@@ -1,0 +1,32 @@
+{
+  "name": "personal-codex-tools",
+  "interface": {
+    "displayName": "Personal Codex Tools"
+  },
+  "plugins": [
+    {
+      "name": "pm-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pm-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "reviewer-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/reviewer-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    }
+  ]
+}

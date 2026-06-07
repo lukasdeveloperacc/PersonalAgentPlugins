@@ -1,0 +1,18 @@
+{
+  "name": "pm-plugin",
+  "version": "0.1.0",
+  "description": "PM workflows for TASK_SPEC-driven AI-native development.",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "PM",
+    "shortDescription": "Create scoped TASK_SPEC handoffs with Codex.",
+    "longDescription": "PM provides TASK_SPEC generation workflows for a Codex PM role.",
+    "developerName": "Local developer",
+    "category": "Development",
+    "capabilities": [],
+    "defaultPrompt": "Create a scoped TASK_SPEC for a Developer agent."
+  }
+}

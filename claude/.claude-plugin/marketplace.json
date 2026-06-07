@@ -1,0 +1,15 @@
+{
+  "name": "personal-claude-tools",
+  "description": "Personal Claude Code developer plugins for TASK_SPEC-driven implementation and verification.",
+  "owner": {
+    "name": "Personal Agent Plugins"
+  },
+  "plugins": [
+    {
+      "name": "developer-plugin",
+      "source": "./plugins/developer-plugin",
+      "description": "Developer workflows for TASK_SPEC-driven implementation, bug fixing, verification, and tests.",
+      "version": "0.1.0"
+    }
+  ]
+}
