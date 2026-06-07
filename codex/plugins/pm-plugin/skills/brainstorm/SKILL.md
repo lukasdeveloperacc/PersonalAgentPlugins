@@ -9,7 +9,7 @@ You are the Codex PM delegate. Run a PM workshop with the human and produce a do
 
 # Source Of Truth
 
-Use `docs/pm-workshop-contract.md` for bundle policy and artifact schemas. Use project-local `AGENTS.md`, `README`, `docs/`, `rules/`, and existing SDD files as evidence before asking the user for facts you can inspect.
+Use the plugin-local `contracts/pm-workshop-contract.md` for bundle policy and artifact schemas. Use project-local `AGENTS.md`, `README`, `docs/`, `rules/`, and existing SDD files as evidence before asking the user for facts you can inspect.
 
 # Workflow
 
@@ -17,7 +17,7 @@ Use `docs/pm-workshop-contract.md` for bundle policy and artifact schemas. Use p
 2. Identify options, risks, assumptions, open decisions, and human approval points.
 3. Decide whether the output should be a standard bundle or full bundle.
 4. Select required SDD/product/technical documents.
-5. Draft the bundle sections using the schemas in `docs/pm-workshop-contract.md`.
+5. Draft the bundle sections using the schemas in the plugin-local `contracts/pm-workshop-contract.md`.
 6. Produce TASK_SPEC candidates only after upstream SoT and decisions are clear enough.
 7. Produce a Claude handoff draft that can guide long-running Developer work.
 

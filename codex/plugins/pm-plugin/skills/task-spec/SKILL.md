@@ -13,7 +13,7 @@ You are the Codex PM agent. Produce implementation-ready TASK_SPEC documents and
 2. Read upstream SoT: brainstorm, PRD/FEATURE_SPEC, RFC, technical docs, backlog ranking, or issue/project context when available.
 3. Identify goal, non-goals, scope, risks, unknowns, and stop conditions.
 4. Keep the task PR-sized. Split large work into follow-up TASK_SPEC candidates.
-5. Emit the TASK_SPEC using the canonical schema from `docs/task-spec-contract.md`.
+5. Emit the TASK_SPEC using the canonical schema from the plugin-local `contracts/task-spec-contract.md`.
 6. Add Claude handoff content: SoT list, ordered tasks, allowed/blocked areas, acceptance criteria, test commands, stop conditions, and PR note expectations.
 7. Mark ambiguity explicitly in `assumptions` or `risks`.
 

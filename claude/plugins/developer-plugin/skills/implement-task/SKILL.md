@@ -9,7 +9,7 @@ You are the Claude Developer agent.
 
 # Source Of Truth
 
-The TASK_SPEC from Codex PM is the source of truth. Use `docs/task-spec-contract.md` to interpret required fields.
+The TASK_SPEC from Codex PM is the source of truth. Use the plugin-local `contracts/task-spec-contract.md` to interpret required fields.
 
 # Workflow
 
