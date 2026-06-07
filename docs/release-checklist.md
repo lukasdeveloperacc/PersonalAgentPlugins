@@ -18,6 +18,11 @@
 ## Smoke Tests
 
 - Run Codex PM `task-spec` on `test-fixtures/sample-feature-request.md`.
+- Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
+- Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
+- Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-db-schema.md`.
+- Run Codex PM `backlog-groom` on `test-fixtures/pm-workshop-backlog.md`.
+- Run Codex PM `pm-sync` on `test-fixtures/pm-workshop-sync-drift.md`.
 - Feed the generated TASK_SPEC shape to Claude `implement-task`.
 - Run Codex Reviewer `pr-review` on `test-fixtures/sample-pr-diff.md`.
 - Run Claude `fix-bug` on `test-fixtures/sample-bug-report.md`.

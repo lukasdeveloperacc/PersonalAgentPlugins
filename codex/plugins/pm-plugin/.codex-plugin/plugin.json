@@ -1,18 +1,18 @@
 {
   "name": "pm-plugin",
   "version": "0.1.0",
-  "description": "PM workflows for TASK_SPEC-driven AI-native development.",
+  "description": "PM delegate workflows for AI-native planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
   "author": {
     "name": "Local developer"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "PM",
-    "shortDescription": "Create scoped TASK_SPEC handoffs with Codex.",
-    "longDescription": "PM provides TASK_SPEC generation workflows for a Codex PM role.",
+    "shortDescription": "Run PM workshops and create Claude-ready handoffs with Codex.",
+    "longDescription": "PM provides Codex PM delegate workflows for brainstorm workshops, roadmap ranking, backlog grooming, PM sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
     "developerName": "Local developer",
     "category": "Development",
     "capabilities": [],
-    "defaultPrompt": "Create a scoped TASK_SPEC for a Developer agent."
+    "defaultPrompt": "Run a PM workshop and produce scoped documents, TASK_SPEC candidates, and Claude handoff material."
   }
 }

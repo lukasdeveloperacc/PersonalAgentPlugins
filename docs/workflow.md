@@ -8,18 +8,23 @@ This repository defines a paired AI-native workflow:
 
 ## Standard Flow
 
-1. Codex PM creates a TASK_SPEC with `pm-plugin:task-spec`.
-2. Claude Developer implements the TASK_SPEC with `developer-plugin:implement-task`.
-3. Claude runs verification with `developer-plugin:verify-app`.
-4. Codex Reviewer reviews the diff or PR with `reviewer-plugin:pr-review`.
-5. The human lead decides whether to merge or release.
+1. Codex PM runs a workshop with `pm-plugin:brainstorm` when the idea is vague or large.
+2. Codex PM ranks and grooms backlog with `pm-plugin:roadmap-rank`, `pm-plugin:backlog-groom`, or `pm-plugin:pm-sync` when needed.
+3. Codex PM creates a TASK_SPEC and Claude handoff with `pm-plugin:task-spec`.
+4. Claude Developer implements the TASK_SPEC with `developer-plugin:implement-task`.
+5. Claude runs verification with `developer-plugin:verify-app`.
+6. Codex Reviewer reviews the diff or PR with `reviewer-plugin:pr-review`.
+7. The human lead decides whether to merge or release.
 
 ## Role Boundaries
 
 Codex PM:
 
 - Defines scope, non-goals, acceptance criteria, and reviewer checklist.
+- Produces PM workshop, SDD, backlog, TASK_SPEC, and Claude handoff drafts.
+- Uses GitHub as state/tracking and Markdown as decision/spec/handoff SoT.
 - Does not implement code.
+- Does not run Claude directly.
 - Does not perform final PR review.
 
 Claude Developer:
@@ -37,6 +42,7 @@ Codex Reviewer:
 Human lead:
 
 - Owns final merge and release decisions.
+- Owns ambiguous product/technical decisions that the PM workshop cannot safely resolve.
 
 ## Versioning
 
