@@ -9,7 +9,7 @@ This contract defines how the Codex PM plugin turns ideas into discovery dossier
 - Slack is optional notification only and must not be treated as source of truth.
 - Claude direct execution is out of v1 scope.
 - Human approval is required for ambiguous decisions, final PR merge, release, and go-live.
-- PM workshop output must be discovery-first. Brainstorm is the conversational entry point for first-project onboarding, feature shaping, refactor discovery, bug-theme investigation, and docs/handoff planning. The PM should investigate available project evidence and confirm the workflow path with the human before producing final artifact bundles.
+- PM workshop output must be discovery-first. Brainstorm is the conversational entry point for first-project onboarding, feature shaping, refactor discovery, bug-theme investigation, user-provided site investigation, and docs/handoff planning. The PM should investigate available project evidence, permitted public browser evidence, and confirm the workflow path with the human before producing final artifact bundles.
 - If the question depends on current external best practices, upstream behavior, standards, or version-aware guidance, the PM should run a bounded research pass first and let that evidence shape the workshop direction.
 
 ## Discovery-First Gate
@@ -21,6 +21,7 @@ Before final artifact generation, the PM must produce a `Discovery Dossier` and 
 - Conversation mode
 - Evidence inspected
 - External evidence gathered, if any
+- Site evidence gathered with Chrome DevTools MCP, if any
 - Relevant existing docs/code/schema/backlog state
 - Missing evidence
 - Current assumptions
@@ -35,6 +36,7 @@ Before choosing a workflow path, classify the workshop mode:
 - `FEATURE_SHAPING`
 - `REFACTOR_DISCOVERY`
 - `BUG_THEME`
+- `USER_PROVIDED_SITE`
 - `DOCS_AND_HANDOFF`
 
 Use one:
@@ -114,6 +116,7 @@ The PM should use OMX harnesses as evidence and planning surfaces when they mate
 Use the lightest branch that can produce a safe handoff:
 
 - `none`: small, clear, low-risk work; produce a standard bundle directly.
+- `chrome-devtools`: user-provided site needs public read-only browser evidence before PM can judge feasibility or implementation direction.
 - `$best-practice-research`: current external best practices, official upstream behavior, standards, SDK/API behavior, or version-aware guidance may change the option set.
 - `$deep-interview`: unclear product intent, user value, non-goals, constraints, or human approval points.
 - `$ralplan`: clear enough requirements but unresolved architecture, sequencing, tradeoff, DB/API/auth/payment/state-machine, or test strategy concerns.
@@ -123,12 +126,13 @@ Use the lightest branch that can produce a safe handoff:
 
 When several branches apply, run at most one harness first unless its result makes the next branch clearly necessary. Prefer this order:
 
-1. `$best-practice-research`
-2. `$deep-interview`
-3. `$ralplan`
-4. `$ultragoal`
-5. `$team`
-6. `$ultraqa`
+1. `chrome-devtools`
+2. `$best-practice-research`
+3. `$deep-interview`
+4. `$ralplan`
+5. `$ultragoal`
+6. `$team`
+7. `$ultraqa`
 
 If OMX runtime is unavailable, the PM output must include:
 
@@ -148,6 +152,7 @@ If OMX runtime is unavailable, the PM output must include:
 - Conversation mode
 - Discovery dossier
 - Research notes, when external evidence was needed
+- Site investigation notes, when a URL or external site was inspected
 - Workflow decision gate
 - Options considered
 - Risks and assumptions

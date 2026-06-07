@@ -10,6 +10,8 @@
 ## Local Validation
 
 - Parse every JSON manifest.
+- Parse plugin `.mcp.json` files when present.
+- Confirm runtime contract mirrors are synced between root `docs/` and plugin-local `contracts/`.
 - Validate Codex plugin with the Codex plugin validator when available.
 - Validate Claude plugin or marketplace with `claude plugin validate`.
 - Confirm every required skill file exists.
@@ -20,6 +22,8 @@
 - Run Codex PM `task-spec` on `test-fixtures/sample-feature-request.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
 - Run Codex PM `brainstorm` on a first-project kickoff prompt and confirm it classifies `PROJECT_KICKOFF`.
+- Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-site-feasibility.md` and confirm it classifies `USER_PROVIDED_SITE`.
+- Confirm `brainstorm` records Chrome DevTools MCP site evidence or a fallback reason for URL-based prompts.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-db-schema.md`.
 - Confirm `brainstorm` can switch into research-first mode when current best practices or upstream behavior matter.
@@ -40,5 +44,5 @@
 ## Publishing
 
 - Tag releases after local validation.
-- Keep v0.1 skill-only.
-- Add MCP, hooks, or automation only in later versions with a separate review.
+- Keep v0.1 conservative.
+- Add new MCP, hooks, or automation only in later versions with a separate review.

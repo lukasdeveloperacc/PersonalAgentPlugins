@@ -1,14 +1,14 @@
 # TASK_SPEC Contract
 
-`TASK_SPEC` is the compatibility contract between the Codex PM/Reviewer plugin and the Claude Developer plugin.
+`TASK_SPEC` is the compatibility contract between the Codex PM, Claude Developer, and Codex Reviewer roles.
 
-Codex PM produces it. Claude consumes it. Codex Reviewer uses it as review context. All plugins must treat the fields below as the source of truth for scoped implementation.
+Codex PM produces it. Claude consumes it. Codex Reviewer uses it as review context. Treat these fields as the source of truth for scoped implementation.
 
 ## Version
 
 Current contract version: `1.0`
 
-Change `spec_version` only when required fields or field semantics change. Backward-incompatible changes require updates to both plugins in the same release.
+Change `spec_version` only when required fields or field semantics change. Backward-incompatible changes require updates to all consuming plugins in the same release.
 
 ## Required Fields
 
@@ -58,7 +58,7 @@ Claude `implement-task` must:
 - Implement only inside `scope` and `allowed_files`.
 - Avoid `blocked_files`.
 - Report missing or contradictory required fields before implementation.
-- Report any needed scope expansion as a blocker or explicit assumption.
+- Report needed scope expansion as a blocker or explicit assumption.
 
 ## Approval Boundary
 

@@ -10,7 +10,7 @@
 - Claude: Developer
 - Human lead: final merge / release approval
 
-v0.x는 skill-only 플러그인입니다. MCP, hooks, 자동 배포 권한은 포함하지 않습니다.
+v0.x is still conservative: PM includes Chrome DevTools MCP for read-only site investigation, while hooks and automatic deployment/write automation are not included.
 
 ## Structure
 
@@ -19,6 +19,8 @@ codex/
   .agents/plugins/marketplace.json
   plugins/pm-plugin/
     .codex-plugin/plugin.json
+    .mcp.json
+    contracts/
     skills/
   plugins/reviewer-plugin/
     .codex-plugin/plugin.json
@@ -38,6 +40,7 @@ test-fixtures/
 
 - `brainstorm`: start the PM conversation for first-project onboarding, feature shaping, refactor discovery, bug themes, or docs/handoff planning; investigate first, present a workflow decision gate, then produce PM/SDD/technical/TASK_SPEC/handoff bundles after confirmation.
 - `brainstorm` may research current best practices first when upstream behavior or version-aware guidance matters.
+- `brainstorm` can inspect user-provided sites with Chrome DevTools MCP for public read-only feasibility evidence.
 - `task-spec`: create a scoped TASK_SPEC.
 
 `reviewer-plugin` provides:
@@ -85,6 +88,20 @@ $pm-plugin:brainstorm
 법적/기술적 제약이 있는지 대화하면서 구현 초안을 잡아줘.
 필요하면 best-practice-research나 deep-interview를 사용하고,
 바로 TASK_SPEC로 가지 말고 먼저 FEATURE_SHAPING 워크플로우를 제안해줘.
+```
+
+### Site feasibility discovery
+
+```text
+$pm-plugin:brainstorm
+
+이 도매사 사이트를 보고 상품 데이터 수집 기능이 현실적으로 가능한지 판단해줘:
+https://example-wholesale-site.test
+
+Chrome DevTools MCP로 공개 페이지 구조, 네트워크 요청, 콘솔 에러,
+로그인 필요 여부, 데이터 필드, 약관/자동화 리스크를 조사해줘.
+로그인 세션이나 폼 제출이 필요하면 먼저 나에게 승인받고,
+바로 구현하지 말고 USER_PROVIDED_SITE Discovery Dossier와 Workflow Decision Gate를 먼저 보여줘.
 ```
 
 ### Refactor discovery
@@ -147,3 +164,13 @@ claude plugin install developer-plugin@personal-claude-tools
 `docs/task-spec-contract.md` defines the shared TASK_SPEC schema. Installed plugins also carry plugin-local contract copies so skills can run after installation without reading repository-level docs.
 
 Claude must not silently broaden TASK_SPEC scope. Codex Reviewer review is advisory. Only the human lead approves merge or release.
+
+## Runtime Docs
+
+Installed plugin agents should rely on plugin-local runtime docs:
+
+- PM: `codex/plugins/pm-plugin/contracts/`
+- Reviewer: `codex/plugins/reviewer-plugin/contracts/`
+- Claude Developer: `claude/plugins/developer-plugin/contracts/`
+
+Root `docs/` files are maintainer-facing mirrors and release/security/workflow notes for this repository. If a skill must read a document after installation, put that document inside the plugin package and reference the plugin-local path from `SKILL.md`.

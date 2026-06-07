@@ -1,11 +1,12 @@
 {
   "name": "pm-plugin",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "PM delegate workflows for AI-native discovery, research, planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
   "author": {
     "name": "Local developer"
   },
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "PM",
     "shortDescription": "Run discovery-first, research-backed PM workshops and create Claude-ready handoffs with Codex.",

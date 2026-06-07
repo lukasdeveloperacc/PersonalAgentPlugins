@@ -1,6 +1,6 @@
 # PM Workshop Contract
 
-This contract defines how the Codex PM plugin turns ideas into document bundles, backlog state proposals, TASK_SPEC candidates, and Claude handoffs.
+This contract defines how the Codex PM plugin turns ideas into discovery dossiers, research-backed workflow decisions, document bundles, backlog state proposals, TASK_SPEC candidates, and Claude handoffs.
 
 ## Operating Model
 
@@ -9,6 +9,55 @@ This contract defines how the Codex PM plugin turns ideas into document bundles,
 - Slack is optional notification only and must not be treated as source of truth.
 - Claude direct execution is out of v1 scope.
 - Human approval is required for ambiguous decisions, final PR merge, release, and go-live.
+- PM workshop output must be discovery-first. Brainstorm is the conversational entry point for first-project onboarding, feature shaping, refactor discovery, bug-theme investigation, user-provided site investigation, and docs/handoff planning. The PM should investigate available project evidence, permitted public browser evidence, and confirm the workflow path with the human before producing final artifact bundles.
+- If the question depends on current external best practices, upstream behavior, standards, or version-aware guidance, the PM should run a bounded research pass first and let that evidence shape the workshop direction.
+
+## Discovery-First Gate
+
+Before final artifact generation, the PM must produce a `Discovery Dossier` and `Workflow Decision Gate` unless the request is explicitly small, already approved, and low risk.
+
+### Discovery Dossier
+
+- Conversation mode
+- Evidence inspected
+- External evidence gathered, if any
+- Site evidence gathered with Chrome DevTools MCP, if any
+- Relevant existing docs/code/schema/backlog state
+- Missing evidence
+- Current assumptions
+- Affected product, technical, data, and QA surfaces
+- Investigation gaps that could affect Claude execution
+
+### Workflow Decision Gate
+
+Before choosing a workflow path, classify the workshop mode:
+
+- `PROJECT_KICKOFF`
+- `FEATURE_SHAPING`
+- `REFACTOR_DISCOVERY`
+- `BUG_THEME`
+- `USER_PROVIDED_SITE`
+- `DOCS_AND_HANDOFF`
+
+Use one:
+
+- `MORE_INTERVIEW`: ask more product/PM questions before planning.
+- `RESEARCH_FIRST`: inspect docs/code/schema/backlog or official references before planning.
+- `PLAN_FIRST`: run planning/tradeoff work before artifact generation.
+- `FULL_BUNDLE`: generate full PM/SDD/technical/TASK_SPEC/handoff bundle after confirmation.
+- `STANDARD_BUNDLE`: generate a smaller scoped bundle after confirmation.
+- `TASK_SPEC_ONLY`: produce TASK_SPEC from already-approved upstream documents.
+- `RESEARCH_THEN_DECIDE`: gather external evidence first, then re-open the workflow gate.
+
+The gate must include:
+
+- Recommended path
+- Why this path fits
+- Deliverables to generate
+- Human decisions required before artifact generation
+- OMX harness to use, if any
+
+The PM must ask one concise confirmation question and wait for confirmation or correction before producing final PRD, SDD, RFC, TASK_SPEC, or Claude handoff artifacts.
 
 ## GitHub Write Policy
 
@@ -60,9 +109,15 @@ Full bundle adds:
 
 The PM plugin may use OMX harnesses as planning and validation surfaces when the current Codex session supports OMX runtime workflows. Harnesses are not Developer execution and must not run Claude.
 
+### Active Harness Use
+
+The PM should use OMX harnesses as evidence and planning surfaces when they materially improve the workshop, not only list them as suggestions. If the current Codex surface cannot execute a selected harness, the PM must record the fallback command, expected artifact, and why the PM output is still provisional.
+
 Use the lightest branch that can produce a safe handoff:
 
 - `none`: small, clear, low-risk work; produce a standard bundle directly.
+- `chrome-devtools`: user-provided site needs public read-only browser evidence before PM can judge feasibility or implementation direction.
+- `$best-practice-research`: current external best practices, official upstream behavior, standards, SDK/API behavior, or version-aware guidance may change the option set.
 - `$deep-interview`: unclear product intent, user value, non-goals, constraints, or human approval points.
 - `$ralplan`: clear enough requirements but unresolved architecture, sequencing, tradeoff, DB/API/auth/payment/state-machine, or test strategy concerns.
 - `$ultragoal`: clear goal and plan but needs durable repo-native artifacts, multi-goal sequencing, execution packets, or long-running Claude handoff documents.
@@ -71,11 +126,13 @@ Use the lightest branch that can produce a safe handoff:
 
 When several branches apply, run at most one harness first unless its result makes the next branch clearly necessary. Prefer this order:
 
-1. `$deep-interview`
-2. `$ralplan`
-3. `$ultragoal`
-4. `$team`
-5. `$ultraqa`
+1. `chrome-devtools`
+2. `$best-practice-research`
+3. `$deep-interview`
+4. `$ralplan`
+5. `$ultragoal`
+6. `$team`
+7. `$ultraqa`
 
 If OMX runtime is unavailable, the PM output must include:
 
@@ -92,6 +149,11 @@ If OMX runtime is unavailable, the PM output must include:
 - Problem statement
 - User/customer value
 - Business goal
+- Conversation mode
+- Discovery dossier
+- Research notes, when external evidence was needed
+- Site investigation notes, when a URL or external site was inspected
+- Workflow decision gate
 - Options considered
 - Risks and assumptions
 - Open decisions

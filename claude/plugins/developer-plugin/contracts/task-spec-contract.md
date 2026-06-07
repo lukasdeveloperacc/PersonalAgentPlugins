@@ -8,6 +8,8 @@ Codex PM produces it. Claude consumes it. Codex Reviewer uses it as review conte
 
 Current contract version: `1.0`
 
+Change `spec_version` only when required fields or field semantics change. Backward-incompatible changes require updates to all consuming plugins in the same release.
+
 ## Required Fields
 
 ```yaml
@@ -37,6 +39,16 @@ definition_of_done:
 reviewer_checklist:
   - "review point for Codex Reviewer"
 ```
+
+## Producer Responsibilities
+
+Codex PM `task-spec` must:
+
+- Emit every required field.
+- Keep the task PR-sized.
+- Mark ambiguity in `assumptions` or `risks`.
+- Identify blocked files and permission-sensitive areas.
+- Avoid authorizing production writes, secret access, merge, or release.
 
 ## Consumer Responsibilities
 
