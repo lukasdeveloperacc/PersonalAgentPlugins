@@ -1,6 +1,6 @@
 {
   "name": "reviewer-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reviewer workflows for PR and architecture review.",
   "author": {
     "name": "Local developer"
