@@ -1,6 +1,6 @@
 # PM Workshop Contract
 
-This contract defines how the Codex PM plugin turns ideas into document bundles, backlog state proposals, TASK_SPEC candidates, and Claude handoffs.
+This contract defines how the Codex PM plugin turns ideas into discovery dossiers, workflow decisions, document bundles, backlog state proposals, TASK_SPEC candidates, and Claude handoffs.
 
 ## Operating Model
 
@@ -9,6 +9,41 @@ This contract defines how the Codex PM plugin turns ideas into document bundles,
 - Slack is optional notification only and must not be treated as source of truth.
 - Claude direct execution is out of v1 scope.
 - Human approval is required for ambiguous decisions, final PR merge, release, and go-live.
+- PM workshop output must be discovery-first. The PM should investigate available project evidence and confirm the workflow path with the human before producing final artifact bundles.
+
+## Discovery-First Gate
+
+Before final artifact generation, the PM must produce a `Discovery Dossier` and `Workflow Decision Gate` unless the request is explicitly small, already approved, and low risk.
+
+### Discovery Dossier
+
+- Evidence inspected
+- Relevant existing docs/code/schema/backlog state
+- Missing evidence
+- Current assumptions
+- Affected product, technical, data, and QA surfaces
+- Investigation gaps that could affect Claude execution
+
+### Workflow Decision Gate
+
+Use one:
+
+- `MORE_INTERVIEW`: ask more product/PM questions before planning.
+- `RESEARCH_FIRST`: inspect docs/code/schema/backlog or official references before planning.
+- `PLAN_FIRST`: run planning/tradeoff work before artifact generation.
+- `FULL_BUNDLE`: generate full PM/SDD/technical/TASK_SPEC/handoff bundle after confirmation.
+- `STANDARD_BUNDLE`: generate a smaller scoped bundle after confirmation.
+- `TASK_SPEC_ONLY`: produce TASK_SPEC from already-approved upstream documents.
+
+The gate must include:
+
+- Recommended path
+- Why this path fits
+- Deliverables to generate
+- Human decisions required before artifact generation
+- OMX harness to use, if any
+
+The PM must ask one concise confirmation question and wait for confirmation or correction before producing final PRD, SDD, RFC, TASK_SPEC, or Claude handoff artifacts.
 
 ## GitHub Write Policy
 
@@ -92,6 +127,8 @@ If OMX runtime is unavailable, the PM output must include:
 - Problem statement
 - User/customer value
 - Business goal
+- Discovery dossier
+- Workflow decision gate
 - Options considered
 - Risks and assumptions
 - Open decisions

@@ -1,18 +1,18 @@
 {
   "name": "pm-plugin",
-  "version": "0.1.2",
-  "description": "PM delegate workflows for AI-native planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
+  "version": "0.1.3",
+  "description": "PM delegate workflows for AI-native discovery, planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
   "author": {
     "name": "Local developer"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "PM",
-    "shortDescription": "Run PM workshops and create Claude-ready handoffs with Codex.",
-    "longDescription": "PM provides Codex PM delegate workflows for brainstorm workshops, roadmap ranking, backlog grooming, PM sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
+    "shortDescription": "Run discovery-first PM workshops and create Claude-ready handoffs with Codex.",
+    "longDescription": "PM provides Codex PM delegate workflows for discovery-first brainstorm workshops, roadmap ranking, backlog grooming, PM sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
     "developerName": "Local developer",
     "category": "Development",
     "capabilities": [],
-    "defaultPrompt": "Run a PM workshop and produce scoped documents, TASK_SPEC candidates, and Claude handoff material."
+    "defaultPrompt": "Run a discovery-first PM workshop, confirm the workflow with the human, then produce scoped documents, TASK_SPEC candidates, and Claude handoff material."
   }
 }
