@@ -37,6 +37,7 @@ test-fixtures/
 `pm-plugin` provides:
 
 - `brainstorm`: run a discovery-first PM workshop, present a workflow decision gate, then produce PM/SDD/technical/TASK_SPEC/handoff bundles after confirmation.
+- `brainstorm` may research current best practices first when upstream behavior or version-aware guidance matters.
 - `task-spec`: create a scoped TASK_SPEC.
 
 `reviewer-plugin` provides:

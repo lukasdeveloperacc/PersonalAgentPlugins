@@ -21,6 +21,7 @@
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-db-schema.md`.
+- Confirm `brainstorm` can switch into research-first mode when current best practices or upstream behavior matter.
 - Confirm `brainstorm` emits `Discovery Dossier` before final artifact generation.
 - Confirm `brainstorm` emits `Workflow Decision Gate` and asks for human confirmation before final PRD/SDD/RFC/TASK_SPEC/handoff artifacts on ambiguous or long-running work.
 - Confirm `brainstorm` emits `OMX Harness Decision` and executes or falls back according to the fixture branch.
