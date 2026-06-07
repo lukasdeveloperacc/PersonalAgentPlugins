@@ -24,6 +24,11 @@
 - Confirm `brainstorm` emits `OMX Harness Decision` and executes or falls back according to the fixture branch.
 - Run Codex PM `backlog-groom` on `test-fixtures/pm-workshop-backlog.md`.
 - Run Codex PM `pm-sync` on `test-fixtures/pm-workshop-sync-drift.md`.
+- Run Codex Reviewer `spec-review` on a PM full-bundle artifact.
+- Run Codex Reviewer `handoff-review` on a Claude handoff draft.
+- Run Codex Reviewer `task-spec-review` on a generated TASK_SPEC.
+- Run Codex Reviewer `db-contract-review` on a data-impact planning artifact.
+- Run Codex Reviewer `omx-branch-review` on a PM harness decision section.
 - Feed the generated TASK_SPEC shape to Claude `implement-task`.
 - Run Codex Reviewer `pr-review` on `test-fixtures/sample-pr-diff.md`.
 - Run Claude `fix-bug` on `test-fixtures/sample-bug-report.md`.
