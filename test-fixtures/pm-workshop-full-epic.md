@@ -12,6 +12,13 @@ Design a multi-step reservation lifecycle redesign that changes user, driver, an
 
 Full bundle.
 
+## Expected OMX Harness Branch
+
+- Selected branch: `$ralplan`
+- Reason: The request spans multiple PRs and affects state machine, route behavior, sequencing, and test strategy.
+- Follow-up branch: `$ultragoal` should be recommended after `$ralplan` to produce durable repo-native artifacts and multi-TASK_SPEC execution packets. `$team` may be recommended if the plan needs parallel document, architecture, test, or data analysis.
+- Execution: Run `$ralplan` automatically when OMX runtime is available; otherwise emit the fallback command and expected artifact.
+
 ## Escalation Reasons
 
 - Work spans two or more PRs.

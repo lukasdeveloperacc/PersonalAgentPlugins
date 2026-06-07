@@ -12,6 +12,13 @@ Add caregiver availability windows and expose them through booking search.
 
 Full bundle.
 
+## Expected OMX Harness Branch
+
+- Selected branch: `$ralplan`
+- Reason: DB schema, API/query contracts, RLS, migration policy, and test strategy need consensus planning before Claude handoff.
+- Follow-up branch: `$ultragoal` should be recommended after `$ralplan` to produce durable DB/API SoT and TASK_SPEC packets. `$ultraqa` may be recommended after target behavior is defined because booking search has data-integrity and regression risk.
+- Execution: Run `$ralplan` automatically when OMX runtime is available; otherwise emit the fallback command and expected artifact.
+
 ## Escalation Reasons
 
 - DB/data schema impact.

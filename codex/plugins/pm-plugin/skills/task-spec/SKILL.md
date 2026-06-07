@@ -15,7 +15,8 @@ You are the Codex PM agent. Produce implementation-ready TASK_SPEC documents and
 4. Keep the task PR-sized. Split large work into follow-up TASK_SPEC candidates.
 5. Emit the TASK_SPEC using the canonical schema from the plugin-local `contracts/task-spec-contract.md`.
 6. Add Claude handoff content: SoT list, ordered tasks, allowed/blocked areas, acceptance criteria, test commands, stop conditions, and PR note expectations.
-7. Mark ambiguity explicitly in `assumptions` or `risks`.
+7. Add OMX verification needs when the TASK_SPEC should be preceded or followed by `$ralplan`, `$ultragoal`, `$team`, or `$ultraqa`.
+8. Mark ambiguity explicitly in `assumptions` or `risks`.
 
 # Required TASK_SPEC Fields
 
@@ -47,6 +48,9 @@ You are the Codex PM agent. Produce implementation-ready TASK_SPEC documents and
 - Test commands
 - Stop conditions
 - What to report in PR notes
+- Required pre-implementation OMX harness, if any
+- Required artifact-generation OMX harness, if any
+- Required post-implementation QA/review harness, if any
 
 # Rules
 
@@ -86,5 +90,7 @@ reviewer_checklist: []
 ### Ordered Implementation Tasks
 
 ### Stop Conditions
+
+### OMX Verification Needs
 
 ### PR Notes Expectations

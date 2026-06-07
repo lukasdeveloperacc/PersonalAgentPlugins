@@ -12,6 +12,12 @@ Add an export button to an existing reports screen so a manager can download the
 
 Standard bundle.
 
+## Expected OMX Harness Branch
+
+- Selected branch: `none`
+- Reason: The request is small, product intent is clear, and no DB/API/auth/payment/state-machine risk is present.
+- Execution: No OMX harness should run automatically.
+
 ## Expected Documents
 
 - BRAINSTORM

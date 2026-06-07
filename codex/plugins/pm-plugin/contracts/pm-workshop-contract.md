@@ -56,6 +56,35 @@ Full bundle adds:
 - Explicit decision log
 - Multi-TASK_SPEC execution sequence
 
+## OMX Harness Branching
+
+The PM plugin may use OMX harnesses as planning and validation surfaces when the current Codex session supports OMX runtime workflows. Harnesses are not Developer execution and must not run Claude.
+
+Use the lightest branch that can produce a safe handoff:
+
+- `none`: small, clear, low-risk work; produce a standard bundle directly.
+- `$deep-interview`: unclear product intent, user value, non-goals, constraints, or human approval points.
+- `$ralplan`: clear enough requirements but unresolved architecture, sequencing, tradeoff, DB/API/auth/payment/state-machine, or test strategy concerns.
+- `$ultragoal`: clear goal and plan but needs durable repo-native artifacts, multi-goal sequencing, execution packets, or long-running Claude handoff documents.
+- `$team`: large or multi-lane work needing parallel document, architecture, data, test, or risk analysis before a long Claude handoff.
+- `$ultraqa`: critical journey, auth, payment, data-integrity, state-transition, regression-heavy, or release-readiness work needing adversarial QA scenarios.
+
+When several branches apply, run at most one harness first unless its result makes the next branch clearly necessary. Prefer this order:
+
+1. `$deep-interview`
+2. `$ralplan`
+3. `$ultragoal`
+4. `$team`
+5. `$ultraqa`
+
+If OMX runtime is unavailable, the PM output must include:
+
+- Selected branch
+- Reason
+- Recommended next command
+- Expected artifact
+- Fallback PM bundle
+
 ## Required Schemas
 
 ### BRAINSTORM.md
@@ -68,6 +97,7 @@ Full bundle adds:
 - Open decisions
 - Required SoT documents
 - Recommended bundle depth
+- OMX harness decision
 - Human approval points
 
 ### RFC
@@ -102,6 +132,9 @@ Full bundle adds:
 - Acceptance criteria
 - Test commands
 - Stop conditions
+- Pre-implementation OMX harness requirement, if any
+- Artifact-generation OMX harness requirement, if any
+- Post-implementation QA/review harness requirement, if any
 - What to report in PR notes
 
 ### Multi-TASK_SPEC Sequence

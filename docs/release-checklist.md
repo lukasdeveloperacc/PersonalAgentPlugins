@@ -21,6 +21,7 @@
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-db-schema.md`.
+- Confirm `brainstorm` emits `OMX Harness Decision` and executes or falls back according to the fixture branch.
 - Run Codex PM `backlog-groom` on `test-fixtures/pm-workshop-backlog.md`.
 - Run Codex PM `pm-sync` on `test-fixtures/pm-workshop-sync-drift.md`.
 - Feed the generated TASK_SPEC shape to Claude `implement-task`.
