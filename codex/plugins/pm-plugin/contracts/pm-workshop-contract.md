@@ -9,7 +9,7 @@ This contract defines how the Codex PM plugin turns ideas into discovery dossier
 - Slack is optional notification only and must not be treated as source of truth.
 - Claude direct execution is out of v1 scope.
 - Human approval is required for ambiguous decisions, final PR merge, release, and go-live.
-- PM workshop output must be discovery-first. The PM should investigate available project evidence and confirm the workflow path with the human before producing final artifact bundles.
+- PM workshop output must be discovery-first. Brainstorm is the conversational entry point for first-project onboarding, feature shaping, refactor discovery, bug-theme investigation, and docs/handoff planning. The PM should investigate available project evidence and confirm the workflow path with the human before producing final artifact bundles.
 - If the question depends on current external best practices, upstream behavior, standards, or version-aware guidance, the PM should run a bounded research pass first and let that evidence shape the workshop direction.
 
 ## Discovery-First Gate
@@ -18,7 +18,9 @@ Before final artifact generation, the PM must produce a `Discovery Dossier` and 
 
 ### Discovery Dossier
 
+- Conversation mode
 - Evidence inspected
+- External evidence gathered, if any
 - Relevant existing docs/code/schema/backlog state
 - Missing evidence
 - Current assumptions
@@ -26,6 +28,14 @@ Before final artifact generation, the PM must produce a `Discovery Dossier` and 
 - Investigation gaps that could affect Claude execution
 
 ### Workflow Decision Gate
+
+Before choosing a workflow path, classify the workshop mode:
+
+- `PROJECT_KICKOFF`
+- `FEATURE_SHAPING`
+- `REFACTOR_DISCOVERY`
+- `BUG_THEME`
+- `DOCS_AND_HANDOFF`
 
 Use one:
 
@@ -97,9 +107,14 @@ Full bundle adds:
 
 The PM plugin may use OMX harnesses as planning and validation surfaces when the current Codex session supports OMX runtime workflows. Harnesses are not Developer execution and must not run Claude.
 
+### Active Harness Use
+
+The PM should use OMX harnesses as evidence and planning surfaces when they materially improve the workshop, not only list them as suggestions. If the current Codex surface cannot execute a selected harness, the PM must record the fallback command, expected artifact, and why the PM output is still provisional.
+
 Use the lightest branch that can produce a safe handoff:
 
 - `none`: small, clear, low-risk work; produce a standard bundle directly.
+- `$best-practice-research`: current external best practices, official upstream behavior, standards, SDK/API behavior, or version-aware guidance may change the option set.
 - `$deep-interview`: unclear product intent, user value, non-goals, constraints, or human approval points.
 - `$ralplan`: clear enough requirements but unresolved architecture, sequencing, tradeoff, DB/API/auth/payment/state-machine, or test strategy concerns.
 - `$ultragoal`: clear goal and plan but needs durable repo-native artifacts, multi-goal sequencing, execution packets, or long-running Claude handoff documents.
@@ -108,11 +123,12 @@ Use the lightest branch that can produce a safe handoff:
 
 When several branches apply, run at most one harness first unless its result makes the next branch clearly necessary. Prefer this order:
 
-1. `$deep-interview`
-2. `$ralplan`
-3. `$ultragoal`
-4. `$team`
-5. `$ultraqa`
+1. `$best-practice-research`
+2. `$deep-interview`
+3. `$ralplan`
+4. `$ultragoal`
+5. `$team`
+6. `$ultraqa`
 
 If OMX runtime is unavailable, the PM output must include:
 
@@ -129,6 +145,7 @@ If OMX runtime is unavailable, the PM output must include:
 - Problem statement
 - User/customer value
 - Business goal
+- Conversation mode
 - Discovery dossier
 - Research notes, when external evidence was needed
 - Workflow decision gate

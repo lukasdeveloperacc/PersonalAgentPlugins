@@ -8,7 +8,7 @@ This repository defines a paired AI-native workflow:
 
 ## Standard Flow
 
-1. Codex PM runs a discovery-first workshop with `pm-plugin:brainstorm` when the idea is vague or large.
+1. Codex PM starts with `pm-plugin:brainstorm` as the conversational entry point for first-project onboarding, feature shaping, refactor discovery, bug themes, or docs/handoff planning.
 2. Codex PM researches current external best practices first when upstream behavior, standards, or version-aware guidance matters.
 3. Codex PM produces a `Discovery Dossier` from available docs/code/schema/backlog evidence and the research pass.
 4. Codex PM presents a `Workflow Decision Gate` and asks the human to confirm whether to interview more, research first, plan first, create a full bundle, create a standard bundle, or produce TASK_SPEC only.
@@ -26,6 +26,7 @@ This repository defines a paired AI-native workflow:
 Codex PM:
 
 - Defines scope, non-goals, acceptance criteria, and reviewer checklist.
+- Uses `brainstorm` as the first PM conversation before turning uncertainty into documents or TASK_SPECs.
 - Investigates available project evidence before drafting final artifacts.
 - Uses external research when current best practices or upstream behavior matter.
 - Asks the human to confirm the workflow path before producing final document bundles.

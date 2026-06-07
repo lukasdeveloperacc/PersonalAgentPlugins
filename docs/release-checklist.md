@@ -19,6 +19,7 @@
 
 - Run Codex PM `task-spec` on `test-fixtures/sample-feature-request.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
+- Run Codex PM `brainstorm` on a first-project kickoff prompt and confirm it classifies `PROJECT_KICKOFF`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-db-schema.md`.
 - Confirm `brainstorm` can switch into research-first mode when current best practices or upstream behavior matter.
