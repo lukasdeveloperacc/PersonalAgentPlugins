@@ -24,6 +24,8 @@ codex/
     skills/
   plugins/reviewer-plugin/
     .codex-plugin/plugin.json
+    .mcp.json
+    contracts/
     skills/
 claude/
   .claude-plugin/marketplace.json
@@ -68,6 +70,20 @@ codex plugin list
 codex plugin add pm-plugin@personal-codex-tools
 codex plugin add reviewer-plugin@personal-codex-tools
 ```
+
+`reviewer-plugin` includes Figma MCP for read/review evidence:
+
+```json
+{
+  "mcpServers": {
+    "figma": {
+      "url": "http://127.0.0.1:3845/mcp"
+    }
+  }
+}
+```
+
+Codex Reviewer uses this to inspect approved Figma sources during `design-review` and `visual-qa-review`. It must not mutate Figma; Figma writes belong to Claude Designer under approved write scope.
 
 ## PM Skill Examples
 

@@ -25,6 +25,7 @@
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-site-feasibility.md` and confirm it classifies `USER_PROVIDED_SITE`.
 - Confirm `brainstorm` records Chrome DevTools MCP site evidence or a fallback reason for URL-based prompts.
 - Confirm `designer-plugin` declares Figma MCP at `http://127.0.0.1:3845/mcp`.
+- Confirm `reviewer-plugin` declares Figma MCP at `http://127.0.0.1:3845/mcp` and its review skills forbid Figma mutation.
 - Confirm Figma write skills require target file/page/frame, write mode, planned operation, and human approval before writes.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-db-schema.md`.

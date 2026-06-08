@@ -30,7 +30,7 @@ Codex PM may use Chrome DevTools MCP for user-provided site investigation. Defau
 
 Codex Reviewer can review PRs/diffs and recommend review decisions.
 
-Codex Reviewer can review DESIGN_SPEC artifacts, Figma write scope, and visual QA evidence.
+Codex Reviewer can review DESIGN_SPEC artifacts, Figma write scope, visual QA evidence, and approved Figma sources. Codex Reviewer must not create, modify, delete, rename, publish, or reorganize Figma objects.
 
 The human lead is the only final merge and release authority.
 
@@ -42,8 +42,11 @@ Current MCP:
 
 1. Chrome DevTools MCP for PM site investigation.
 2. Figma MCP for Claude Designer through the local desktop server at `http://127.0.0.1:3845/mcp`.
+3. Figma MCP for Codex Reviewer through the same local desktop server, for read/review evidence only.
 
 Figma MCP write usage requires an explicit target and approval. Prefer draft, duplicate, branch, or sandbox files. Markdown DESIGN_SPEC remains the durable handoff source of truth.
+
+Codex Reviewer Figma usage is read/review only even if the underlying MCP server exposes write-capable tools.
 
 Add future MCP servers only after current skill workflows are stable. Prefer read-only or staging-scoped integrations first.
 

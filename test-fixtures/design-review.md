@@ -62,5 +62,7 @@ human_approval_required: []
 
 - Check DESIGN_SPEC required fields.
 - Check Figma write scope and approval.
+- Use Codex Reviewer Figma MCP for read/review evidence when available.
+- Do not mutate Figma as the Reviewer role.
 - Check implementation readiness and screen/state coverage.
 - Return `APPROVE` only if no blocking gaps exist.
