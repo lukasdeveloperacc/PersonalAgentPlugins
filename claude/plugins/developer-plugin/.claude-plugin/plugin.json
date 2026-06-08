@@ -1,5 +1,5 @@
 {
   "name": "developer-plugin",
   "description": "Developer workflows for TASK_SPEC and DESIGN_SPEC driven implementation, bug fixing, verification, and tests.",
-  "version": "0.1.3"
+  "version": "0.1.4"
 }

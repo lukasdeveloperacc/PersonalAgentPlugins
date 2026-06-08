@@ -40,6 +40,21 @@ reviewer_checklist:
   - "review point for Codex Reviewer"
 ```
 
+## Conditional Design Fields
+
+These fields are required when UI/UX is material to the task. They are optional for non-UI work and do not change `spec_version`.
+
+```yaml
+design_required: false
+design_sources:
+  - "DESIGN_SPEC path, SCREEN_SPEC path, Figma URL, or none"
+figma_sources:
+  - "Figma file/page/frame URL or none"
+visual_qa_required: false
+design_review_gate: "not_required|required|approved|waived_with_risk"
+visual_qa_gate: "not_required|required|approved|waived_with_risk"
+```
+
 ## Producer Responsibilities
 
 Codex PM `task-spec` must:
@@ -49,6 +64,7 @@ Codex PM `task-spec` must:
 - Mark ambiguity in `assumptions` or `risks`.
 - Identify blocked files and permission-sensitive areas.
 - Avoid authorizing production writes, secret access, merge, or release.
+- If UI/UX is material, reference approved DESIGN_SPEC/Figma sources or explicitly mark the missing design gate as a risk.
 
 ## Consumer Responsibilities
 
@@ -59,6 +75,7 @@ Claude `implement-task` must:
 - Avoid `blocked_files`.
 - Report missing or contradictory required fields before implementation.
 - Report needed scope expansion as a blocker or explicit assumption.
+- For UI/UX work, treat approved DESIGN_SPEC as the design source of truth and report missing or contradictory design fields before implementation.
 
 ## Approval Boundary
 

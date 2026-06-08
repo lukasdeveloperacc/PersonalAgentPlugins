@@ -170,6 +170,20 @@ For data or DB changes, add:
 -> reviewer-plugin:db-contract-review
 ```
 
+### PM detects UI/UX work
+
+```text
+$pm-plugin:brainstorm
+
+SmartStoreToolkit의 상품 수집 시작 화면을 새로 만들고 싶어.
+사용자는 스마트스토어 운영자이고, 도매사 URL을 입력하면 수집 가능성 점검을 시작하는 화면이야.
+
+이건 UI/UX 품질이 중요하니까 바로 TASK_SPEC로 가지 말고
+DESIGN_REQUIRED 여부를 판단해줘.
+필요하면 Claude Designer의 design-intent, screen-spec, figma-draft,
+Codex design-review, visual-qa-review를 포함한 workflow gate를 먼저 제안해줘.
+```
+
 ## Claude Plugin
 
 `developer-plugin` provides:

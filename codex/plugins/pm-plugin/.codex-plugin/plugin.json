@@ -1,7 +1,7 @@
 {
   "name": "pm-plugin",
-  "version": "0.1.6",
-  "description": "PM delegate workflows for AI-native discovery, research, planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
+  "version": "0.1.7",
+  "description": "PM delegate workflows for AI-native discovery, research, design routing, planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
   "author": {
     "name": "Local developer"
   },
@@ -9,11 +9,11 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "PM",
-    "shortDescription": "Run discovery-first, research-backed PM workshops and create Claude-ready handoffs with Codex.",
-    "longDescription": "PM provides Codex PM delegate workflows for discovery-first, research-backed brainstorm workshops, roadmap ranking, backlog grooming, PM sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
+    "shortDescription": "Run discovery-first, research-backed PM workshops and create design-aware Claude-ready handoffs with Codex.",
+    "longDescription": "PM provides Codex PM delegate workflows for discovery-first, research-backed brainstorm workshops, UI/UX design routing, roadmap ranking, backlog grooming, PM sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
     "developerName": "Local developer",
     "category": "Development",
     "capabilities": [],
-    "defaultPrompt": "Start a PM brainstorming conversation, investigate the project and external evidence as needed, choose the right workflow with the human, then produce scoped documents, TASK_SPEC candidates, and Claude handoff material."
+    "defaultPrompt": "Start a PM brainstorming conversation, investigate the project and external evidence as needed, identify whether Designer routing is required, choose the right workflow with the human, then produce scoped documents, TASK_SPEC candidates, and Claude handoff material."
   }
 }

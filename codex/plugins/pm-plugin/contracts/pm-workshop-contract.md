@@ -1,6 +1,6 @@
 # PM Workshop Contract
 
-This contract defines how the Codex PM plugin turns ideas into discovery dossiers, research-backed workflow decisions, document bundles, backlog state proposals, TASK_SPEC candidates, and Claude handoffs.
+This contract defines how the Codex PM plugin turns ideas into discovery dossiers, research-backed workflow decisions, design-aware document bundles, backlog state proposals, TASK_SPEC candidates, and Claude handoffs.
 
 ## Operating Model
 
@@ -9,7 +9,7 @@ This contract defines how the Codex PM plugin turns ideas into discovery dossier
 - Slack is optional notification only and must not be treated as source of truth.
 - Claude direct execution is out of v1 scope.
 - Human approval is required for ambiguous decisions, final PR merge, release, and go-live.
-- PM workshop output must be discovery-first. Brainstorm is the conversational entry point for first-project onboarding, feature shaping, refactor discovery, bug-theme investigation, user-provided site investigation, and docs/handoff planning. The PM should investigate available project evidence, permitted public browser evidence, and confirm the workflow path with the human before producing final artifact bundles.
+- PM workshop output must be discovery-first. Brainstorm is the conversational entry point for first-project onboarding, feature shaping, UI/UX design shaping, refactor discovery, bug-theme investigation, user-provided site investigation, and docs/handoff planning. The PM should investigate available project evidence, permitted public browser evidence, design materiality, and confirm the workflow path with the human before producing final artifact bundles.
 - If the question depends on current external best practices, upstream behavior, standards, or version-aware guidance, the PM should run a bounded research pass first and let that evidence shape the workshop direction.
 
 ## Discovery-First Gate
@@ -26,6 +26,8 @@ Before final artifact generation, the PM must produce a `Discovery Dossier` and 
 - Missing evidence
 - Current assumptions
 - Affected product, technical, data, and QA surfaces
+- Design materiality: `DESIGN_REQUIRED` or `DESIGN_NOT_REQUIRED`
+- Figma sources, existing design-system evidence, screenshots, or missing design evidence
 - Investigation gaps that could affect Claude execution
 
 ### Workflow Decision Gate
@@ -37,6 +39,7 @@ Before choosing a workflow path, classify the workshop mode:
 - `REFACTOR_DISCOVERY`
 - `BUG_THEME`
 - `USER_PROVIDED_SITE`
+- `UI_UX_DESIGN`
 - `DOCS_AND_HANDOFF`
 
 Use one:
@@ -47,6 +50,7 @@ Use one:
 - `FULL_BUNDLE`: generate full PM/SDD/technical/TASK_SPEC/handoff bundle after confirmation.
 - `STANDARD_BUNDLE`: generate a smaller scoped bundle after confirmation.
 - `TASK_SPEC_ONLY`: produce TASK_SPEC from already-approved upstream documents.
+- `DESIGN_REQUIRED`: route to Claude Designer before TASK_SPEC/Developer handoff, then require Codex `design-review`.
 - `RESEARCH_THEN_DECIDE`: gather external evidence first, then re-open the workflow gate.
 
 The gate must include:
@@ -56,8 +60,38 @@ The gate must include:
 - Deliverables to generate
 - Human decisions required before artifact generation
 - OMX harness to use, if any
+- Designer route to use, if UI/UX is material
 
 The PM must ask one concise confirmation question and wait for confirmation or correction before producing final PRD, SDD, RFC, TASK_SPEC, or Claude handoff artifacts.
+
+## Designer Routing Gate
+
+The PM must mark `DESIGN_REQUIRED` when any of these are material:
+
+- New screens, screen redesigns, or user-flow changes.
+- Figma references, Figma draft creation/modification, or design-system decisions.
+- Component anatomy, variants, states, responsive behavior, or accessibility expectations.
+- Visual QA criteria that could block PR readiness.
+
+If `DESIGN_REQUIRED`, the PM output must include:
+
+- Required Claude Designer skills:
+  - `/designer-plugin:design-intent`
+  - `/designer-plugin:screen-spec`
+  - `/designer-plugin:component-spec`
+  - `/designer-plugin:figma-draft`
+  - `/designer-plugin:visual-qa-brief`
+- Required Codex Reviewer gates:
+  - `$reviewer-plugin:design-review` before Developer handoff.
+  - `$reviewer-plugin:visual-qa-review` after implementation before normal PR review.
+- DESIGN_SPEC source-of-truth path, or a blocking note that it must be created.
+- Figma sources and write-scope approval status.
+
+The PM must not create a final Developer handoff for material UI/UX work unless one of these is true:
+
+- Approved DESIGN_SPEC already exists and is referenced.
+- Human explicitly chooses to proceed without Designer routing and residual design risk is recorded.
+- The UI/UX surface is intentionally trivial and marked `DESIGN_NOT_REQUIRED` with rationale.
 
 ## GitHub Write Policy
 
@@ -82,6 +116,7 @@ Use by default:
 - `BRAINSTORM.md`
 - `PRD` or `FEATURE_SPEC` if product behavior needs definition
 - Required technical SoT drafts only where affected
+- Required design SoT drafts when `DESIGN_REQUIRED`
 - TASK_SPEC candidates
 - Claude handoff
 
@@ -94,6 +129,7 @@ Escalate to full bundle when any condition applies:
 - There are two or more viable product or technical options.
 - API, DB, auth, payment, route, or state machine changes are involved.
 - Multiple SDD documents are affected.
+- UI/UX requires Figma write, new design-system primitives, major flow changes, or multi-screen visual QA.
 - Roadmap or priority conflicts exist.
 - Human strategy decision is required.
 
@@ -104,6 +140,7 @@ Full bundle adds:
 - GitHub Issue/Project update plan
 - Explicit decision log
 - Multi-TASK_SPEC execution sequence
+- DESIGN_SPEC and visual QA sequence when UI/UX is material
 
 ## OMX Harness Branching
 
@@ -153,11 +190,13 @@ If OMX runtime is unavailable, the PM output must include:
 - Discovery dossier
 - Research notes, when external evidence was needed
 - Site investigation notes, when a URL or external site was inspected
+- Design materiality notes and Designer routing decision
 - Workflow decision gate
 - Options considered
 - Risks and assumptions
 - Open decisions
 - Required SoT documents
+- Required design SoT documents, if any
 - Recommended bundle depth
 - OMX harness decision
 - Human approval points
@@ -187,6 +226,7 @@ If OMX runtime is unavailable, the PM output must include:
 
 - Work objective
 - Source-of-truth documents
+- DESIGN_SPEC / Figma sources / visual QA checklist, when UI/UX is material
 - Ordered implementation tasks
 - Explicit non-goals
 - Allowed files or areas
@@ -197,6 +237,7 @@ If OMX runtime is unavailable, the PM output must include:
 - Pre-implementation OMX harness requirement, if any
 - Artifact-generation OMX harness requirement, if any
 - Post-implementation QA/review harness requirement, if any
+- Required design-review and visual-qa-review gates, if any
 - What to report in PR notes
 
 ### Multi-TASK_SPEC Sequence
@@ -221,6 +262,20 @@ When work touches data or persistence, include draft roles for:
 - API/query/RPC contract impact
 
 PM plugin must not apply migrations, execute production schema changes, or grant/revoke production permissions.
+
+## Design SoT Roles
+
+When work touches material UI/UX, include draft roles for:
+
+- Design intent
+- Screen and UX flow
+- Component anatomy, variants, and states
+- Responsive behavior
+- Accessibility notes
+- Figma source and write-scope approval
+- Visual QA checklist
+
+PM plugin must not run Claude Designer directly or mutate Figma. PM only routes and packages the Designer handoff.
 
 ## PM / Reviewer Boundary
 

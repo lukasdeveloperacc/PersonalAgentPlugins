@@ -1,6 +1,6 @@
 ---
 name: brainstorm
-description: Start a PM brainstorming conversation that investigates a first project, new feature, refactor, bug theme, user-provided site, or product idea before deciding workflow and artifacts. Use when the user wants to explore what to build, inspect a site, how to approach a change, what to research, which OMX harness to use, or what documents/TASK_SPECs/Claude handoffs are needed.
+description: Start a PM brainstorming conversation that investigates a first project, new feature, refactor, bug theme, user-provided site, UI/UX design need, or product idea before deciding workflow and artifacts. Use when the user wants to explore what to build, inspect a site, shape UI/UX, decide Designer routing, how to approach a change, what to research, which OMX harness to use, or what documents/TASK_SPECs/Claude handoffs are needed.
 ---
 
 # Role
@@ -18,18 +18,20 @@ Use the plugin-local `contracts/pm-workshop-contract.md` for bundle policy and a
 3. Clarify the idea with the human: problem, user value, business goal, desired outcome, constraints, and non-goals.
 4. Run discovery before drafting deliverables. Inspect project-local `AGENTS.md`, `README`, `docs/`, `rules/`, existing SDD files, backlog state, and relevant code/schema surfaces when available.
 5. If the question depends on current external best practices, official upstream behavior, standards, or version-aware guidance, run `$best-practice-research` before drafting final artifacts.
-6. Produce a short `Discovery Dossier`: evidence found, evidence missing, assumptions, affected product/technical surfaces, likely SoT documents, and investigation gaps.
-7. Identify options, risks, assumptions, open decisions, and human approval points.
-8. Classify the work using the OMX Harness Decision Matrix below.
-9. Present a `Workflow Decision Gate` to the human before drafting final artifacts. Recommend one workflow path, explain why, list deliverables, list required human decisions, and ask for confirmation or correction.
-10. If the human confirms the workflow path, continue. If not, revise the path first. Do not jump directly from brainstorming to final artifacts when material ambiguity remains.
-11. If an OMX harness is available and the selected branch requires it, run the selected harness before finalizing the bundle.
-12. If OMX is unavailable, record the selected branch, reason, and fallback output in `OMX Harness Decision`.
-13. Decide whether the output should be a standard bundle or full bundle.
-14. Select required SDD/product/technical documents.
-15. Draft the bundle sections using the schemas in the plugin-local `contracts/pm-workshop-contract.md`.
-16. Produce TASK_SPEC candidates only after upstream SoT and decisions are clear enough.
-17. Produce a Claude handoff draft that can guide long-running Developer work.
+6. Identify whether UI/UX is material. If screens, flows, Figma, design-system usage, component states, responsive behavior, or visual QA materially affect success, mark `DESIGN_REQUIRED`.
+7. Produce a short `Discovery Dossier`: evidence found, evidence missing, assumptions, affected product/technical/design surfaces, likely SoT documents, and investigation gaps.
+8. Identify options, risks, assumptions, open decisions, and human approval points.
+9. Classify the work using the OMX Harness Decision Matrix below and the Designer Routing rules below.
+10. Present a `Workflow Decision Gate` to the human before drafting final artifacts. Recommend one workflow path, explain why, list deliverables, list required human decisions, and ask for confirmation or correction.
+11. If the human confirms the workflow path, continue. If not, revise the path first. Do not jump directly from brainstorming to final artifacts when material ambiguity remains.
+12. If `DESIGN_REQUIRED`, include Claude Designer commands and Codex `design-review` as required handoff gates before Developer implementation.
+13. If an OMX harness is available and the selected branch requires it, run the selected harness before finalizing the bundle.
+14. If OMX is unavailable, record the selected branch, reason, and fallback output in `OMX Harness Decision`.
+15. Decide whether the output should be a standard bundle or full bundle.
+16. Select required SDD/product/technical/design documents.
+17. Draft the bundle sections using the schemas in the plugin-local `contracts/pm-workshop-contract.md`.
+18. Produce TASK_SPEC candidates only after upstream SoT and decisions are clear enough. If `DESIGN_REQUIRED`, TASK_SPEC candidates must reference DESIGN_SPEC status and visual QA requirements.
+19. Produce a Claude handoff draft that can guide long-running Developer work.
 
 # Conversation Modes
 
@@ -40,6 +42,7 @@ Use these modes to frame the discussion before selecting deliverables:
 - `REFACTOR_DISCOVERY`: refactor, cleanup, architecture simplification, or technical debt. Identify current pain, affected boundaries, behavior that must not change, test coverage, and rollback strategy before planning.
 - `BUG_THEME`: recurring bug class, unstable workflow, QA issue, or operational failure pattern. Separate symptoms from root cause, define evidence to gather, and decide whether investigation or implementation comes first.
 - `USER_PROVIDED_SITE`: the user gives a URL or asks whether an external site is feasible to integrate, inspect, crawl, or model. Use Chrome DevTools MCP to inspect public page structure, console/network behavior, navigation, and visible data flows before proposing an implementation direction.
+- `UI_UX_DESIGN`: screens, flows, Figma, design system, component states, responsive behavior, visual QA, or user interaction quality materially affect success. Route through Claude Designer and Codex design-review before Developer implementation.
 - `DOCS_AND_HANDOFF`: documentation, SDD, DB/API contract, or Claude handoff improvement. Identify which SoT is stale or missing before generating docs.
 
 # Site Investigation With Chrome DevTools MCP
@@ -94,6 +97,8 @@ Before final artifact generation, present:
 - Evidence inspected
 - External evidence gathered, if any
 - Site evidence gathered with Chrome DevTools MCP, if any
+- Design materiality assessment: `DESIGN_REQUIRED` or `DESIGN_NOT_REQUIRED`
+- Design evidence gathered: Figma sources, screenshots, existing screens, design system, or missing design evidence
 - Relevant existing docs/code/schema/backlog state
 - Missing evidence
 - Current assumptions
@@ -109,6 +114,7 @@ Use one:
 - `FULL_BUNDLE`: generate full PM/SDD/technical/TASK_SPEC/handoff bundle after confirmation.
 - `STANDARD_BUNDLE`: generate a smaller scoped bundle after confirmation.
 - `TASK_SPEC_ONLY`: produce TASK_SPEC from already-approved upstream documents.
+- `DESIGN_REQUIRED`: route to Claude Designer before TASK_SPEC/Developer handoff, then require Codex `design-review`.
 - `RESEARCH_THEN_DECIDE`: gather external evidence first, then re-open the workflow gate.
 
 Include:
@@ -118,8 +124,38 @@ Include:
 - Deliverables to generate
 - Human decisions required before artifact generation
 - OMX harness to use, if any
+- Designer route to use, if UI/UX is material
 
 Ask one concise confirmation question. Continue only after the workflow path is confirmed or corrected.
+
+# Designer Routing
+
+Use Designer routing when UI/UX materially affects the task. Material UI/UX includes:
+
+- New screens, screen redesigns, or user-flow changes.
+- Figma references, Figma draft creation/modification, or design-system decisions.
+- Component anatomy, variants, states, responsive behavior, or accessibility expectations.
+- Visual QA requirements that could block PR readiness.
+
+If `DESIGN_REQUIRED`, the Workflow Decision Gate must include:
+
+- Claude Designer command sequence:
+  - `/designer-plugin:design-intent` when user intent or design direction is unclear.
+  - `/designer-plugin:screen-spec` when implementation-ready DESIGN_SPEC or SCREEN_SPEC is needed.
+  - `/designer-plugin:component-spec` when component variants/states are material.
+  - `/designer-plugin:figma-draft` when approved Figma draft creation/modification is needed.
+  - `/designer-plugin:visual-qa-brief` when QA criteria are needed before implementation.
+- Codex Reviewer gate:
+  - `$reviewer-plugin:design-review` before PM creates final TASK_SPEC or Developer handoff.
+  - `$reviewer-plugin:visual-qa-review` after implementation and before normal PR review.
+- Required DESIGN_SPEC source-of-truth path or a note that it must be produced before Developer work starts.
+- Figma write approval status when Figma mutation is requested.
+
+Do not create a final Developer handoff for UI/UX material work unless one of these is true:
+
+- Approved DESIGN_SPEC already exists and is referenced.
+- Human explicitly chooses to proceed without Designer routing and the residual design risk is recorded.
+- The UI/UX surface is intentionally trivial and marked `DESIGN_NOT_REQUIRED` with rationale.
 
 # OMX Harness Decision Matrix
 
@@ -140,6 +176,7 @@ Do not only mention useful OMX harnesses. Use them as evidence and planning surf
 
 - For `PROJECT_KICKOFF`, prefer repo discovery first, then use `$deep-interview` when the project purpose or human decision boundaries are unclear, `$best-practice-research` when the domain/tooling depends on current external guidance, `$team` when several repo areas need parallel mapping, and `$ralplan` when the initial operating model needs consensus.
 - For `FEATURE_SHAPING`, use `$deep-interview` for product ambiguity, `$best-practice-research` for market/tooling/upstream guidance, `$ralplan` for option tradeoffs, and `$ultraqa` for high-risk user journeys.
+- For `UI_UX_DESIGN`, use Designer routing first for design artifacts, `$deep-interview` when design intent is unclear, `$ralplan` when screen flow or component architecture has tradeoffs, and `$ultraqa` when visual/state regressions are high risk.
 - For `USER_PROVIDED_SITE`, use `chrome-devtools` first for public read-only site evidence, `$best-practice-research` for legal/tooling/upstream guidance, `$deep-interview` for business intent and approval boundaries, and `$ralplan` when the integration approach has material tradeoffs.
 - For `REFACTOR_DISCOVERY`, use `$ralplan` for architecture and sequencing, `$team` for broad impact mapping, and `$ultraqa` when behavior preservation needs adversarial QA scenarios.
 - For `BUG_THEME`, use `$team` for parallel evidence gathering when the failure surface is broad, `$ralplan` for remediation strategy, and `$ultraqa` for regression-heavy flows.
@@ -171,6 +208,7 @@ Use by default:
 - `PRD` or `FEATURE_SPEC` when product behavior needs definition
 - Required technical SoT drafts only where affected
 - TASK_SPEC candidates
+- DESIGN_SPEC, SCREEN_SPEC, COMPONENT_SPEC, or VISUAL_QA_CHECKLIST when `DESIGN_REQUIRED`
 - Claude handoff
 
 # Full Bundle Escalation
@@ -182,6 +220,7 @@ Escalate to full bundle when any condition applies:
 - There are two or more viable product or technical options.
 - API, DB, auth, payment, route, or state machine changes are involved.
 - Multiple SDD documents are affected.
+- UI/UX requires Figma write, new design-system primitives, major flow changes, or multi-screen visual QA.
 - Roadmap or priority conflicts exist.
 - Human strategy decision is required.
 
@@ -192,6 +231,7 @@ Full bundle adds:
 - GitHub Issue/Project update plan
 - Explicit decision log
 - Multi-TASK_SPEC execution sequence
+- DESIGN_SPEC and visual QA sequence when UI/UX is material
 
 # Technical / DB SoT Coverage
 
@@ -205,6 +245,19 @@ If work touches data or persistence, consider drafts or updates for:
 - `API_CONTRACT.md`
 
 DB/data impact triggers full bundle unless explicitly documentation-only and low risk. Do not apply migrations, execute production schema changes, or grant/revoke permissions.
+
+# Design SoT Coverage
+
+If work touches material UI/UX, include draft roles for:
+
+- `DESIGN_SPEC.md`
+- `SCREEN_SPEC.md`
+- `UX_FLOW.md`
+- `COMPONENT_SPEC.md`
+- `VISUAL_QA_CHECKLIST.md`
+- Figma source and write-scope notes
+
+UI/UX materiality triggers Designer routing unless explicitly low risk or the human approves proceeding without it.
 
 # GitHub Policy
 
@@ -236,6 +289,17 @@ Use one:
 - `FULL`
 
 ## Required Documents
+
+## Designer Routing
+
+Include:
+
+- Design required: yes/no
+- Rationale
+- Required Designer skills
+- Figma sources/write approval
+- Required Codex design-review gate
+- Required visual-qa-review gate
 
 ## Draft Bundle
 

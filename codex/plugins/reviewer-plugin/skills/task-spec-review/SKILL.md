@@ -20,7 +20,8 @@ Use plugin-local `contracts/task-spec-contract.md` as the required schema. If a 
 5. Check risks and assumptions expose uncertainty instead of hiding decisions.
 6. Check reviewer checklist covers the highest-risk parts of the task.
 7. Check whether the TASK_SPEC is one PR-sized unit or needs splitting.
-8. Recommend whether Developer work can begin.
+8. If UI/UX is material, check conditional design fields and required DESIGN_SPEC/design-review gates.
+9. Recommend whether Developer work can begin.
 
 # Required Fields
 
@@ -40,12 +41,24 @@ Use plugin-local `contracts/task-spec-contract.md` as the required schema. If a 
 - `definition_of_done`
 - `reviewer_checklist`
 
+# Conditional Design Fields
+
+When UI/UX is material, check:
+
+- `design_required`
+- `design_sources`
+- `figma_sources`
+- `visual_qa_required`
+- `design_review_gate`
+- `visual_qa_gate`
+
 # Rules
 
 - Treat missing `allowed_files` or `blocked_files` as a blocking gap for long-running Claude work.
 - Treat vague acceptance criteria as blocking when product behavior can regress silently.
 - Do not demand exhaustive tests when the task is low-risk; require an explicit validation rationale.
 - Flag any instruction that authorizes Claude to merge, release, modify secrets, edit production data, or apply production migrations.
+- Flag UI/UX material work that lacks approved DESIGN_SPEC, design-review gate, or visual QA requirement unless the human explicitly waived it with recorded risk.
 
 # Output Format
 
@@ -64,5 +77,7 @@ Use exactly one:
 ## Acceptance Criteria / Testability
 
 ## Risk Notes
+
+## Design / Visual QA Readiness
 
 ## Required Edits

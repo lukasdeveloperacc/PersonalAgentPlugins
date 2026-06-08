@@ -23,6 +23,7 @@
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
 - Run Codex PM `brainstorm` on a first-project kickoff prompt and confirm it classifies `PROJECT_KICKOFF`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-site-feasibility.md` and confirm it classifies `USER_PROVIDED_SITE`.
+- Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-design-routing.md` and confirm it marks material UI/UX work as `DESIGN_REQUIRED`.
 - Confirm `brainstorm` records Chrome DevTools MCP site evidence or a fallback reason for URL-based prompts.
 - Confirm `designer-plugin` declares Figma MCP at `http://127.0.0.1:3845/mcp`.
 - Confirm `reviewer-plugin` declares Figma MCP at `http://127.0.0.1:3845/mcp` and its review skills forbid Figma mutation.
