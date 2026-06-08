@@ -18,10 +18,12 @@ This repository defines a paired AI-native workflow:
 8. Codex Reviewer gates PM artifacts with `reviewer-plugin:spec-review` when the work is large, ambiguous, technical, or long-running.
 9. Codex PM creates a TASK_SPEC and Claude handoff with `pm-plugin:task-spec`.
 10. Codex Reviewer checks Developer readiness with `reviewer-plugin:task-spec-review`, `reviewer-plugin:handoff-review`, and `reviewer-plugin:db-contract-review` when data surfaces are affected.
-11. Claude Developer implements the TASK_SPEC and approved DESIGN_SPEC with `developer-plugin:implement-task`.
-12. Claude runs verification with `developer-plugin:verify-app`.
-13. Codex Reviewer runs `reviewer-plugin:visual-qa-review` for UI/UX work and `reviewer-plugin:pr-review` for the diff or PR.
-14. The human lead decides whether to merge or release.
+11. Claude Developer runs `developer-plugin:intake-task` for long-running or high-risk work to confirm TASK_SPEC, DESIGN_SPEC, scope, testability, and OMC harness readiness.
+12. Claude Developer implements the TASK_SPEC and approved DESIGN_SPEC with `developer-plugin:implement-task` or `developer-plugin:omc-execute`.
+13. Claude Developer uses direct execution, `/oh-my-claudecode:ralph`, `/oh-my-claudecode:team`, `omc team`, `/oh-my-claudecode:ultraqa`, `omc ultragoal`, `/oh-my-claudecode:verify`, `/oh-my-claudecode:ask`, or `browser-debug` according to the Developer OMC harness contract.
+14. Claude runs verification with `developer-plugin:verify-app`.
+15. Codex Reviewer runs `reviewer-plugin:visual-qa-review` for UI/UX work and `reviewer-plugin:pr-review` for the diff or PR.
+16. The human lead decides whether to merge or release.
 
 ## Role Boundaries
 
@@ -42,8 +44,12 @@ Codex PM:
 Claude Developer:
 
 - Implements inside the TASK_SPEC and approved DESIGN_SPEC when UI/UX is material.
+- Uses the OMC harness contract to choose direct execution, Ralph, Team, UltraQA, Ultragoal, Verify, Ask, or browser debugging.
+- Uses only one primary OMC loop authority per task.
+- Uses Chrome DevTools MCP for approved local/public runtime inspection.
 - Produces verification evidence.
 - Does not approve merge or release.
+- Does not mutate Figma or use unsupported shell subcommands such as `omc ralph`, `omc autopilot`, or `omc ultrawork`.
 
 Claude Designer:
 
@@ -74,3 +80,5 @@ Use `0.x` releases while the plugin schemas and TASK_SPEC contract are still sta
 Any backward-incompatible TASK_SPEC contract change must update both the Codex and Claude skills in the same release.
 
 Any backward-incompatible DESIGN_SPEC contract change must update Claude Designer, Claude Developer, and Codex Reviewer skills in the same release.
+
+Any backward-incompatible OMC harness contract change must update Claude Developer skills and root `docs/developer-omc-harness-contract.md` in the same release.

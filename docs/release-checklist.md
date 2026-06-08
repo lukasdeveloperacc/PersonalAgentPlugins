@@ -12,6 +12,7 @@
 - Parse every JSON manifest.
 - Parse plugin `.mcp.json` files when present.
 - Confirm runtime contract mirrors are synced between root `docs/` and plugin-local `contracts/`.
+- Confirm Developer OMC harness contract mirror is synced between `docs/developer-omc-harness-contract.md` and `claude/plugins/developer-plugin/contracts/omc-harness-contract.md`.
 - Validate Codex plugin with the Codex plugin validator when available.
 - Validate Claude plugin or marketplace with `claude plugin validate`.
 - Confirm every required skill file exists.
@@ -26,6 +27,7 @@
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-design-routing.md` and confirm it marks material UI/UX work as `DESIGN_REQUIRED`.
 - Confirm `brainstorm` records Chrome DevTools MCP site evidence or a fallback reason for URL-based prompts.
 - Confirm `designer-plugin` declares Figma MCP at `http://127.0.0.1:3845/mcp`.
+- Confirm `developer-plugin` declares Chrome DevTools MCP and forbids Figma mutation.
 - Confirm `reviewer-plugin` declares Figma MCP at `http://127.0.0.1:3845/mcp` and its review skills forbid Figma mutation.
 - Confirm Figma write skills require target file/page/frame, write mode, planned operation, and human approval before writes.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-full-epic.md`.
@@ -44,12 +46,13 @@
 - Run Codex Reviewer `db-contract-review` on a data-impact planning artifact.
 - Run Codex Reviewer `omx-branch-review` on a PM harness decision section.
 - Feed the generated TASK_SPEC shape to Claude `implement-task`.
+- Run Claude Developer `intake-task` or `omc-execute` on `test-fixtures/developer-omc-harness-routing.md` and confirm it selects direct/Ralph/Team/UltraQA/Ultragoal according to task shape.
 - Run Codex Reviewer `pr-review` on `test-fixtures/sample-pr-diff.md`.
 - Run Claude `fix-bug` on `test-fixtures/sample-bug-report.md`.
 
 ## Publishing
 
 - Tag releases after local validation.
-- Keep v0.1 conservative.
+- Keep v0.x conservative.
 - Add new MCP, hooks, or automation only in later versions with a separate review.
 - Treat any expansion of Figma write authority as a security-sensitive change.

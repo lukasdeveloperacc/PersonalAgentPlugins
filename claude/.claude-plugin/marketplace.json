@@ -8,8 +8,8 @@
     {
       "name": "developer-plugin",
       "source": "./plugins/developer-plugin",
-      "description": "Developer workflows for TASK_SPEC-driven implementation, bug fixing, verification, and tests.",
-      "version": "0.1.4"
+      "description": "Developer workflows for TASK_SPEC-driven implementation, OMC harness routing, browser debugging, verification, and tests.",
+      "version": "0.2.0"
     },
     {
       "name": "designer-plugin",
