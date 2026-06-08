@@ -202,6 +202,105 @@ The Designer plugin includes plugin-local Figma MCP config:
 
 This requires the Figma desktop Dev Mode MCP server to be enabled. Figma writes are allowed only for explicitly approved draft, duplicate, branch, sandbox, or approved official targets. Markdown `DESIGN_SPEC` remains the handoff source of truth.
 
+## Designer Skill Examples
+
+Use Claude Designer when UI/UX quality materially affects the task. The normal handoff source of truth is:
+
+```text
+PM artifacts + TASK_SPEC candidate
+-> Claude DESIGN_SPEC
+-> Codex design-review
+-> Claude Developer implementation
+-> Codex visual-qa-review
+```
+
+### Design from user intent
+
+```text
+/designer-plugin:design-intent
+
+SmartStoreToolkit의 첫 상품 수집 화면을 설계하고 싶어.
+사용자는 스마트스토어 운영자이고, 도매사 URL이나 상품 소스를 넣으면
+수집 가능성을 점검하고 안전하게 다음 단계로 넘어가는 흐름이 필요해.
+
+PM 산출물과 기존 README/docs를 참고해서
+사용자 의도, UX 원칙, 화면 방향, 열려 있는 디자인 결정을 정리해줘.
+Figma 수정은 아직 하지 말고 디자인 방향만 먼저 잡아줘.
+```
+
+### Create a screen spec
+
+```text
+/designer-plugin:screen-spec
+
+위 design-intent를 바탕으로 Claude Developer가 구현할 수 있는
+DESIGN_SPEC, SCREEN_SPEC, UX_FLOW, COMPONENT_SPEC 초안을 만들어줘.
+
+반드시 default/loading/empty/error/disabled 상태,
+desktop/mobile responsive rule,
+accessibility note,
+visual QA checklist를 포함해줘.
+```
+
+### Draft in Figma
+
+```text
+/designer-plugin:figma-draft
+
+Figma desktop Dev Mode MCP server는 켜져 있고 endpoint는:
+http://127.0.0.1:3845/mcp
+
+Target:
+- File: SmartStoreToolkit draft duplicate
+- Page: AI Drafts
+- Frame: Wholesale Collection Start
+- Write mode: duplicate
+- Approval: 이 duplicate file은 draft write를 승인함
+
+DESIGN_SPEC 기준으로 Figma draft frame을 생성/수정하고,
+변경한 Figma object 요약과 업데이트된 DESIGN_SPEC,
+visual QA checklist를 함께 남겨줘.
+
+공식 design system component/token/published library는 수정하지 마.
+삭제 작업도 하지 마.
+```
+
+### Review the design before implementation
+
+```text
+$reviewer-plugin:design-review
+
+Claude Designer가 만든 DESIGN_SPEC와 Figma draft를 검토해줘.
+Figma MCP로 승인된 Figma source를 조회할 수 있으면 직접 확인하고,
+PM intent, Figma write scope, screen states, responsive rules,
+implementation readiness, visual QA checklist를 기준으로 판단해줘.
+
+Reviewer는 Figma를 수정하지 말고 read/review만 해.
+```
+
+### Implement after design approval
+
+```text
+/developer-plugin:implement-task
+
+이 작업은 UI/UX가 중요하므로 TASK_SPEC와 승인된 DESIGN_SPEC를 둘 다 source of truth로 봐줘.
+TASK_SPEC 범위 안에서만 구현하고, DESIGN_SPEC의 화면 상태와 responsive rule을 보존해줘.
+Figma는 Developer 역할에서 수정하지 마.
+구현 후 visual QA에 필요한 screenshot/viewport evidence를 남겨줘.
+```
+
+### Review visual QA after implementation
+
+```text
+$reviewer-plugin:visual-qa-review
+
+구현 결과를 승인된 DESIGN_SPEC, Figma source, screenshot/viewport evidence와 비교해줘.
+layout, spacing, hierarchy, typography, state coverage, responsive behavior를 확인하고
+PR review로 넘어가도 되는지 판단해줘.
+
+Reviewer는 Figma를 수정하지 말고 read/review만 해.
+```
+
 Local validation and marketplace setup:
 
 ```sh
