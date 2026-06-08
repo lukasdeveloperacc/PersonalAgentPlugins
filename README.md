@@ -7,7 +7,7 @@
 이 저장소는 AI Native 개발 흐름을 역할별로 분리합니다.
 
 - Codex: PM, Reviewer
-- Claude: Developer
+- Claude: Designer, Developer
 - Human lead: final merge / release approval
 
 v0.x is still conservative: PM includes Chrome DevTools MCP for read-only site investigation, while hooks and automatic deployment/write automation are not included.
@@ -30,6 +30,11 @@ claude/
   plugins/developer-plugin/
     .claude-plugin/plugin.json
     skills/
+  plugins/designer-plugin/
+    .claude-plugin/plugin.json
+    .mcp.json
+    contracts/
+    skills/
 docs/
 test-fixtures/
 ```
@@ -46,6 +51,8 @@ test-fixtures/
 `reviewer-plugin` provides:
 
 - `spec-review`: review PM workshop, PRD, SDD, RFC, and technical planning artifacts.
+- `design-review`: review DESIGN_SPEC, SCREEN_SPEC, UX flow, component specs, Figma write scope, and visual QA brief before Developer handoff.
+- `visual-qa-review`: review implemented UI against approved DESIGN_SPEC, Figma sources, screenshots, and viewport evidence.
 - `handoff-review`: review whether Claude can safely start long-running work from a handoff.
 - `task-spec-review`: validate TASK_SPEC contract completeness before Developer work.
 - `db-contract-review`: review DB/schema/RLS/migration/API contract readiness.
@@ -125,15 +132,20 @@ $pm-plugin:brainstorm
 BUG_THEME 관점으로 조사 계획과 구현 전 확인할 질문을 만들어줘.
 ```
 
-### PM to Reviewer to Developer flow
+### PM to Designer to Reviewer to Developer flow
 
 ```text
 $pm-plugin:brainstorm
+-> Claude designer-plugin:design-intent
+-> Claude designer-plugin:screen-spec
+-> Claude designer-plugin:figma-draft when approved Figma draft writes are needed
+-> reviewer-plugin:design-review
 -> reviewer-plugin:spec-review
 -> pm-plugin:task-spec
 -> reviewer-plugin:task-spec-review
 -> reviewer-plugin:handoff-review
 -> Claude developer-plugin:implement-task
+-> reviewer-plugin:visual-qa-review
 ```
 
 For data or DB changes, add:
@@ -151,17 +163,41 @@ For data or DB changes, add:
 - `verify-app`: run checks and report evidence.
 - `write-tests`: add scoped tests.
 
+`designer-plugin` provides:
+
+- `design-intent`: turn user intent and PM context into UI/UX design direction.
+- `screen-spec`: create DESIGN_SPEC, SCREEN_SPEC, UX flow, screen states, responsive rules, and visual QA checklist.
+- `figma-draft`: inspect Figma and create/modify approved draft Figma material through the local Figma MCP server.
+- `component-spec`: define component anatomy, variants, states, token usage, and implementation notes.
+- `visual-qa-brief`: prepare visual QA expectations for Codex review and Developer verification.
+
+The Designer plugin includes plugin-local Figma MCP config:
+
+```json
+{
+  "mcpServers": {
+    "figma": {
+      "type": "http",
+      "url": "http://127.0.0.1:3845/mcp"
+    }
+  }
+}
+```
+
+This requires the Figma desktop Dev Mode MCP server to be enabled. Figma writes are allowed only for explicitly approved draft, duplicate, branch, sandbox, or approved official targets. Markdown `DESIGN_SPEC` remains the handoff source of truth.
+
 Local validation and marketplace setup:
 
 ```sh
 claude plugin validate ./claude
 claude plugin marketplace add ./claude
 claude plugin install developer-plugin@personal-claude-tools
+claude plugin install designer-plugin@personal-claude-tools
 ```
 
 ## Shared Contract
 
-`docs/task-spec-contract.md` defines the shared TASK_SPEC schema. Installed plugins also carry plugin-local contract copies so skills can run after installation without reading repository-level docs.
+`docs/task-spec-contract.md` defines the shared TASK_SPEC schema. `docs/design-spec-contract.md` defines the DESIGN_SPEC schema for Claude Designer, Codex Reviewer, and Claude Developer. Installed plugins also carry plugin-local contract copies so skills can run after installation without reading repository-level docs.
 
 Claude must not silently broaden TASK_SPEC scope. Codex Reviewer review is advisory. Only the human lead approves merge or release.
 
@@ -172,5 +208,6 @@ Installed plugin agents should rely on plugin-local runtime docs:
 - PM: `codex/plugins/pm-plugin/contracts/`
 - Reviewer: `codex/plugins/reviewer-plugin/contracts/`
 - Claude Developer: `claude/plugins/developer-plugin/contracts/`
+- Claude Designer: `claude/plugins/designer-plugin/contracts/`
 
 Root `docs/` files are maintainer-facing mirrors and release/security/workflow notes for this repository. If a skill must read a document after installation, put that document inside the plugin package and reference the plugin-local path from `SKILL.md`.

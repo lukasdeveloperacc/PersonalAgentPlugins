@@ -1,18 +1,18 @@
 {
   "name": "reviewer-plugin",
-  "version": "0.2.1",
-  "description": "Reviewer workflows for PM artifact gates, Claude handoff readiness, PRs, and architecture review.",
+  "version": "0.3.0",
+  "description": "Reviewer workflows for PM artifact gates, design gates, Claude handoff readiness, PRs, and architecture review.",
   "author": {
     "name": "Local developer"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Reviewer",
-    "shortDescription": "Review PM artifacts, Claude handoffs, PRs, and architecture risk with Codex.",
-    "longDescription": "Reviewer provides PM artifact quality gates, Claude handoff readiness checks, PR review, and architecture review workflows for a Codex Reviewer role.",
+    "shortDescription": "Review PM artifacts, design specs, Claude handoffs, PRs, and architecture risk with Codex.",
+    "longDescription": "Reviewer provides PM artifact quality gates, design spec and visual QA gates, Claude handoff readiness checks, PR review, and architecture review workflows for a Codex Reviewer role.",
     "developerName": "Local developer",
     "category": "Development",
     "capabilities": [],
-    "defaultPrompt": "Review PM artifacts, a Claude handoff, a PR, diff, or architecture proposal."
+    "defaultPrompt": "Review PM artifacts, DESIGN_SPECs, visual QA evidence, a Claude handoff, a PR, diff, or architecture proposal."
   }
 }
