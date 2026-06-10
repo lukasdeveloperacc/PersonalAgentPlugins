@@ -21,7 +21,8 @@ Use plugin-local `contracts/task-spec-contract.md` as the required schema. If a 
 6. Check reviewer checklist covers the highest-risk parts of the task.
 7. Check whether the TASK_SPEC is one PR-sized unit or needs splitting.
 8. If UI/UX is material, check conditional design fields and required DESIGN_SPEC/design-review gates.
-9. Recommend whether Developer work can begin.
+9. Check `developer_report_path` for non-trivial, PR-tracked, UI/UX, DB/API, or OMC-harness work, and verify the same path is in `allowed_files`.
+10. Recommend whether Developer work can begin.
 
 # Required Fields
 
@@ -40,6 +41,7 @@ Use plugin-local `contracts/task-spec-contract.md` as the required schema. If a 
 - `assumptions`
 - `definition_of_done`
 - `reviewer_checklist`
+- `developer_report_path`
 
 # Conditional Design Fields
 
@@ -56,6 +58,8 @@ When UI/UX is material, check:
 
 - Treat missing `allowed_files` or `blocked_files` as a blocking gap for long-running Claude work.
 - Treat vague acceptance criteria as blocking when product behavior can regress silently.
+- Treat missing `developer_report_path` as blocking for long-running, multi-file, UI/UX, DB/API, OMC-harness, or PR-tracked work.
+- Treat `developer_report_path` that is not in `allowed_files` as a blocking gap because Claude cannot write PM-visible status.
 - Do not demand exhaustive tests when the task is low-risk; require an explicit validation rationale.
 - Flag any instruction that authorizes Claude to merge, release, modify secrets, edit production data, or apply production migrations.
 - Flag UI/UX material work that lacks approved DESIGN_SPEC, design-review gate, or visual QA requirement unless the human explicitly waived it with recorded risk.
@@ -79,5 +83,7 @@ Use exactly one:
 ## Risk Notes
 
 ## Design / Visual QA Readiness
+
+## Developer Report Readiness
 
 ## Required Edits

@@ -38,6 +38,7 @@ definition_of_done:
   - "completion condition"
 reviewer_checklist:
   - "review point for Codex Reviewer"
+developer_report_path: "docs/ai-handoffs/<task_id>/DEVELOPER_REPORT.md"
 ```
 
 ## Conditional Design Fields
@@ -55,6 +56,18 @@ design_review_gate: "not_required|required|approved|waived_with_risk"
 visual_qa_gate: "not_required|required|approved|waived_with_risk"
 ```
 
+## Developer Report Field
+
+`developer_report_path` is required for long-running, multi-file, UI/UX, DB/API, OMC-harness, or PR-tracked work. It is recommended for every TASK_SPEC and does not change `spec_version`.
+
+Default:
+
+```yaml
+developer_report_path: "docs/ai-handoffs/<task_id>/DEVELOPER_REPORT.md"
+```
+
+The same path should be included in `allowed_files` so Claude Developer can create or update the PM-visible report.
+
 ## Producer Responsibilities
 
 Codex PM `task-spec` must:
@@ -65,6 +78,7 @@ Codex PM `task-spec` must:
 - Identify blocked files and permission-sensitive areas.
 - Avoid authorizing production writes, secret access, merge, or release.
 - If UI/UX is material, reference approved DESIGN_SPEC/Figma sources or explicitly mark the missing design gate as a risk.
+- Include `developer_report_path` and add that path to `allowed_files` for non-trivial Developer work.
 
 ## Consumer Responsibilities
 
@@ -76,6 +90,7 @@ Claude `implement-task` must:
 - Report missing or contradictory required fields before implementation.
 - Report needed scope expansion as a blocker or explicit assumption.
 - For UI/UX work, treat approved DESIGN_SPEC as the design source of truth and report missing or contradictory design fields before implementation.
+- Create or update `developer_report_path` using the Developer Report Contract when work starts, completes, blocks, or partially completes.
 
 ## Approval Boundary
 

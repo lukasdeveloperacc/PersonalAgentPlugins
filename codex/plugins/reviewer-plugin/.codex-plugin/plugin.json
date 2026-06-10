@@ -1,6 +1,6 @@
 {
   "name": "reviewer-plugin",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Reviewer workflows for PM artifact gates, design gates, Claude handoff readiness, PRs, and architecture review.",
   "author": {
     "name": "Local developer"

@@ -16,14 +16,16 @@ This repository defines a paired AI-native workflow:
 6. If UI/UX is material, Claude Designer creates design intent, DESIGN_SPEC, SCREEN_SPEC, component specs, Figma drafts, and visual QA briefs with `designer-plugin`.
 7. Codex Reviewer gates design artifacts with `reviewer-plugin:design-review` before Developer handoff.
 8. Codex Reviewer gates PM artifacts with `reviewer-plugin:spec-review` when the work is large, ambiguous, technical, or long-running.
-9. Codex PM creates a TASK_SPEC and Claude handoff with `pm-plugin:task-spec`.
-10. Codex Reviewer checks Developer readiness with `reviewer-plugin:task-spec-review`, `reviewer-plugin:handoff-review`, and `reviewer-plugin:db-contract-review` when data surfaces are affected.
+9. Codex PM creates a TASK_SPEC and Claude handoff with `pm-plugin:task-spec`, including `developer_report_path` for non-trivial work.
+10. Codex Reviewer checks Developer readiness with `reviewer-plugin:task-spec-review`, `reviewer-plugin:handoff-review`, and `reviewer-plugin:db-contract-review` when data surfaces are affected. Non-trivial work should include a PM-visible Developer report path in `allowed_files`.
 11. Claude Developer runs `developer-plugin:intake-task` for long-running or high-risk work to confirm TASK_SPEC, DESIGN_SPEC, scope, testability, and OMC harness readiness.
 12. Claude Developer implements the TASK_SPEC and approved DESIGN_SPEC with `developer-plugin:implement-task` or `developer-plugin:omc-execute`.
 13. Claude Developer uses direct execution, `/oh-my-claudecode:ralph`, `/oh-my-claudecode:team`, `omc team`, `/oh-my-claudecode:ultraqa`, `omc ultragoal`, `/oh-my-claudecode:verify`, `/oh-my-claudecode:ask`, or `browser-debug` according to the Developer OMC harness contract.
-14. Claude runs verification with `developer-plugin:verify-app`.
-15. Codex Reviewer runs `reviewer-plugin:visual-qa-review` for UI/UX work and `reviewer-plugin:pr-review` for the diff or PR.
-16. The human lead decides whether to merge or release.
+14. Claude Developer creates or updates `docs/ai-handoffs/<task_id>/DEVELOPER_REPORT.md` with `developer-plugin:report-result` or the reporting built into `implement-task`, `omc-execute`, `resume-task`, `fix-bug`, `verify-app`, `write-tests`, and `browser-debug`.
+15. Claude runs verification with `developer-plugin:verify-app` and keeps the Developer report current.
+16. Codex PM can run `pm-plugin:pm-sync` to inspect TASK_SPEC, GitHub item, PR, and Developer report drift before requesting review.
+17. Codex Reviewer runs `reviewer-plugin:visual-qa-review` for UI/UX work and `reviewer-plugin:pr-review` for the diff or PR.
+18. The human lead decides whether to merge or release.
 
 ## Role Boundaries
 
@@ -36,6 +38,7 @@ Codex PM:
 - Uses external research when current best practices or upstream behavior matter.
 - Asks the human to confirm the workflow path before producing final document bundles.
 - Produces PM workshop, SDD, backlog, TASK_SPEC, and Claude handoff drafts.
+- Assigns a PM-visible Developer report path for non-trivial work and uses `pm-sync` to inspect status.
 - Uses GitHub as state/tracking and Markdown as decision/spec/handoff SoT.
 - Does not implement code.
 - Does not run Claude directly.
@@ -47,7 +50,7 @@ Claude Developer:
 - Uses the OMC harness contract to choose direct execution, Ralph, Team, UltraQA, Ultragoal, Verify, Ask, or browser debugging.
 - Uses only one primary OMC loop authority per task.
 - Uses Chrome DevTools MCP for approved local/public runtime inspection.
-- Produces verification evidence.
+- Produces verification evidence and keeps `DEVELOPER_REPORT.md` current for PM visibility.
 - Does not approve merge or release.
 - Does not mutate Figma or use unsupported shell subcommands such as `omc ralph`, `omc autopilot`, or `omc ultrawork`.
 
@@ -82,3 +85,5 @@ Any backward-incompatible TASK_SPEC contract change must update both the Codex a
 Any backward-incompatible DESIGN_SPEC contract change must update Claude Designer, Claude Developer, and Codex Reviewer skills in the same release.
 
 Any backward-incompatible OMC harness contract change must update Claude Developer skills and root `docs/developer-omc-harness-contract.md` in the same release.
+
+Any backward-incompatible Developer Report contract change must update Claude Developer, Codex PM, Codex Reviewer, and root `docs/developer-report-contract.md` in the same release.

@@ -13,6 +13,7 @@
 - Parse plugin `.mcp.json` files when present.
 - Confirm runtime contract mirrors are synced between root `docs/` and plugin-local `contracts/`.
 - Confirm Developer OMC harness contract mirror is synced between `docs/developer-omc-harness-contract.md` and `claude/plugins/developer-plugin/contracts/omc-harness-contract.md`.
+- Confirm Developer Report contract mirror is synced between `docs/developer-report-contract.md` and `claude/plugins/developer-plugin/contracts/developer-report-contract.md`.
 - Validate Codex plugin with the Codex plugin validator when available.
 - Validate Claude plugin or marketplace with `claude plugin validate`.
 - Confirm every required skill file exists.
@@ -21,6 +22,7 @@
 ## Smoke Tests
 
 - Run Codex PM `task-spec` on `test-fixtures/sample-feature-request.md`.
+- Confirm generated non-trivial TASK_SPECs include `developer_report_path` and that path appears in `allowed_files`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-standard.md`.
 - Run Codex PM `brainstorm` on a first-project kickoff prompt and confirm it classifies `PROJECT_KICKOFF`.
 - Run Codex PM `brainstorm` on `test-fixtures/pm-workshop-site-feasibility.md` and confirm it classifies `USER_PROVIDED_SITE`.
@@ -38,6 +40,7 @@
 - Confirm `brainstorm` emits `OMX Harness Decision` and executes or falls back according to the fixture branch.
 - Run Codex PM `backlog-groom` on `test-fixtures/pm-workshop-backlog.md`.
 - Run Codex PM `pm-sync` on `test-fixtures/pm-workshop-sync-drift.md`.
+- Run Codex PM `pm-sync` against a fixture or sample repo that contains `docs/ai-handoffs/**/DEVELOPER_REPORT.md` and confirm it reports Developer status and drift.
 - Run Codex Reviewer `spec-review` on a PM full-bundle artifact.
 - Run Codex Reviewer `handoff-review` on a Claude handoff draft.
 - Run Codex Reviewer `task-spec-review` on a generated TASK_SPEC.
@@ -47,6 +50,7 @@
 - Run Codex Reviewer `omx-branch-review` on a PM harness decision section.
 - Feed the generated TASK_SPEC shape to Claude `implement-task`.
 - Run Claude Developer `intake-task` or `omc-execute` on `test-fixtures/developer-omc-harness-routing.md` and confirm it selects direct/Ralph/Team/UltraQA/Ultragoal according to task shape.
+- Run Claude Developer `report-result` on `test-fixtures/developer-report.md` and confirm it creates or updates the PM-visible Developer report shape without claiming approval.
 - Run Codex Reviewer `pr-review` on `test-fixtures/sample-pr-diff.md`.
 - Run Claude `fix-bug` on `test-fixtures/sample-bug-report.md`.
 

@@ -18,6 +18,7 @@ TASK_SPEC says to implement SmartStoreToolkit's 상품 수집 시작 flow.
 
 The work includes:
 
+- `developer_report_path: docs/ai-handoffs/TASK_SPEC-001/DEVELOPER_REPORT.md`
 - new UI screen and existing DESIGN_SPEC
 - two backend validation modules
 - one integration test suite
@@ -31,6 +32,7 @@ No production writes, no release, no Figma mutation.
 
 - Do not jump directly into code before intake.
 - Confirm TASK_SPEC/DESIGN_SPEC readiness.
+- Confirm `developer_report_path` and that the path is in `allowed_files` before long-running work.
 - Select one primary loop authority:
   - direct only if the task is narrowed to one small PR slice
   - `/oh-my-claudecode:ralph` for single-owner complete-and-verify execution
@@ -41,3 +43,4 @@ No production writes, no release, no Figma mutation.
 - Use `/oh-my-claudecode:ask codex` only as advisor evidence, not as the main implementation loop.
 - Forbid unsupported shell commands such as `omc ralph`, `omc autopilot`, or `omc ultrawork`.
 - Report an `OMC Harness Decision` with reason, execution status, and evidence.
+- Create or update `docs/ai-handoffs/TASK_SPEC-001/DEVELOPER_REPORT.md` with harness decision, files changed, acceptance criteria evidence, verification evidence, blockers, and PM follow-up.

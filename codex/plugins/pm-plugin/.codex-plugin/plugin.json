@@ -1,7 +1,7 @@
 {
   "name": "pm-plugin",
-  "version": "0.1.7",
-  "description": "PM delegate workflows for AI-native discovery, research, design routing, planning, backlog grooming, TASK_SPEC creation, and Claude handoff.",
+  "version": "0.1.8",
+  "description": "PM delegate workflows for AI-native discovery, research, design routing, planning, backlog grooming, TASK_SPEC creation, Claude handoff, and Developer report sync.",
   "author": {
     "name": "Local developer"
   },
@@ -10,7 +10,7 @@
   "interface": {
     "displayName": "PM",
     "shortDescription": "Run discovery-first, research-backed PM workshops and create design-aware Claude-ready handoffs with Codex.",
-    "longDescription": "PM provides Codex PM delegate workflows for discovery-first, research-backed brainstorm workshops, UI/UX design routing, roadmap ranking, backlog grooming, PM sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
+    "longDescription": "PM provides Codex PM delegate workflows for discovery-first, research-backed brainstorm workshops, UI/UX design routing, roadmap ranking, backlog grooming, Developer report sync checks, TASK_SPEC creation, and Claude-ready handoffs.",
     "developerName": "Local developer",
     "category": "Development",
     "capabilities": [],
