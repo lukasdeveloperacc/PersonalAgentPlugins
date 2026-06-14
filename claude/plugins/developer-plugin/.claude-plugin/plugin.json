@@ -1,8 +1,0 @@
-{
-  "name": "developer-plugin",
-  "description": "Developer workflows for TASK_SPEC, DESIGN_SPEC, OMC harness-driven implementation, PM-visible reporting, bug fixing, verification, browser debugging, and tests.",
-  "version": "0.2.1",
-  "author": {
-    "name": "Personal Agent Plugins"
-  }
-}

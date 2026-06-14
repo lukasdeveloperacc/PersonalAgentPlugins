@@ -1,3 +1,4 @@
-.omx/
 .omc/
+.omx/
+node_modules/
 .env
