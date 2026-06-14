@@ -8,7 +8,7 @@ pane-liveness logic can be tested with no live cmux session.
 ```text
 SURFACE      WINDOW   ROLE          TITLE                      ALIVE
 surface:1    win:1    orchestrator  claude                     yes
-surface:2    win:1    reviewer      cmux omx exec (codex)      yes
+surface:2    win:1    reviewer      omx (interactive)          yes
 ```
 
 Expected: `panes.json.surfaces.reviewer == "surface:2"` is reused (liveness probe succeeds).

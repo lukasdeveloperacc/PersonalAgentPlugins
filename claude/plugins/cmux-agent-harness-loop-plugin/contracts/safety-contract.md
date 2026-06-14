@@ -16,10 +16,11 @@ any API-router / one-shot advisor call
 **Scope of the ban:** it applies to the harness's *transport* choices. The ban targets
 one-shot, fire-and-forget advisor calls made outside cmux.
 
-**Explicitly ALLOWED (not the ask family):** `cmux omx exec`, `cmux omc`, `codex exec
-review` launched *inside a cmux pane*. These are persistent, multi-turn, in-pane
-orchestration observed via `read-screen` — categorically different from the ask family.
-See `cmux-transport-contract.md` §5.
+**Explicitly ALLOWED (not the ask family):** launching an interactive runtime inside a cmux
+pane, then injecting prompts with `cmux send` / `set-buffer` / `paste-buffer` and observing
+with `cmux read-screen`. `cmux omx exec`, `omx exec`, and `codex exec` are not ask-family
+commands, but they are forbidden by default for this harness because they bypass the persistent
+conversation model. See `cmux-transport-contract.md` §5.
 
 ## 2. Forbidden — dangerous flags (never by default)
 
@@ -57,7 +58,7 @@ git status --short
 git diff --stat   (and --cached)
 explicit file reads of non-secret files
 cmux pane control (new-split, send, send-key, read-screen, list-panels, respawn-pane, notify, set-buffer, paste-buffer)
-in-pane cmux omx exec / cmux omc / codex exec review
+interactive OMX/Codex pane bootstrap + prompt injection
 writing shared-memory markdown under docs/changes/
 writing runtime state under .agent-harness/
 ```
@@ -77,4 +78,6 @@ would send to a pane:
 - Zero occurrences of secret patterns (`*_API_KEY`, tokens, `.env` reads).
 - Zero occurrences of the dangerous flags in §2.
 - Zero occurrences of the ask-family strings in §1 (`/ask`, `omc ask`, `omx ask`) as
-  transport. (`cmux omx exec` / `cmux omc` are allowed and must NOT be flagged.)
+  transport.
+- Zero default-use occurrences of non-interactive exec transport (`cmux omx exec`, `omx exec`,
+  `codex exec`, `codex exec review`).

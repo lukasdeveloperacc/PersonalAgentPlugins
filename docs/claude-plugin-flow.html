@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>cmux-agent-harness-loop Claude Plugin 동작 설명과 Flow</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a33;
+      --panel-2: #17213f;
+      --text: #e9eefc;
+      --muted: #aab6d6;
+      --line: #2a3765;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --code: #07111f;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .35);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(125, 211, 252, .18), transparent 32rem),
+        radial-gradient(circle at top right, rgba(167, 139, 250, .16), transparent 28rem),
+        var(--bg);
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    code {
+      padding: .14rem .35rem;
+      border: 1px solid rgba(125, 211, 252, .22);
+      border-radius: .45rem;
+      background: rgba(7, 17, 31, .75);
+      color: #d8ecff;
+    }
+    pre {
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--code);
+      color: #d7e8ff;
+    }
+
+    .shell {
+      border-left: 4px solid var(--accent);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+
+    .hero {
+      padding: 34px;
+      border: 1px solid rgba(125, 211, 252, .22);
+      border-radius: calc(var(--radius) + 8px);
+      background: linear-gradient(135deg, rgba(18, 26, 51, .92), rgba(23, 33, 63, .82));
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: .5rem;
+      align-items: center;
+      margin-bottom: .8rem;
+      padding: .28rem .65rem;
+      border: 1px solid rgba(125, 211, 252, .28);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(125, 211, 252, .08);
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    h1, h2, h3 { line-height: 1.2; }
+    h1 {
+      margin: 0 0 .8rem;
+      font-size: clamp(2.1rem, 5vw, 4.7rem);
+      letter-spacing: -0.055em;
+    }
+    h2 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      letter-spacing: -0.035em;
+    }
+    h3 {
+      margin: 0 0 .6rem;
+      font-size: 1.18rem;
+      color: #f3f7ff;
+    }
+    p { margin: .5rem 0 0; color: var(--muted); }
+    ul, ol { margin-top: .5rem; padding-left: 1.3rem; color: var(--muted); }
+    li + li { margin-top: .35rem; }
+
+    .lead {
+      max-width: 850px;
+      color: #cad6f5;
+      font-size: 1.12rem;
+    }
+
+    .meta-grid, .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 16px;
+    }
+    .meta-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 24px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    @media (max-width: 900px) {
+      .meta-grid, .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .hero { padding: 24px; }
+    }
+
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(18, 26, 51, .76);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .18);
+    }
+    .card strong { color: #f7fbff; }
+    .stat {
+      min-height: 110px;
+    }
+    .stat .label {
+      color: var(--muted);
+      font-size: .86rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .stat .value {
+      display: block;
+      margin-top: .35rem;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    section { margin-top: 28px; }
+    .section-card {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      background: rgba(18, 26, 51, .72);
+      box-shadow: var(--shadow);
+    }
+
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .toc a {
+      padding: .55rem .72rem;
+      border: 1px solid rgba(125, 211, 252, .22);
+      border-radius: 999px;
+      color: #d9ecff;
+      background: rgba(125, 211, 252, .08);
+      font-weight: 700;
+      font-size: .92rem;
+    }
+
+    .flow {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .flow-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+    @media (max-width: 980px) { .flow-row { grid-template-columns: 1fr; } }
+    .node {
+      position: relative;
+      padding: 17px;
+      border: 1px solid rgba(125, 211, 252, .28);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(23, 33, 63, .96), rgba(18, 26, 51, .86));
+    }
+    .node::after {
+      content: "→";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 1.2rem;
+    }
+    .node:last-child::after { content: ""; }
+    @media (max-width: 980px) {
+      .node::after {
+        content: "↓";
+        right: 50%;
+        top: auto;
+        bottom: -18px;
+        transform: translateX(50%);
+      }
+      .node:last-child::after { content: ""; }
+    }
+    .node .tag {
+      display: inline-block;
+      margin-bottom: .55rem;
+      padding: .18rem .46rem;
+      border-radius: 7px;
+      background: rgba(125, 211, 252, .13);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: .75rem;
+      letter-spacing: .06em;
+    }
+    .node p { font-size: .94rem; }
+
+    .swimlane {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: rgba(7, 17, 31, .35);
+    }
+    .lane-row {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+    .lane-row:last-child { border-bottom: 0; }
+    .lane-head {
+      padding: 16px;
+      border-right: 1px solid var(--line);
+      background: rgba(125, 211, 252, .08);
+      font-weight: 900;
+    }
+    .lane-body { padding: 16px; }
+    @media (max-width: 760px) { .lane-row { grid-template-columns: 1fr; } .lane-head { border-right: 0; border-bottom: 1px solid var(--line); } }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .34rem .55rem;
+      border: 1px solid rgba(170, 182, 214, .22);
+      border-radius: 999px;
+      color: #dbe7ff;
+      background: rgba(255,255,255,.04);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+    .pill.good { border-color: rgba(52, 211, 153, .35); color: #b8f7dc; background: rgba(52, 211, 153, .08); }
+    .pill.warn { border-color: rgba(251, 191, 36, .35); color: #ffe4a3; background: rgba(251, 191, 36, .08); }
+    .pill.bad { border-color: rgba(251, 113, 133, .38); color: #ffd1d8; background: rgba(251, 113, 133, .08); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    th, td {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      color: #eef6ff;
+      background: rgba(125, 211, 252, .1);
+      font-size: .92rem;
+    }
+    td { color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+
+    .callout {
+      margin-top: 16px;
+      padding: 16px 18px;
+      border: 1px solid rgba(251, 191, 36, .32);
+      border-left: 5px solid var(--warn);
+      border-radius: 14px;
+      background: rgba(251, 191, 36, .08);
+    }
+    .callout.good {
+      border-color: rgba(52, 211, 153, .32);
+      border-left-color: var(--good);
+      background: rgba(52, 211, 153, .07);
+    }
+    .callout.bad {
+      border-color: rgba(251, 113, 133, .32);
+      border-left-color: var(--bad);
+      background: rgba(251, 113, 133, .07);
+    }
+    .callout p { color: #d8e4ff; }
+
+    .mini-title {
+      margin-bottom: 8px;
+      color: #fff;
+      font-weight: 900;
+    }
+    .footer {
+      margin-top: 28px;
+      padding: 18px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <span class="eyebrow">Claude Code Plugin · cmux Harness</span>
+      <h1>cmux-agent-harness-loop plugin 동작 설명 + Flow</h1>
+      <p class="lead">
+        이 문서는 이 저장소의 Claude plugin인 <code>cmux-agent-harness-loop-plugin</code>이 설치되고,
+        Claude/OMC orchestrator가 cmux pane을 통해 OMX/Codex reviewer를 지속적으로 구동하며,
+        <code>docs/changes/</code>와 <code>.agent-harness/</code>에 상태를 남기는 과정을 한눈에 볼 수 있도록 정리한 HTML 설명서입니다.
+      </p>
+
+      <div class="meta-grid">
+        <div class="card stat"><span class="label">Plugin</span><span class="value">cmux-agent-harness-loop-plugin</span><p>Claude Code plugin marketplace 패키지</p></div>
+        <div class="card stat"><span class="label">Skill</span><span class="value">cmux-agent-harness-loop</span><p>setup/status/plan/review/loop/handoff 제공</p></div>
+        <div class="card stat"><span class="label">Transport</span><span class="value">cmux-only</span><p>send + read-screen + verdict file</p></div>
+        <div class="card stat"><span class="label">Reviewer</span><span class="value">OMX/Codex pane</span><p>지속형 reviewer, 기본 source 수정 금지</p></div>
+      </div>
+
+      <nav class="toc" aria-label="목차">
+        <a href="#summary">요약</a>
+        <a href="#package">패키지 구조</a>
+        <a href="#roles">역할 모델</a>
+        <a href="#install">설치/노출 Flow</a>
+        <a href="#commands">서브커맨드</a>
+        <a href="#setup-flow">Setup Flow</a>
+        <a href="#loop-flow">Loop Flow</a>
+        <a href="#review-flow">Review Flow</a>
+        <a href="#state">상태/파일</a>
+        <a href="#safety">Safety</a>
+        <a href="#tests">검증</a>
+      </nav>
+    </header>
+
+    <section id="summary" class="section-card">
+      <h2>1. 핵심 요약</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>실행 코드는 “skill 지침”이다</h3>
+          <p>
+            이 plugin은 별도 MCP 서버를 등록하지 않습니다. <code>.mcp.json</code>의 <code>mcpServers</code>는 비어 있고,
+            핵심 동작은 <code>skills/cmux-agent-harness-loop/SKILL.md</code>의 절차 지침, 계약문서, 템플릿으로 정의됩니다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Claude가 orchestrator다</h3>
+          <p>
+            Claude/OMC가 사용자 요청을 intake하고 계획을 세우며 실제 파일을 수정합니다. Reviewer인 OMX/Codex는 별도 cmux pane에서
+            검토 결과를 내지만, 최종 판단과 source 변경 권한은 orchestrator에게 있습니다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>review는 three-channel이다</h3>
+          <p>
+            모든 review는 <code>cmux send</code>로 prompt를 보내고, <code>cmux read-screen</code>으로 pane/sentinel을 관찰하며,
+            <code>docs/changes/REVIEW_*.md.done</code> marker가 생긴 뒤 verdict 파일을 파싱합니다.
+          </p>
+        </div>
+      </div>
+      <div class="callout good">
+        <div class="mini-title">한 줄로 말하면</div>
+        <p>
+          “Claude가 작업을 수행하고, cmux 안의 지속형 Codex/OMX reviewer에게 안전한 방식으로 검토를 맡긴 뒤,
+          GO/STOP/NEEDS_CHECK 결과를 파일 기반으로 확정해 다음 루프 여부를 결정하는 하니스 루프”입니다.
+        </p>
+      </div>
+    </section>
+
+    <section id="package" class="section-card">
+      <h2>2. 패키지 구조와 Source of Truth</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Repository layout</h3>
+          <pre><code>claude/
+  .claude-plugin/marketplace.json
+  plugins/cmux-agent-harness-loop-plugin/
+    .claude-plugin/plugin.json
+    .mcp.json
+    contracts/
+      cmux-transport-contract.md
+      harness-loop-contract.md
+      review-verdict.md
+      safety-contract.md
+    skills/cmux-agent-harness-loop/SKILL.md
+    templates/
+      harness.yaml.tmpl
+      state.json.tmpl
+      panes.json.tmpl
+      prompts/*.tmpl
+      docs-changes/*.tmpl
+    tests/</code></pre>
+        </div>
+        <div class="card">
+          <h3>주요 파일 역할</h3>
+          <ul>
+            <li><code>marketplace.json</code>: 개인 marketplace 이름과 plugin source를 노출합니다.</li>
+            <li><code>plugin.json</code>: plugin 이름/설명/버전 metadata를 정의합니다.</li>
+            <li><code>SKILL.md</code>: 실제 orchestration 절차, subcommand dispatch, cmux playbook을 정의합니다.</li>
+            <li><code>contracts/*.md</code>: transport, loop, verdict, safety의 강제 계약입니다.</li>
+            <li><code>templates/</code>: 대상 프로젝트에 scaffold될 runtime/memory 파일의 mirror입니다.</li>
+            <li><code>tests/</code>: prose skill이 지켜야 할 핵심 계약을 reference 구현으로 검증합니다.</li>
+          </ul>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Source</th><th>무엇을 결정하나</th><th>중요 포인트</th></tr></thead>
+        <tbody>
+          <tr><td><code>cmux-transport-contract.md</code></td><td>허용된 cmux 명령과 both-channels review</td><td><code>--surface</code> 핸들, <code>cmux send</code>/<code>read-screen</code>/verdict file 모두 필수</td></tr>
+          <tr><td><code>harness-loop-contract.md</code></td><td>5개 관찰 가능 상태와 종료 조건</td><td><code>INTAKE → EXECUTE → REVIEW → DECIDE → HANDOFF</code></td></tr>
+          <tr><td><code>review-verdict.md</code></td><td>GO/STOP/NEEDS_CHECK verdict format과 atomic write ordering</td><td>파싱 trigger는 sentinel이 아니라 <code>.done</code> marker</td></tr>
+          <tr><td><code>safety-contract.md</code></td><td>금지 transport/flag/secret/source mutation 규칙</td><td><code>omx ask</code>/<code>omc ask</code>/<code>/ask</code> 금지, reviewer는 기본 수정 금지</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="roles" class="section-card">
+      <h2>3. 역할 모델: Orchestrator / Reviewer / Worker</h2>
+      <div class="swimlane">
+        <div class="lane-row">
+          <div class="lane-head">사용자</div>
+          <div class="lane-body">요청을 Claude에게 전달합니다. 예: <code>/cmux-agent-harness-loop loop "버그 수정"</code></div>
+        </div>
+        <div class="lane-row">
+          <div class="lane-head">Claude / OMC<br/>Orchestrator</div>
+          <div class="lane-body">
+            요청 분류, context 수집, 계획 작성, 실제 source 수정, reviewer pane 제어, reviewer findings 판정,
+            <code>docs/changes/</code> 기록을 담당합니다. 기본적으로 source를 수정할 수 있는 유일한 role입니다.
+          </div>
+        </div>
+        <div class="lane-row">
+          <div class="lane-head">OMX / Codex<br/>Reviewer</div>
+          <div class="lane-body">
+            cmux의 지속형 pane에서 requirement mismatch, bug, security, architecture, missing tests, complexity,
+            maintainability를 검토합니다. 결과는 <code>GO</code>, <code>STOP</code>, <code>NEEDS_CHECK</code> 중 하나입니다.
+          </div>
+        </div>
+        <div class="lane-row">
+          <div class="lane-head">Worker<br/>(v0.2 deferred)</div>
+          <div class="lane-body">
+            <code>harness.yaml</code>에는 정의되어 있으나 v0.1에서는 비활성입니다. 현재 구현은 orchestrator-direct 실행 모델입니다.
+          </div>
+        </div>
+      </div>
+      <div class="pill-row">
+        <span class="pill good">Orchestrator: can_modify_files=true</span>
+        <span class="pill warn">Reviewer: persistent=true</span>
+        <span class="pill bad">Reviewer source edit 금지</span>
+        <span class="pill">Worker: enabled=false</span>
+      </div>
+    </section>
+
+    <section id="install" class="section-card">
+      <h2>4. 설치/노출 Flow</h2>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="node"><span class="tag">1</span><h3>Marketplace 등록</h3><p><code>claude/.claude-plugin/marketplace.json</code>이 personal marketplace와 plugin source를 선언합니다.</p></div>
+          <div class="node"><span class="tag">2</span><h3>Plugin metadata</h3><p><code>.claude-plugin/plugin.json</code>이 이름, 설명, 버전을 제공합니다.</p></div>
+          <div class="node"><span class="tag">3</span><h3>Skill discover</h3><p>Claude Code가 <code>skills/cmux-agent-harness-loop/SKILL.md</code>를 skill로 노출합니다.</p></div>
+          <div class="node"><span class="tag">4</span><h3>Command dispatch</h3><p>첫 argument를 읽어 <code>setup</code>, <code>status</code>, <code>plan</code>, <code>review</code>, <code>loop</code>, <code>handoff</code>로 분기합니다.</p></div>
+          <div class="node"><span class="tag">5</span><h3>cmux runtime</h3><p>실제 multi-agent interaction은 cmux pane에서만 수행합니다.</p></div>
+        </div>
+      </div>
+      <pre class="shell"><code>claude plugin validate ./claude
+claude plugin marketplace add ./claude
+claude plugin install cmux-agent-harness-loop-plugin@personal-claude-tools</code></pre>
+      <div class="callout">
+        <div class="mini-title">주의</div>
+        <p>
+          이 plugin repository 자체에는 runtime 산출물인 <code>.agent-harness/</code>와 <code>docs/changes/</code>를 scaffold하지 않습니다.
+          <code>setup</code>은 plugin repo 감지 시 거부해야 하며, 대상 프로젝트에서 실행되는 것을 전제로 합니다.
+        </p>
+      </div>
+    </section>
+
+    <section id="commands" class="section-card">
+      <h2>5. Subcommand 표면</h2>
+      <table>
+        <thead><tr><th>Command</th><th>하는 일</th><th>pane 필요</th><th>mutation</th></tr></thead>
+        <tbody>
+          <tr><td><code>setup</code></td><td>cmux 여부 확인, runtime 탐색, 대상 프로젝트에 <code>.agent-harness/</code>와 <code>docs/changes/</code> scaffold</td><td>cmux 밖이면 dry-run scaffold</td><td>runtime/memory 파일 생성</td></tr>
+          <tr><td><code>status</code></td><td>runtime availability, reviewer pane liveness, last loop, pending TODO, template source 보고</td><td>선택</td><td>읽기 전용</td></tr>
+          <tr><td><code>plan "요청"</code></td><td>INTAKE만 수행해 <code>TASK_SPEC.md</code> 작성</td><td>불필요</td><td>문서 작성</td></tr>
+          <tr><td><code>review</code></td><td>reviewer pane 확보, 9개 context 주입, both-channels round-trip, verdict 수집/판정</td><td>필요</td><td>review/memory 파일</td></tr>
+          <tr><td><code>loop "요청"</code></td><td>INTAKE→EXECUTE→REVIEW→DECIDE→HANDOFF 전체 루프 구동</td><td>review 단계에서 필요</td><td>source + memory</td></tr>
+          <tr><td><code>handoff</code></td><td>현재 상태를 <code>HANDOFF.md</code>로 정리하고 STOP/GO notify</td><td>notify에 사용</td><td>handoff 문서</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="setup-flow" class="section-card">
+      <h2>6. Setup Flow 상세</h2>
+      <div class="flow-row">
+        <div class="node"><span class="tag">SETUP-1</span><h3>cmux 내부 확인</h3><p><code>$CMUX_SURFACE_ID</code>가 비어 있으면 transport는 unavailable로 기록하고 pane 생성은 건너뜁니다.</p></div>
+        <div class="node"><span class="tag">SETUP-2</span><h3>Plugin repo guard</h3><p>현재 cwd/ancestor에 <code>.claude-plugin/</code> 또는 이 plugin marketplace가 있으면 scaffold를 거부합니다.</p></div>
+        <div class="node"><span class="tag">SETUP-3</span><h3>Template resolve</h3><p><code>CLAUDE_PLUGIN_ROOT</code>, marketplace cache, skill dir, 마지막으로 SKILL.md inlined heredoc 순서로 찾습니다.</p></div>
+        <div class="node"><span class="tag">SETUP-4</span><h3>Runtime discover</h3><p><code>cmux</code>, <code>claude</code>, <code>omc</code>, <code>omx</code>, <code>codex</code>의 존재와 help surface를 확인합니다.</p></div>
+        <div class="node"><span class="tag">SETUP-5</span><h3>Scaffold</h3><p>비어 있거나 없는 파일만 쓰며, 기존 non-empty 파일은 절대 덮어쓰지 않습니다.</p></div>
+      </div>
+      <h3 style="margin-top:22px">Setup 결과물</h3>
+      <div class="grid-3">
+        <div class="card"><h3><code>.agent-harness/harness.yaml</code></h3><p>transport, agent 역할, loop max, memory path, safety 정책의 runtime config입니다.</p></div>
+        <div class="card"><h3><code>.agent-harness/state.json</code></h3><p>stage cursor, loop_id, attempt, cli verification, termination 상태를 저장합니다.</p></div>
+        <div class="card"><h3><code>.agent-harness/panes.json</code></h3><p>orchestrator/reviewer/worker/test/browser surface ref와 runtime 정보를 추적합니다.</p></div>
+      </div>
+    </section>
+
+    <section id="loop-flow" class="section-card">
+      <h2>7. Loop Flow: 5개 관찰 가능 상태</h2>
+      <p>
+        이 plugin의 핵심 cursor는 <code>.agent-harness/state.json.stage</code>입니다. 모든 전환 후 stage를 저장해야 하므로,
+        세션이 끊겨도 이어서 복구할 수 있습니다.
+      </p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="node">
+            <span class="tag">INTAKE</span>
+            <h3>요청 수집 + 계획</h3>
+            <p>요청을 verbatim 저장하고, type을 분류하고, branch/status/diff/docs를 요약해 <code>TASK_SPEC.md</code>를 작성합니다.</p>
+          </div>
+          <div class="node">
+            <span class="tag">EXECUTE</span>
+            <h3>Orchestrator 실행</h3>
+            <p>v0.1에서는 Claude/OMC orchestrator가 직접 source file을 수정합니다. worker pane은 deferred입니다.</p>
+          </div>
+          <div class="node">
+            <span class="tag">REVIEW</span>
+            <h3>Both-channels 검토</h3>
+            <p>reviewer pane을 확보하고 context 9종을 주입한 뒤 verdict file을 기다립니다.</p>
+          </div>
+          <div class="node">
+            <span class="tag">DECIDE</span>
+            <h3>Finding 판정</h3>
+            <p>Claude가 reviewer finding마다 <code>ACCEPT</code>/<code>REJECT</code>/<code>NEEDS_CHECK</code>/<code>DEFER</code>를 결정합니다.</p>
+          </div>
+          <div class="node">
+            <span class="tag">HANDOFF</span>
+            <h3>기록 + 종료 판단</h3>
+            <p><code>HANDOFF.md</code>, <code>TODO.md</code>, <code>DECISIONS.md</code>를 갱신하고 GO/STOP을 notify합니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <table>
+        <thead><tr><th>종료 조건</th><th>결과</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td><code>last_decision == GO</code> 그리고 <code>remaining_criteria == 0</code></td><td><span class="pill good">DONE</span></td><td>수렴 완료</td></tr>
+          <tr><td><code>loop_count >= max_loops</code></td><td><span class="pill warn">NEEDS_CHECK</span></td><td>무한 루프 방지. 기본 <code>max_loops=5</code></td></tr>
+          <tr><td>동일 STOP finding이 2회 연속 반복</td><td><span class="pill bad">NO_PROGRESS</span></td><td>같은 실패를 반복하지 않고 사람에게 중단 사유를 표면화</td></tr>
+          <tr><td>STOP이지만 action 가능한 ACCEPT TODO가 있음</td><td><span class="pill">NEXT_LOOP</span></td><td>ACCEPT 항목을 다음 요청으로 feed</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="review-flow" class="section-card">
+      <h2>8. Review Flow 상세: send + read-screen + file</h2>
+      <div class="callout bad">
+        <div class="mini-title">가장 중요한 규칙</div>
+        <p>
+          <code>read-screen</code>에서 sentinel을 보더라도 바로 verdict를 확정하지 않습니다.
+          진짜 parse trigger는 <code>docs/changes/REVIEW_&lt;loop_id&gt;_&lt;attempt&gt;.md.done</code> marker 존재입니다.
+        </p>
+      </div>
+      <div class="flow-row" style="grid-template-columns: repeat(6, minmax(0, 1fr));">
+        <div class="node"><span class="tag">R1</span><h3>Pane 확보</h3><p><code>panes.json.surfaces.reviewer</code>를 읽고, live면 재사용합니다.</p></div>
+        <div class="node"><span class="tag">R2</span><h3>죽은 pane 복구</h3><p><code>read-screen --lines 5</code> 실패 시 <code>respawn-pane</code> 또는 <code>new-split</code>.</p></div>
+        <div class="node"><span class="tag">R3</span><h3>Prompt 전달</h3><p>이미 실행 중인 interactive <code>omx</code>/<code>codex</code> pane에 <code>cmux send</code> 또는 buffer/paste로 prompt를 주입합니다.</p></div>
+        <div class="node"><span class="tag">R4</span><h3>Screen 관찰</h3><p><code>cmux read-screen --scrollback --lines 200</code>으로 liveness와 sentinel을 봅니다.</p></div>
+        <div class="node"><span class="tag">R5</span><h3>Verdict file</h3><p><code>.done</code> marker가 생긴 뒤 <code>REVIEW_*.md</code>를 파싱합니다.</p></div>
+        <div class="node"><span class="tag">R6</span><h3>DECIDE</h3><p>GO/STOP/NEEDS_CHECK를 바탕으로 TODO, decisions, handoff를 기록합니다.</p></div>
+      </div>
+
+      <h3 style="margin-top:22px">Reviewer에게 주입하는 9개 context</h3>
+      <div class="grid-3">
+        <div class="card"><h3>1–3</h3><p>사용자 원문 요청, classified type, 현재 branch</p></div>
+        <div class="card"><h3>4–5</h3><p><code>git status -s</code>, <code>git diff --stat</code> 및 staged diff stat</p></div>
+        <div class="card"><h3>6–7</h3><p>열린 TODO와 최근 decisions digest, 최근 review log 요약</p></div>
+        <div class="card"><h3>8</h3><p>현재 loop stage와 <code>loop_id</code></p></div>
+        <div class="card"><h3>9</h3><p><code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>README.md</code>, <code>docs/changes/*.md</code> 요약</p></div>
+        <div class="card"><h3>Redaction</h3><p><code>*_API_KEY</code>, <code>*_TOKEN</code>, <code>*_SECRET</code>, <code>*_PASSWORD</code>는 기록 전 redaction합니다.</p></div>
+      </div>
+
+      <h3 style="margin-top:22px">Verdict write ordering</h3>
+      <pre><code>1. docs/changes/REVIEW_&lt;loop_id&gt;_&lt;attempt&gt;.md.tmp 작성 + flush
+2. tmp 파일을 REVIEW_&lt;loop_id&gt;_&lt;attempt&gt;.md 로 atomic rename
+3. rename 이후 REVIEW_&lt;loop_id&gt;_&lt;attempt&gt;.md.done marker 생성
+4. .done 이후 screen sentinel 출력:
+   &lt;&lt;&lt;HARNESS_VERDICT_DONE id=&lt;loop_id&gt;_&lt;attempt&gt;&gt;&gt;&gt;</code></pre>
+
+      <table>
+        <thead><tr><th>상황</th><th>처리</th></tr></thead>
+        <tbody>
+          <tr><td><code>.done</code> timeout</td><td>pane respawn/new-split 후 attempt 증가, 재전송. 2회 timeout이면 NEEDS_CHECK + notify</td></tr>
+          <tr><td>verdict unparseable</td><td>1회 retry 후에도 single decision token이 없으면 NEEDS_CHECK</td></tr>
+          <tr><td>질문이 있음</td><td>NEEDS_CHECK로 표면화. GO/STOP을 임의로 만들지 않음</td></tr>
+          <tr><td>reviewer pane 사망</td><td>respawn 실패 시 new-split, attempt bump, idempotent re-send, REVIEW_LOG 기록</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="state" class="section-card">
+      <h2>9. 대상 프로젝트에 남는 파일과 데이터 흐름</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3><code>.agent-harness/</code>: runtime control plane</h3>
+          <ul>
+            <li><code>harness.yaml</code>: role, transport, max loop, memory path, safety config</li>
+            <li><code>state.json</code>: 현재 stage, loop_id, attempt, loop_count, convergence, last decision</li>
+            <li><code>panes.json</code>: orchestrator/reviewer/worker/test/browser surface refs</li>
+            <li><code>prompts/*.md</code>: orchestrator, reviewer, worker, handoff prompt templates</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><code>docs/changes/</code>: shared memory</h3>
+          <ul>
+            <li><code>TASK_SPEC.md</code>: 사용자 요청, type, plan, acceptance criteria</li>
+            <li><code>REVIEW_*.md</code> + <code>.done</code>: reviewer verdict</li>
+            <li><code>REVIEW_LOG.md</code>: review history</li>
+            <li><code>DECISIONS.md</code>: orchestrator의 finding 판정과 rationale</li>
+            <li><code>TODO.md</code>: ACCEPT된 follow-up item</li>
+            <li><code>HANDOFF.md</code>: 다음 session/loop용 요약</li>
+          </ul>
+        </div>
+      </div>
+      <div class="flow-row" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top:16px;">
+        <div class="node"><span class="tag">Input</span><h3>User request</h3><p>요청 원문이 TASK_SPEC와 reviewer prompt context로 들어갑니다.</p></div>
+        <div class="node"><span class="tag">Runtime</span><h3>state + panes</h3><p>stage cursor와 pane surface가 루프 재개와 reviewer 재사용을 가능하게 합니다.</p></div>
+        <div class="node"><span class="tag">Review</span><h3>verdict file</h3><p>화면이 아니라 파일+done marker가 deterministic parse source입니다.</p></div>
+        <div class="node"><span class="tag">Memory</span><h3>handoff + TODO</h3><p>다음 루프 또는 다음 사람/agent가 같은 context에서 이어받습니다.</p></div>
+      </div>
+    </section>
+
+    <section id="safety" class="section-card">
+      <h2>10. Safety Contract</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>금지 transport</h3>
+          <p>one-shot advisor인 <code>/ask</code>, <code>omc ask</code>, <code>omx ask</code>, provider ask는 금지입니다.</p>
+          <div class="pill-row"><span class="pill bad">/ask 금지</span><span class="pill bad">omx ask 금지</span></div>
+        </div>
+        <div class="card">
+          <h3>허용 transport</h3>
+          <p><code>omx</code>/<code>codex</code>를 pane 안에 띄운 뒤 <code>cmux send</code>, <code>set-buffer</code>, <code>paste-buffer</code>로 prompt를 주입하는 방식은 persistent pane orchestration이므로 허용됩니다. <code>omx exec</code>, <code>codex exec</code>는 기본 금지입니다.</p>
+          <div class="pill-row"><span class="pill good">cmux send</span><span class="pill good">read-screen</span></div>
+        </div>
+        <div class="card">
+          <h3>위험 flag 금지</h3>
+          <p><code>--dangerously-skip-permissions</code>, <code>--yolo</code>, <code>-a never</code>, <code>--approval-mode never</code>는 기본 사용 금지입니다.</p>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="card">
+          <h3>Secret 보호</h3>
+          <p>full env dump, secret file 읽기, token/key 출력은 금지입니다. 기록 전 secret-like env name과 literal key는 redaction 대상입니다.</p>
+        </div>
+        <div class="card">
+          <h3>Reviewer 권한 제한</h3>
+          <p>reviewer는 기본적으로 source를 수정하지 않습니다. finding을 제시하고, orchestrator가 최종 ACCEPT/REJECT/NEEDS_CHECK/DEFER를 판단합니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="tests" class="section-card">
+      <h2>11. 이 동작을 어떻게 검증하나</h2>
+      <p>
+        <code>SKILL.md</code>는 prose이므로 직접 실행 가능한 runtime 구현은 아닙니다. 대신 <code>tests/harness_reference.py</code>가 핵심 계약을 reference 구현으로 모델링하고,
+        <code>tests/test_harness.py</code>가 dry-run/no-pane 조건에서 회귀 테스트합니다.
+      </p>
+      <table>
+        <thead><tr><th>검증 영역</th><th>테스트 내용</th></tr></thead>
+        <tbody>
+          <tr><td>classification</td><td>feature/bugfix/test/docs/refactor/security/performance 등 요청 type 분류</td></tr>
+          <tr><td>template resolution</td><td>template source 확인과 12개 mirror 파일 존재 검증</td></tr>
+          <tr><td>setup idempotency</td><td>첫 실행은 파일 작성, 두 번째 실행은 non-empty 기존 파일 보존</td></tr>
+          <tr><td>setup guard</td><td>plugin repo 자체에는 scaffold하지 않음</td></tr>
+          <tr><td>both-channels</td><td>send/read-screen/verdict file 세 채널 모두 사용</td></tr>
+          <tr><td>parse gate</td><td>sentinel만 있고 <code>.done</code>이 없으면 파싱하지 않음</td></tr>
+          <tr><td>termination</td><td>DONE, NEEDS_CHECK ceiling, NO_PROGRESS 반복 STOP 방지</td></tr>
+          <tr><td>safety negatives</td><td>ask-family, 비대화형 exec transport, dangerous flags, secret literal 검출</td></tr>
+        </tbody>
+      </table>
+      <pre class="shell"><code>cd claude/plugins/cmux-agent-harness-loop-plugin/tests
+python3 test_harness.py</code></pre>
+    </section>
+
+    <section class="section-card">
+      <h2>12. 전체 End-to-End 시나리오 예시</h2>
+      <ol>
+        <li>대상 프로젝트에서 사용자가 <code>/cmux-agent-harness-loop loop "로그인 버그 고쳐줘"</code>를 실행합니다.</li>
+        <li>orchestrator는 setup이 없으면 scaffold하고, 요청을 <code>bugfix</code>로 분류합니다.</li>
+        <li><code>TASK_SPEC.md</code>에 원문 요청, 계획, acceptance criteria를 기록합니다.</li>
+        <li>Claude/OMC orchestrator가 직접 source를 수정합니다.</li>
+        <li>reviewer pane을 확보하고 9개 context를 prompt로 주입합니다.</li>
+        <li>reviewer는 <code>REVIEW_L001_1.md.tmp → REVIEW_L001_1.md → REVIEW_L001_1.md.done → sentinel</code> 순서로 결과를 냅니다.</li>
+        <li>orchestrator는 <code>.done</code> 확인 후 verdict를 파싱합니다.</li>
+        <li>STOP이면 finding을 판정해 ACCEPT 항목은 <code>TODO.md</code>에 남기고 다음 루프로 들어갑니다.</li>
+        <li>GO이고 남은 acceptance criteria가 없으면 <code>DONE</code>으로 수렴하고 <code>HANDOFF.md</code>를 남깁니다.</li>
+      </ol>
+    </section>
+
+    <footer class="footer">
+      Generated from repository contracts and templates: <code>claude/plugins/cmux-agent-harness-loop-plugin</code>
+    </footer>
+  </main>
+</body>
+</html>

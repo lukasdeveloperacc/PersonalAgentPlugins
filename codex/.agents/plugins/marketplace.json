@@ -1,0 +1,20 @@
+{
+  "name": "personal-agent-plugins-codex",
+  "interface": {
+    "displayName": "Personal Agent Plugins — Codex"
+  },
+  "plugins": [
+    {
+      "name": "socrates-codex-partner-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/socrates-codex-partner-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

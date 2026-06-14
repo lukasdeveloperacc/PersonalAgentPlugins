@@ -15,4 +15,8 @@ echo "== dry-run transport-shim suite =="
 python3 "$HERE/test_harness.py"
 
 echo
+echo "== socrates static contract suite =="
+python3 "$HERE/test_socrates_static.py"
+
+echo
 echo "ALL DRY-RUN GATES PASSED"

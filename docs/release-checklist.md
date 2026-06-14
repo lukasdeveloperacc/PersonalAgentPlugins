@@ -11,8 +11,10 @@
 - Parse every JSON manifest (`marketplace.json`, `plugin.json`, `.mcp.json`).
 - Validate the Claude plugin/marketplace with `claude plugin validate ./claude` when available.
 - Confirm the required skill file exists: `claude/plugins/cmux-agent-harness-loop-plugin/skills/cmux-agent-harness-loop/SKILL.md`.
-- Confirm the skill has role, subcommand dispatch, transport playbook, loop spec, and output format.
-- Confirm all four contracts exist: `cmux-transport-contract.md`, `harness-loop-contract.md`, `review-verdict.md`, `safety-contract.md`.
+- Confirm the harness skill has role, subcommand dispatch, transport playbook, loop spec, and output format.
+- Confirm the Socrates skill exists, collects idea/mode/experience, uses Codex reflection, offers the direction-choice menu, and hands off to `document-specialist`.
+- Confirm `agents/document-specialist.md` exists and is document-only.
+- Confirm all five contracts exist: `cmux-transport-contract.md`, `harness-loop-contract.md`, `review-verdict.md`, `safety-contract.md`, `socrates-workshop-contract.md`.
 - Confirm root `docs/cmux-transport-contract.md` mirror is synced with the plugin-local `contracts/cmux-transport-contract.md`.
 
 ## Inlined-template / mirror diff gate (FAIL-CLOSED)
@@ -20,6 +22,13 @@
 - The inlined heredoc templates in `SKILL.md` are **canonical**. The `templates/` directory is a byte-identical mirror.
 - Run `tests/run_dryrun_suite.sh` (which runs `python3 tests/sync_templates.py check` first). A byte mismatch **blocks release**.
 - When a mismatch is found, fix `templates/` to match the SKILL.md heredocs (heredocs are the source of truth), never the reverse.
+
+## Codex companion validation
+
+- Parse `codex/.agents/plugins/marketplace.json` and `codex/plugins/socrates-codex-partner-plugin/.codex-plugin/plugin.json`.
+- Run `python3 /Users/chaejin/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py codex/plugins/socrates-codex-partner-plugin`.
+- Run `python3 codex/plugins/socrates-codex-partner-plugin/tests/test_static.py`.
+- Confirm all Codex companion skills are Korean-first and forbid `/ask`/`omc ask`/`omx ask`.
 
 ## Smoke / Dry-run tests (no live cmux pane required)
 
@@ -40,6 +49,9 @@ Inside a real cmux pane:
 3. Kill the reviewer pane mid-review → recovery via respawn/new-split → review completes.
 4. `/cmux-agent-harness-loop status` → correct liveness + last_loop_at.
 5. Confirm no secrets in `REVIEW_LOG.md`; no dangerous flags in any emitted command.
+6. Run `/cmux-agent-harness-loop-plugin:socrates` on a sample idea → choose `토론모드` + one experience level → verify Codex reflection is surfaced, direction menu appears, and docs/changes/SOCRATES_BRIEF.md + PRD.md + OUT_OF_SCOPE.md + HANDOFF.md are produced.
+7. Optional alias smoke: copy `templates/project-commands/socrates.md.tmpl` to target `.claude/commands/socrates.md`, reload Claude, and verify bare `/socrates` delegates to the plugin skill.
+8. Codex companion live smoke: install `socrates-codex-partner-plugin`, then from the Codex pane run a sample `socrates-partner` reflection and verify Korean structured output.
 
 ## Publishing
 

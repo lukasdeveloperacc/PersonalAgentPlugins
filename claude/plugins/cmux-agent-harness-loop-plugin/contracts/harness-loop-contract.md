@@ -16,7 +16,7 @@ INTAKE → EXECUTE → REVIEW → DECIDE → HANDOFF → (DONE | NEXT_LOOP)
 |---|---|---|
 | **INTAKE** | Capture the request; assign `loop_id` + `attempt`; ensure `.agent-harness/` exists (else run `setup`). Folds classify + load_context + plan: classify into one request type (§3), gather branch/`git status -s`/`git diff --stat`, summarize project docs, draft the step plan. | `state.json` (`stage`, `loop_id`, `classified_type`), `docs/changes/TASK_SPEC.md` |
 | **EXECUTE** | Orchestrator (Claude/OMC) makes the file changes for the plan. Worker/test/browser panes are **deferred to v0.2**; v0.1 executes in the orchestrator. | source files (orchestrator only) |
-| **REVIEW** | Both-channels round-trip (see `cmux-transport-contract.md` §4 and `review-verdict.md`): ensure reviewer pane, inject the 9-item context, `cmux send` the exec, poll `read-screen` for the sentinel, parse the verdict file when `.done` exists. | `docs/changes/REVIEW_<loop_id>_<attempt>.md`, `REVIEW_LOG.md` |
+| **REVIEW** | Both-channels round-trip (see `cmux-transport-contract.md` §4 and `review-verdict.md`): ensure reviewer pane, inject the 9-item context into the live OMX/Codex pane with `cmux send`/paste, poll `read-screen` for the sentinel, parse the verdict file when `.done` exists. | `docs/changes/REVIEW_<loop_id>_<attempt>.md`, `REVIEW_LOG.md` |
 | **DECIDE** | Claude judges each reviewer finding: ACCEPT / REJECT / NEEDS_CHECK / DEFER (§4). Only ACCEPT items become TODO. | `docs/changes/DECISIONS.md`, `docs/changes/TODO.md` |
 | **HANDOFF** | Folds record: write REVIEW_LOG / TODO / DECISIONS / HANDOFF; `cmux notify` STOP/GO; set `last_loop_at`; evaluate termination (§2). | `docs/changes/HANDOFF.md`, `state.json` (`last_loop_at`, `loop_count`) |
 

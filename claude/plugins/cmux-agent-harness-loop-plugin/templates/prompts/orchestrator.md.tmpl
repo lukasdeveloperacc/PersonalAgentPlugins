@@ -6,7 +6,7 @@ docs/changes/.
 
 Transport is cmux-only. Never call the ask family (/ask, omc ask, omx ask). Use cmux send,
 read-screen, new-split, list-panels, respawn-pane, notify, set-buffer, paste-buffer, and
-in-pane cmux omx exec / cmux omc / codex exec review.
+interactive OMX/Codex pane bootstrap + prompt injection.
 
 Drive the 5 observable states (INTAKE, EXECUTE, REVIEW, DECIDE, HANDOFF) with
 state.json.stage as the cursor. Honor the termination spec. Never use dangerous flags. Never

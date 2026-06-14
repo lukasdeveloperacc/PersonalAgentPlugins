@@ -24,7 +24,7 @@ cmux new-split          cmux send            cmux send-key
 cmux read-screen        cmux list-panels     cmux respawn-pane
 cmux notify             cmux set-buffer      cmux paste-buffer
 cmux workspace          cmux browser
-cmux omc <args...>      cmux omx <args...>   (in-pane orchestration — see §5)
+cmux omc                cmux omx             (interactive pane bootstrap only — see §5)
 ```
 
 ## 2. Verify CLI syntax first (session-scoped gate)
@@ -66,11 +66,12 @@ $CMUX_WORKSPACE_ID   the workspace; used for list-panels --workspace
 Every `review` MUST exercise all three mechanisms. None may be dropped or replaced by a
 file-only handoff.
 
-1. **`cmux send` — delivers the prompt.** The orchestrator sends an in-pane,
-   **non-interactive** exec command into the reviewer surface (see §5). Long prompt bodies
-   are staged to `.agent-harness/prompts/tmp/<loop-id>.txt` and delivered via
-   `set-buffer`/`paste-buffer` or `cmux send "... < <tmpfile>"`. *(Satisfies "sends prompt
-   via cmux send".)*
+1. **`cmux send` — injects the prompt into a live interactive pane.** The orchestrator
+   starts or reuses an interactive OMX/Codex reviewer surface, then pastes/sends the prompt
+   directly into that running TUI/REPL. Long prompt bodies are staged to
+   `.agent-harness/prompts/tmp/<loop-id>.txt` and injected via `set-buffer` +
+   `paste-buffer` + Enter, or by `cmux send` chunks. **Do not use `omx exec`,
+   `codex exec`, or any non-interactive exec path by default.**
 
 2. **`cmux read-screen` — liveness + latency hint.** The orchestrator polls
    `cmux read-screen --surface <reviewer> --scrollback --lines 200` for pane liveness and
@@ -85,30 +86,50 @@ file-only handoff.
 
 `read-screen` is the transport/liveness channel; the file is the deterministic parse.
 
-## 5. In-pane orchestration with OMC / OMX (allowed, NOT the ask family)
+## 5. Interactive pane orchestration with OMC / OMX
 
-`cmux omc [args...]` and `cmux omx [args...]` set up a tmux shim and forward all remaining
-args so OMC/OMX run **inside a native cmux split**. These are explicitly ALLOWED:
+The desired transport is a **live, persistent, interactive pane**. The orchestrator may start
+the runtime in a pane, but must then converse by prompt injection, not by one-shot exec.
+
+Allowed bootstrap examples:
 
 ```text
-cmux omx exec "<review instructions>"      # OMX (Codex) reviewer, non-interactive, in-pane
-cmux omc exec "<...>"                       # OMC (Claude) orchestration, in-pane
-codex exec review                           # non-interactive Codex review; reads instructions from stdin; supports -c key=value
+cmux new-split right --focus false
+cmux send --surface <reviewer> -- "omx\n"       # start interactive OMX in that pane
+# fallback when OMX is unavailable:
+cmux send --surface <reviewer> -- "codex\n"     # start interactive Codex in that pane
 ```
 
-These are multi-turn, stateful, pane-resident, and observed via `read-screen`. That makes
-them **in-pane orchestration**, categorically different from the forbidden one-shot
-`omx ask` / `omc ask` advisor calls. The distinction: the ask family is a fire-and-forget
-advisor outside cmux; `cmux omx exec` runs through the cmux transport in a persistent pane.
+Allowed prompt injection examples:
+
+```text
+cmux set-buffer --name harness "$(cat .agent-harness/prompts/tmp/<id>.txt)"
+cmux paste-buffer --name harness --surface <reviewer>
+cmux send --surface <reviewer> -- "\n"          # submit to the already-running CLI
+cmux read-screen --surface <reviewer> --scrollback --lines 200
+```
+
+Forbidden by default for this harness transport because it bypasses the persistent
+conversation the user expects:
+
+```text
+cmux omx exec ...
+omx exec ...
+codex exec ...
+codex exec review ...
+```
+
+Those exec forms are not the ask-family, but they are still **not** the interactive
+Socrates/harness transport. Use them only if a human explicitly requests non-interactive exec
+for a specific run; v0.1 does not choose them automatically.
 
 ## 6. Prompt-via-tempfile
 
 For prompts > ~1500 chars or any multi-line prompt:
 
 1. Write the body to `.agent-harness/prompts/tmp/<loop-id>.txt`.
-2. Deliver via cmux only — prefer `set-buffer`/`paste-buffer` (avoids shell escaping), or
-   `cmux send --surface <ref> -- "codex exec review < .agent-harness/prompts/tmp/<id>.txt; <emit sentinel>\n"`.
-3. Final transport is always cmux. Clean temp files on DONE.
+2. Deliver via cmux only: `set-buffer` → `paste-buffer` into the already-running OMX/Codex pane → Enter.
+3. Final transport is always cmux prompt injection. Clean temp files on DONE.
 
 ## 7. Safety (see safety-contract.md for the full rule set)
 

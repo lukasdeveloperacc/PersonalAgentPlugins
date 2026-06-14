@@ -1,6 +1,6 @@
 {
   "name": "cmux-agent-harness-loop-plugin",
-  "description": "cmux-only persistent multi-agent harness loop for general software development. A Claude/OMC orchestrator drives a persistent OMX/Codex reviewer pane through cmux (send + read-screen + file-authoritative verdicts), with shared memory in docs/changes/ and a setup/status/plan/review/loop/handoff command surface. Stack-agnostic; no /ask-family calls; no dangerous flags by default.",
+  "description": "cmux-only persistent multi-agent harness loop plus a video-style Socrates planning workshop. Claude/OMC orchestrates implementation/review loops with OMX/Codex panes, while /socrates captures an idea, adapts to interview/debate/fast mode and user experience, discusses with Codex, then uses a document-specialist agent to write PRD/brief/handoff artifacts. No /ask-family calls; no dangerous flags by default.",
   "version": "0.1.0",
   "author": {
     "name": "Personal Agent Plugins"

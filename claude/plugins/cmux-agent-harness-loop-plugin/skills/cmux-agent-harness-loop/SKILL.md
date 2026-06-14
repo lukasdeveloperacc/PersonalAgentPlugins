@@ -6,8 +6,8 @@ disable-model-invocation: true
 # Role
 
 You are the **cmux harness orchestrator**. You operate a persistent multi-agent loop by
-driving cmux panes: you launch an OMX/Codex reviewer pane, deliver prompts with `cmux send`,
-observe with `cmux read-screen`, and parse authoritative verdict files. You are the only
+driving cmux panes: you launch or reuse an interactive OMX/Codex reviewer pane, inject prompts
+with `cmux send`/buffer paste, observe with `cmux read-screen`, and parse authoritative verdict files. You are the only
 role that edits source files. You never call the ask family. You make the final judgement on
 every reviewer finding.
 
@@ -82,13 +82,14 @@ cmux read-screen --surface <ref> --lines 5
 # recreate a dead pane
 cmux respawn-pane --surface <ref> --command "<shell>"
 
-# launch the reviewer runtime IN the pane (priority order, see Reviewer Invocation)
-cmux send --surface <ref> -- "cmux omx exec '<review instructions or: < tmpfile>'\n"
-#   fallback: cmux send --surface <ref> -- "codex exec review < .agent-harness/prompts/tmp/<id>.txt\n"
+# launch the reviewer runtime IN the pane once (interactive, not exec)
+cmux send --surface <ref> -- "omx\n"
+#   fallback: cmux send --surface <ref> -- "codex\n"
 
-# deliver a long prompt (escaping-safe)
+# inject a long prompt into the already-running OMX/Codex pane (escaping-safe)
 cmux set-buffer --name harness "$(cat .agent-harness/prompts/tmp/<id>.txt)"
 cmux paste-buffer --name harness --surface <ref>
+cmux send --surface <ref> -- "\n"
 
 # read reviewer output (liveness + sentinel scan)
 cmux read-screen --surface <ref> --scrollback --lines 200
@@ -123,8 +124,9 @@ silently.
 
 Every review uses ALL THREE. None may be skipped.
 
-1. **`cmux send`** launches a non-interactive in-pane exec carrying the prompt
-   (`cmux omx exec` or `codex exec review`). Long prompts via tempfile + set-buffer/paste-buffer.
+1. **`cmux send`** injects the review prompt into the already-running interactive OMX/Codex
+   pane. Long prompts use tempfile + `set-buffer`/`paste-buffer` + Enter. Do not use
+   `omx exec`, `cmux omx exec`, or `codex exec` by default.
 2. **`cmux read-screen`** polls for liveness + the end-of-turn sentinel
    `<<<HARNESS_VERDICT_DONE id=<loop_id>_<attempt>>>>`. The sentinel is a liveness/latency
    hint ONLY — never the parse trigger.
@@ -157,12 +159,15 @@ Orchestrator surface = `$CMUX_SURFACE_ID` (the current pane).
 # Reviewer Invocation & Runtime Priority
 
 - **Reviewer runtime priority**: reuse a live OMX pane → reuse a live Codex pane → new pane
-  + `cmux omx exec` → new pane + `codex exec review` → fail with an explicit blocker.
+  + start interactive `omx` → new pane + start interactive `codex` → fail with an explicit blocker.
 - **Orchestrator runtime priority**: current Claude/OMC pane (`$CMUX_SURFACE_ID`) →
   `cmux omc` harness skill → plain Claude.
 
-`cmux omx exec` / `cmux omc` / `codex exec review` are in-pane orchestration and are
-ALLOWED. The forbidden ask family is `/ask`, `omc ask`, `omx ask` (one-shot advisors).
+`omx` / `codex` should run as persistent interactive CLIs inside the reviewer pane. Prompt
+injection happens with `cmux send` / `set-buffer` / `paste-buffer`, then `read-screen` observes
+the response. The forbidden ask family is `/ask`, `omc ask`, `omx ask` (one-shot advisors).
+Non-interactive exec forms (`cmux omx exec`, `omx exec`, `codex exec`) are forbidden by default
+for this harness because they bypass the back-and-forth pane conversation.
 
 ## The 9 context items injected into the reviewer
 
@@ -207,7 +212,7 @@ No panes, no execution.
 
 ## review
 Ensure the reviewer pane (Pane Lifecycle); inject the 9-item context; run the both-channels
-round-trip; DECIDE; RECORD. Never edit source.
+round-trip by interactive prompt injection; DECIDE; RECORD. Never edit source.
 
 ## loop "<request>"
 Drive the 5 observable states with `state.json.stage` as the cursor and the termination
@@ -386,7 +391,7 @@ docs/changes/.
 
 Transport is cmux-only. Never call the ask family (/ask, omc ask, omx ask). Use cmux send,
 read-screen, new-split, list-panels, respawn-pane, notify, set-buffer, paste-buffer, and
-in-pane cmux omx exec / cmux omc / codex exec review.
+interactive OMX/Codex pane bootstrap + prompt injection.
 
 Drive the 5 observable states (INTAKE, EXECUTE, REVIEW, DECIDE, HANDOFF) with
 state.json.stage as the cursor. Honor the termination spec. Never use dangerous flags. Never

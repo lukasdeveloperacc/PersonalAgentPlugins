@@ -100,10 +100,14 @@ def make_review_round(cmux, surface, loop_id, attempt, verdict_md, sentinel_pres
                       done_present=True):
     """Simulate one review: orchestrator sends, reads screen, parses verdict file."""
     # 1. send (channel 1)
-    prompt = f"cmux omx exec 'review L{loop_id}_{attempt} < .agent-harness/prompts/tmp/{loop_id}.txt'"
+    sid = f"{loop_id}_{attempt}"
+    prompt = (
+        f"[HARNESS_REVIEW id={sid}]\n"
+        f"Read .agent-harness/prompts/tmp/{loop_id}.txt and write "
+        f"docs/changes/REVIEW_{sid}.md, then create .done and print the sentinel."
+    )
     cmux.send(surface, prompt)
     # 2. read-screen frame with sentinel (channel 2)
-    sid = f"{loop_id}_{attempt}"
     frame = (f"[reviewer] wrote docs/changes/REVIEW_{sid}.md\n"
              + (f"<<<HARNESS_VERDICT_DONE id={sid}>>>\n" if sentinel_present else ""))
     cmux.script_frames(surface, [frame])
@@ -218,18 +222,20 @@ def test_safety_negatives():
     # a clean set of commands the harness would emit
     good = [
         "cmux new-split right --focus false",
-        "cmux send --surface surface:2 -- 'cmux omx exec review'",
+        "cmux send --surface surface:2 -- 'omx\\n'",
+        "cmux set-buffer --name harness '<prompt>'",
+        "cmux paste-buffer --name harness --surface surface:2",
+        "cmux send --surface surface:2 -- '\\n'",
         "cmux read-screen --surface surface:2 --scrollback --lines 200",
-        "codex exec review < .agent-harness/prompts/tmp/L1.txt",
         "git status -s",
     ]
     check("clean commands produce no safety violations", not H.safety_violations(good),
           str(H.safety_violations(good)))
-    # cmux omx exec / cmux omc / codex exec must NOT be flagged as ask family
-    check("cmux omx exec not flagged as ask family",
-          not H.safety_violations(["cmux omx exec 'review'"]))
+    # interactive cmux bootstrap remains allowed, but non-interactive exec is forbidden.
     check("cmux omc not flagged", not H.safety_violations(["cmux omc team 2:codex 'x'"]))
-    check("codex exec review not flagged", not H.safety_violations(["codex exec review < f"]))
+    exec_v = H.safety_violations(["cmux omx exec 'review'", "codex exec review < f", "omx exec foo"])
+    exec_kinds = {k for k, _, _ in exec_v}
+    check("non-interactive exec transport flagged", "exec_transport" in exec_kinds, str(exec_v))
     # bad commands must be flagged
     bad = [
         "claude --dangerously-skip-permissions",

@@ -12,7 +12,8 @@ mechanics the SKILL describes:
   - the DECIDE mapping (ACCEPT/REJECT/NEEDS_CHECK/DEFER)
   - the termination guards (convergence / max_loops / no-progress)
   - template scaffolding from the canonical templates/ mirror, idempotently
-  - safety filters (ask family / dangerous flags / secret patterns)
+  - safety filters (ask family / forbidden non-interactive exec transport /
+    dangerous flags / secret patterns)
 
 The tests in test_harness.py drive this reference against the repo fixtures and templates.
 This is a verification artifact for the plugin contracts, not the plugin runtime itself.
@@ -31,11 +32,15 @@ DECISION_TOKENS = ("GO", "STOP", "NEEDS_CHECK")
 SENTINEL_RE = re.compile(r"<<<HARNESS_VERDICT_DONE id=([A-Za-z0-9_]+)>>>")
 
 ASK_FAMILY = ("/oh-my-claudecode:ask", ":ask", "/ask", "omc ask", "omx ask")
-# Explicitly-allowed in-pane orchestration forms (NOT the ask family).
-ALLOWED_EXEC_FORMS = ("cmux omx exec", "cmux omc exec", "cmux omc", "codex exec")
 # A residual one-shot advisor token: a provider/omc/omx followed by "ask".
 ASK_TOKEN_RE = re.compile(r"\b(?:omc|omx|claude|gemini|codex)\s+ask\b")
 SLASH_ASK_RE = re.compile(r"(?:^|\s)/(?:oh-my-claudecode:)?ask\b")
+# Non-interactive exec transports bypass the persistent pane conversation and are
+# forbidden by default. The supported path is: start `omx`/`codex` in a cmux pane once,
+# then inject prompts with cmux send / set-buffer / paste-buffer.
+FORBIDDEN_EXEC_TRANSPORT_RE = re.compile(
+    r"\b(?:cmux\s+omx\s+exec|omx\s+exec|codex\s+exec(?:\s+review)?)\b"
+)
 DANGEROUS_FLAGS = (
     "--dangerously-skip-permissions",
     "--yolo",
@@ -85,29 +90,22 @@ def redact(text: str) -> str:
     return SECRET_VALUE_RE.sub("[REDACTED]", text)
 
 
-def _strip_allowed_exec(low: str) -> str:
-    """Remove the explicitly-allowed in-pane exec forms so they cannot mask a residual
-    forbidden token, while a genuine `cmux omx ask` still survives for detection."""
-    out = low
-    for form in ALLOWED_EXEC_FORMS:
-        out = out.replace(form, " ")
-    return out
-
-
 def safety_violations(emitted_commands):
     """Return a list of safety violations across emitted transport strings.
 
-    Allowlist-then-denylist: strip the allowed exec orchestration forms first, then flag any
-    residual one-shot advisor token. This flags `omx ask`, `omc ask`, `/ask`,
-    `/oh-my-claudecode:ask`, and even `cmux omx ask`, while never flagging the allowed
-    `cmux omx exec` / `cmux omc` / `codex exec review`.
+    The harness forbids one-shot advisor tokens (`omx ask`, `omc ask`, `/ask`,
+    `/oh-my-claudecode:ask`, and `cmux omx ask`) and also forbids default-use
+    non-interactive exec transports (`cmux omx exec`, `omx exec`, `codex exec`,
+    `codex exec review`). Plain interactive pane bootstrap such as `cmux send ... "omx\n"`
+    or `cmux omc` remains allowed because it preserves a live pane conversation.
     """
     violations = []
     for cmd in emitted_commands:
         low = cmd.lower()
-        residual = _strip_allowed_exec(low)
-        if ASK_TOKEN_RE.search(residual) or SLASH_ASK_RE.search(residual):
+        if ASK_TOKEN_RE.search(low) or SLASH_ASK_RE.search(low):
             violations.append(("ask_family", "one-shot advisor", cmd))
+        if FORBIDDEN_EXEC_TRANSPORT_RE.search(low):
+            violations.append(("exec_transport", "non-interactive exec", cmd))
         for f in DANGEROUS_FLAGS:
             if f in cmd:
                 violations.append(("dangerous_flag", f, cmd))

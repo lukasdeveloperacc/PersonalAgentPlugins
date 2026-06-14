@@ -26,7 +26,8 @@ each loop on the reviewer's STOP/GO verdict. It is not tied to any framework, ap
 
 Every review uses all three mechanisms; none is replaced by file-only handoff:
 
-1. **`cmux send`** launches a non-interactive in-pane exec carrying the prompt.
+1. **`cmux send` / buffer paste** injects the prompt into an already-running
+   interactive OMX/Codex pane.
 2. **`cmux read-screen`** observes pane liveness + an end-of-turn sentinel.
 3. **A structured verdict file** (`docs/changes/REVIEW_<loop>_<attempt>.md`) is the
    *authoritative* parse, read only after its `.done` marker exists.
@@ -35,18 +36,20 @@ This honors the literal acceptance criteria ("sends prompt via cmux send" and "r
 response via cmux read-screen") while keeping the decision deterministic (the file parse,
 gated on `.done`, not on the screen sentinel).
 
-## Ask-family ban scope, and why `cmux omx exec` is allowed
+## Ask-family ban scope, and why interactive OMX prompt injection is allowed
 
 The plugin forbids the **one-shot advisor family**: `/oh-my-claudecode:ask`, `omc ask`,
 `omx ask`, raw provider one-shot advisors, and API-router one-shot calls. The ban is about
 *transport*: a fire-and-forget advisor call made outside cmux.
 
-`cmux omx exec`, `cmux omc`, and `codex exec review` launched **inside a cmux pane** are NOT
-the ask family. `cmux omx`/`cmux omc` set up a tmux shim and forward args so OMX/OMC run as
-native cmux splits — persistent, multi-turn, pane-resident, observed via `read-screen`. That
-is *in-pane orchestration*, which the plugin uses aggressively. This is an intentional,
-documented divergence from earlier plugins (e.g. `developer-plugin`'s `omc-execute`, which
-used `/ask`-style advisors).
+Starting `omx` (or fallback `codex`) **inside a cmux pane once**, then injecting prompts with
+`cmux send`/`set-buffer`/`paste-buffer`, is NOT the ask family. It is persistent,
+multi-turn, pane-resident orchestration observed via `read-screen`.
+
+By contrast, `cmux omx exec`, `omx exec`, `codex exec`, and `codex exec review` are forbidden
+by default because they create a one-shot/non-interactive path and lose the live conversation
+the user wants. Use those exec forms only if a human explicitly asks for non-interactive exec
+instead of pane conversation.
 
 ## Distinction from `omc team N:codex`
 

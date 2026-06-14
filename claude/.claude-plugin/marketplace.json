@@ -1,6 +1,6 @@
 {
   "name": "personal-claude-tools",
-  "description": "Personal Claude Code plugins. Currently ships the cmux-agent-harness-loop plugin: a cmux-pane-based persistent multi-agent harness loop for general software development.",
+  "description": "Personal Claude Code plugins. Ships cmux-agent-harness-loop plus Socrates: a Codex-backed idea workshop that produces planning documents before implementation.",
   "owner": {
     "name": "Personal Agent Plugins"
   },
@@ -8,7 +8,7 @@
     {
       "name": "cmux-agent-harness-loop-plugin",
       "source": "./plugins/cmux-agent-harness-loop-plugin",
-      "description": "cmux-only persistent multi-agent harness loop: Claude/OMC orchestrator + OMX/Codex reviewer panes for general software development. Subcommands: setup|status|plan|review|loop|handoff.",
+      "description": "cmux-only implementation/review harness plus /socrates-style idea workshop with mode/experience selection, Codex reflection, and document-specialist PRD output.",
       "version": "0.1.0"
     }
   ]
