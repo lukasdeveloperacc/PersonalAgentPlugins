@@ -1,0 +1,8 @@
+{
+  "name": "cmux-agent-harness-loop-plugin",
+  "description": "cmux-only persistent multi-agent harness loop for general software development. A Claude/OMC orchestrator drives a persistent OMX/Codex reviewer pane through cmux (send + read-screen + file-authoritative verdicts), with shared memory in docs/changes/ and a setup/status/plan/review/loop/handoff command surface. Stack-agnostic; no /ask-family calls; no dangerous flags by default.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Personal Agent Plugins"
+  }
+}

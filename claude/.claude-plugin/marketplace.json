@@ -1,0 +1,15 @@
+{
+  "name": "personal-claude-tools",
+  "description": "Personal Claude Code plugins. Currently ships the cmux-agent-harness-loop plugin: a cmux-pane-based persistent multi-agent harness loop for general software development.",
+  "owner": {
+    "name": "Personal Agent Plugins"
+  },
+  "plugins": [
+    {
+      "name": "cmux-agent-harness-loop-plugin",
+      "source": "./plugins/cmux-agent-harness-loop-plugin",
+      "description": "cmux-only persistent multi-agent harness loop: Claude/OMC orchestrator + OMX/Codex reviewer panes for general software development. Subcommands: setup|status|plan|review|loop|handoff.",
+      "version": "0.1.0"
+    }
+  ]
+}

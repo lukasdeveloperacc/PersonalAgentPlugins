@@ -2,3 +2,9 @@
 .omx/
 node_modules/
 .env
+
+.claude/
+.codex/
+
+__pycache__/
+*.pyc

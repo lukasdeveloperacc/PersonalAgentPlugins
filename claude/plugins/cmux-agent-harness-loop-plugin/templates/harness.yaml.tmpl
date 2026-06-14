@@ -1,0 +1,70 @@
+version: 1
+
+transport:
+  mode: cmux_only
+  forbid_ask: true
+  both_channels: true
+
+agents:
+  orchestrator:
+    preferred_runtime:
+      - omc
+      - claude
+    role: orchestrator
+    can_modify_files: true
+  reviewer:
+    preferred_runtime:
+      - omx
+      - codex
+    role: reviewer
+    can_modify_files: false
+    persistent: true
+    pane:
+      split: right
+      reuse: true
+  worker:
+    preferred_runtime:
+      - omc
+      - claude
+      - omx
+      - codex
+    role: worker
+    can_modify_files: true
+    persistent: false
+    pane:
+      split: down
+      reuse: false
+    enabled: false   # deferred to v0.2
+
+loop:
+  observable_states:
+    - INTAKE
+    - EXECUTE
+    - REVIEW
+    - DECIDE
+    - HANDOFF
+  max_loops: 5
+
+memory:
+  task_spec: docs/changes/TASK_SPEC.md
+  decisions: docs/changes/DECISIONS.md
+  review_log: docs/changes/REVIEW_LOG.md
+  todo: docs/changes/TODO.md
+  handoff: docs/changes/HANDOFF.md
+
+safety:
+  forbid_commands:
+    - "/oh-my-claudecode:ask"
+    - "/ask"
+    - "omc ask"
+    - "omx ask"
+  forbid_dangerous_flags:
+    - "--dangerously-skip-permissions"
+    - "--yolo"
+    - "-a never"
+    - "--approval-mode never"
+  redact_env_names:
+    - "*_API_KEY"
+    - "*_TOKEN"
+    - "*_SECRET"
+    - "*_PASSWORD"
