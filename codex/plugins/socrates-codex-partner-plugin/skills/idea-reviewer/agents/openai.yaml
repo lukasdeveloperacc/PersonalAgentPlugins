@@ -1,0 +1,9 @@
+interface:
+  display_name: "Idea Reviewer"
+  short_description: "아이디어/타겟/차별화/검증 리스크를 비판하는 Codex reviewer agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 아이디어의 가장 강한 반론과 MVP 축소안을 리뷰해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

@@ -1,0 +1,9 @@
+interface:
+  display_name: "Socrates PM"
+  short_description: "제품 framing, MVP 축소, 수용 기준을 정리하는 Codex PM agent."
+  brand_color: "#7C3AED"
+  default_prompt: "Socrates 아이디어를 PM 관점에서 정리해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

@@ -1,0 +1,9 @@
+interface:
+  display_name: "Design Reviewer"
+  short_description: "UX flow, IA/copy, 접근성, 상태 처리를 검토하는 Codex design reviewer agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 기획의 사용자 흐름과 UX 리스크를 리뷰해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

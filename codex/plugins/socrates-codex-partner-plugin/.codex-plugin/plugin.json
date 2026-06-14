@@ -1,7 +1,7 @@
 {
   "name": "socrates-codex-partner-plugin",
   "version": "0.1.0",
-  "description": "Codex companion for the Claude cmux Socrates workflow: Korean PM critique, document-specialist planning artifacts, and file-authoritative harness review verdicts. Designed to run inside a cmux/OMX pane without ask-family shortcuts.",
+  "description": "Codex companion for Claude Socrates: Korean PM/reviewer/researcher role agents, Ralplan-ready bundle drafting, and cmux harness verdicts without ask/exec shortcuts.",
   "author": {
     "name": "Personal Agent Plugins"
   },
@@ -16,19 +16,20 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Socrates Codex Partner",
-    "shortDescription": "Codex PM/document partner for Claude Socrates.",
-    "longDescription": "Provides Korean-first Socrates critique, PRD/document drafting, and harness verdict-writing skills so a Claude cmux orchestrator can collaborate with a predictable Codex partner pane.",
+    "shortDescription": "Codex PM/reviewer/researcher agents for Claude Socrates.",
+    "longDescription": "Provides Korean-first Codex companion role agents for Claude Socrates: PM framing, idea/design/code review, AI and surfer research, Ralplan partner critique, Ralplan-ready bundle drafting, and file-authoritative harness verdict writing. Designed for persistent cmux/OMX panes without ask-family or exec-family shortcuts.",
     "developerName": "Personal Agent Plugins",
     "category": "Productivity",
     "capabilities": [
       "Planning",
       "Review",
+      "Research",
       "Documentation"
     ],
     "defaultPrompt": [
       "Socrates 아이디어를 PM 관점에서 비판해줘.",
-      "이 transcript로 PRD와 HANDOFF를 작성해줘.",
-      "하니스 리뷰 verdict를 계약대로 작성해줘."
+      "이 transcript로 Ralplan-ready bundle을 작성해줘.",
+      "이 handoff를 ralplan-partner로 검토해줘."
     ],
     "brandColor": "#7C3AED"
   }

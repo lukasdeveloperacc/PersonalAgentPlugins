@@ -1,0 +1,9 @@
+interface:
+  display_name: "Ralplan Partner"
+  short_description: "Codex $ralplan 입력, 결정기록, test shape를 점검하는 planning partner agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 handoff bundle을 $ralplan에 넣기 전에 리스크와 test shape를 검토해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

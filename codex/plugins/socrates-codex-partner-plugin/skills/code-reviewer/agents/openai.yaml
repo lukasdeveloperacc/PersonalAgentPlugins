@@ -1,0 +1,9 @@
+interface:
+  display_name: "Code Reviewer"
+  short_description: "구현 diff와 테스트 근거를 읽기 전용으로 검토하는 Codex code reviewer agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 변경 diff를 코드 리뷰 관점에서 검토해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

@@ -28,12 +28,15 @@ def main():
     soc = ROOT / "skills/socrates/SKILL.md"
     agent = ROOT / "agents/document-specialist.md"
     contract = ROOT / "contracts/socrates-workshop-contract.md"
+    role_contract = ROOT / "contracts/role-lane-contract.md"
 
     check("socrates skill exists", soc.is_file(), str(soc))
     check("document-specialist agent exists", agent.is_file(), str(agent))
     check("socrates contract exists", contract.is_file(), str(contract))
 
     text = soc.read_text(encoding="utf-8")
+    contract_text = contract.read_text(encoding="utf-8")
+    agent_text = agent.read_text(encoding="utf-8")
     for phrase in [
         "인터뷰모드",
         "토론모드",
@@ -60,9 +63,55 @@ def main():
     for bad in forbidden_runtime:
         check(f"socrates forbids {bad}", bad in text and "Do **not** use" in text)
 
-    agent_text = agent.read_text(encoding="utf-8")
     check("agent is document-only", "do not write application source code" in agent_text.lower())
     check("agent writes PRD", "docs/changes/PRD.md" in agent_text)
+
+    bundle_files = [
+        "RALPLAN_BRIEF.md",
+        "INTERVIEW_EVIDENCE.md",
+        "RALPLAN_DR_SEED.md",
+        "ULTRAGOAL_DRAFT.md",
+        "ROLE_PANE_MAP.md",
+        "MCP_READINESS_CHECKLIST.md",
+    ]
+    for name in bundle_files:
+        check(f"socrates skill references bundle: {name}", name in text)
+        check(f"socrates contract references bundle: {name}", name in contract_text)
+        check(f"document-specialist writes bundle: {name}", name in agent_text)
+        check(f"bundle template exists: {name}", (ROOT / f"templates/socrates/{name}.tmpl").is_file())
+
+    ultragoal_template = (ROOT / "templates/socrates/ULTRAGOAL_DRAFT.md.tmpl").read_text(encoding="utf-8")
+    for phrase in ["Draft only", "document-specialist", "claude-codex-orchestrator", "자동 실행하지 않습니다"]:
+        check(f"ultragoal draft template includes {phrase}", phrase in ultragoal_template)
+
+    for phrase in [
+        "Korean-first `/socrates` planning conversation",
+        "Codex `$ralplan` handoff bundle",
+        "Claude `/ultragoal` prompt draft only",
+        "explicit user-selected execution lane",
+        "$deep-interview",
+    ]:
+        check(f"contract naming flow includes {phrase}", phrase in contract_text)
+
+    check("role-lane contract exists", role_contract.is_file(), str(role_contract))
+    role_contract_text = role_contract.read_text(encoding="utf-8") if role_contract.is_file() else ""
+    for role in [
+        "claude-codex-orchestrator",
+        "front-developer",
+        "backend-developer",
+        "infra-developer",
+        "ai-engineering-developer",
+    ]:
+        p = ROOT / f"agents/{role}.md"
+        check(f"Claude lane agent exists: {role}", p.is_file(), str(p))
+        lane_text = p.read_text(encoding="utf-8") if p.is_file() else ""
+        check(f"Claude lane references role contract: {role}", "contracts/role-lane-contract.md" in lane_text)
+        check(f"Claude lane is not planning auto-run: {role}", "planning" in lane_text.lower() and "auto" in lane_text.lower())
+        check(f"role contract includes lane: {role}", role in role_contract_text)
+
+    for bad in ["omx exec", "codex exec", "codex exec review", "cmux omx exec"]:
+        check(f"socrates forbids exec transport: {bad}", bad in text and ("Do **not** use" in text or "기본" in text))
+        check(f"role-lane forbids exec transport: {bad}", bad in role_contract_text and "기본" in role_contract_text)
 
     for rel in [
         "templates/socrates/SOCRATES_BRIEF.md.tmpl",
@@ -75,8 +124,12 @@ def main():
         check(f"template exists: {rel}", (ROOT / rel).is_file())
 
     readme = (REPO / "README.md").read_text(encoding="utf-8")
+    docs_socrates = (REPO / "docs/socrates-workshop.md").read_text(encoding="utf-8")
     check("README documents socrates invocation", "/cmux-agent-harness-loop-plugin:socrates" in readme)
     check("README documents bare alias", "bare `/socrates`" in readme)
+    for name in bundle_files:
+        check(f"docs mirror references bundle: {name}", name in docs_socrates)
+    check("docs mirror states plugin-local canonical", "Plugin-local contracts/templates/skills are canonical" in docs_socrates)
     prd_template = (ROOT / "templates/socrates/PRD.md.tmpl").read_text(encoding="utf-8")
     check("template uses Korean PRD heading", "제품 요구사항 문서" in prd_template)
 

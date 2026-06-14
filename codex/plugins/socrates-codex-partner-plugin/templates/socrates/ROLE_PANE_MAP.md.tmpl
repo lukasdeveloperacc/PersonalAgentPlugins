@@ -1,0 +1,28 @@
+# Role / Pane Map
+
+## Codex / OMX PM·Reviewer·Researcher panes
+
+| Role | Pane / Surface | Responsibility | Output |
+|---|---|---|---|
+| socrates-pm |  | 문제/타겟/MVP 정리 |  |
+| idea-reviewer |  | 아이디어 리스크/차별화 비판 |  |
+| design-reviewer |  | UX/정보구조 검토 |  |
+| code-reviewer |  | 구현계획/코드 리스크 검토 |  |
+| ai-researcher |  | AI/LLM 선택지 조사 |  |
+| surfer-researcher |  | 웹/시장/레퍼런스 조사 |  |
+| ralplan-partner |  | `$ralplan` 입력/결정기록 검토 |  |
+
+## Claude Orchestrator / Developer lanes
+
+| Role | Pane / Surface | Responsibility | Output |
+|---|---|---|---|
+| claude-codex-orchestrator |  | Codex 결과를 Claude 실행계획으로 연결 |  |
+| front-developer |  | 프론트엔드 구현 레인 |  |
+| backend-developer |  | 백엔드 구현 레인 |  |
+| infra-developer |  | 인프라/배포 레인 |  |
+| ai-engineering-developer |  | AI 엔지니어링 레인 |  |
+| document-specialist |  | 기획 산출물 및 `/ultragoal` 초안 작성 |  |
+
+## Transport Rule
+
+기본 협업은 persistent cmux pane prompt injection입니다. `omx exec`, `codex exec`, `codex exec review`, `cmux omx exec`는 기본 경로가 아닙니다.

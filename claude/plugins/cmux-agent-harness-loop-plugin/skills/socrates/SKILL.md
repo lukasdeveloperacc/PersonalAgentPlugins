@@ -1,6 +1,6 @@
 ---
 name: socrates
-description: Video-style Socratic product-planning workshop. Capture an idea, ask for progression mode and experience level, discuss it with a visible Codex/OMX partner, offer direction choices, then use a document-specialist agent to write PRD/brief/handoff artifacts. No implementation.
+description: Video-style Socratic product-planning workshop. Capture an idea, ask for progression mode and experience level, discuss it with a visible Codex/OMX partner, offer direction choices, then use a document-specialist agent to write PRD/brief/handoff artifacts plus a Ralplan-ready handoff bundle. No implementation.
 disable-model-invocation: true
 ---
 
@@ -17,7 +17,7 @@ This skill intentionally mirrors a video-style flow:
 3. user chooses their experience level,
 4. Claude interviews or debates the idea with Codex visible as a thinking partner,
 5. Claude offers direction choices such as "이대로 진행" / "문제·타겟 다시" / "기능·차별화 다시" / "OUT 목록 조정",
-6. a document-specialist writes the final planning artifacts.
+6. a document-specialist writes the final planning artifacts and the Ralplan-ready handoff bundle.
 
 
 # Language Policy
@@ -59,6 +59,8 @@ If the target project installs the alias template, the video-like command is:
 
 - Do **not** start coding.
 - Do **not** silently turn the user's idea into a spec without conversation.
+- Do **not** execute Claude `/ultragoal`, Codex `$ultragoal`, `$ralplan`, or the harness loop from
+  this planning skill. Socrates may draft handoff prompts only.
 - Do **not** use `/ask`, `omc ask`, `omx ask`, or any one-shot advisor transport.
 - Do **not** use `omx exec`, `cmux omx exec`, `codex exec`, or `codex exec review`
   by default; Socrates must converse with an already-running interactive pane.
@@ -121,6 +123,14 @@ docs/changes/SOCRATES_TRANSCRIPT.md
   "open_questions": [],
   "assumptions": [],
   "out_of_scope": [],
+  "handoff_bundle": {
+    "ralplan_brief": null,
+    "interview_evidence": null,
+    "ralplan_dr_seed": null,
+    "ultragoal_draft": null,
+    "role_pane_map": null,
+    "mcp_readiness_checklist": null
+  },
   "artifacts": []
 }
 ```
@@ -218,6 +228,22 @@ docs/changes/OUT_OF_SCOPE.md
 docs/changes/HANDOFF.md
 ```
 
+For Codex `$ralplan` and later explicit Claude `/ultragoal` handoff, also ask it to write the
+Ralplan-ready bundle:
+
+```text
+docs/changes/RALPLAN_BRIEF.md
+docs/changes/INTERVIEW_EVIDENCE.md
+docs/changes/RALPLAN_DR_SEED.md
+docs/changes/ULTRAGOAL_DRAFT.md
+docs/changes/ROLE_PANE_MAP.md
+docs/changes/MCP_READINESS_CHECKLIST.md
+```
+
+`ULTRAGOAL_DRAFT.md` is a Claude `/ultragoal` prompt draft only. It is owned by
+`document-specialist`, validated by `claude-codex-orchestrator`, and must not be auto-run by
+`/socrates`, `$deep-interview`, or `$ralplan`.
+
 Use these templates when helpful:
 
 - `templates/socrates/SOCRATES_BRIEF.md.tmpl`
@@ -225,6 +251,12 @@ Use these templates when helpful:
 - `templates/socrates/OUT_OF_SCOPE.md.tmpl`
 - `templates/socrates/HANDOFF.md.tmpl`
 - `templates/socrates/EXPERIMENT_PLAN.md.tmpl`
+- `templates/socrates/RALPLAN_BRIEF.md.tmpl`
+- `templates/socrates/INTERVIEW_EVIDENCE.md.tmpl`
+- `templates/socrates/RALPLAN_DR_SEED.md.tmpl`
+- `templates/socrates/ULTRAGOAL_DRAFT.md.tmpl`
+- `templates/socrates/ROLE_PANE_MAP.md.tmpl`
+- `templates/socrates/MCP_READINESS_CHECKLIST.md.tmpl`
 
 If the document-specialist agent is unavailable, write the same artifacts yourself and state that
 fallback explicitly.

@@ -1,0 +1,9 @@
+interface:
+  display_name: "Surfer Researcher"
+  short_description: "시장/경쟁/UX/public-source 관찰을 정리하는 Codex surfer research agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 아이디어의 시장/경쟁/UX 레퍼런스를 조사해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

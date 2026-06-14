@@ -64,8 +64,24 @@ test-fixtures/
 3. 경험수준 선택: `거의처음` / `튜토리얼 정도` / `혼자 만들 수 있음` / `실무개발자`.
 4. Claude가 사용자를 인터뷰하고, Codex/OMX 파트너 pane이 문제·타겟·기능·차별화·OUT 목록을 비판합니다.
 5. 토론모드에서는 `이대로 진행`, `문제/타겟 다시 잡기`, `기능/차별화 다시 잡기`, `OUT 목록 조정`, `질문 더 받기` 메뉴로 되돌아갈 수 있습니다.
-6. 마지막에는 plugin-shipped `document-specialist` agent가 `docs/changes/SOCRATES_BRIEF.md`, `PRD.md`, `OUT_OF_SCOPE.md`, `HANDOFF.md`를 작성합니다.
+6. 마지막에는 plugin-shipped `document-specialist` agent가 기본 기획문서와 Ralplan-ready handoff bundle을 작성합니다.
 7. 질문, 선택지, Codex 요약, 최종 기획문서 산출물은 한국어를 기본값으로 사용합니다.
+
+기본 기획문서:
+
+- `docs/changes/SOCRATES_BRIEF.md`
+- `docs/changes/PRD.md`
+- `docs/changes/OUT_OF_SCOPE.md`
+- `docs/changes/HANDOFF.md`
+
+Ralplan-ready handoff bundle:
+
+- `docs/changes/RALPLAN_BRIEF.md`
+- `docs/changes/INTERVIEW_EVIDENCE.md`
+- `docs/changes/RALPLAN_DR_SEED.md`
+- `docs/changes/ULTRAGOAL_DRAFT.md` — Claude `/ultragoal` prompt draft only; 자동 실행 아님.
+- `docs/changes/ROLE_PANE_MAP.md`
+- `docs/changes/MCP_READINESS_CHECKLIST.md`
 
 영상처럼 bare `/socrates`를 원하면 target project에 `templates/project-commands/socrates.md.tmpl`를 `.claude/commands/socrates.md`로 복사해 alias로 사용할 수 있습니다. 플러그인 배포형 기본 명령은 namespace 충돌 방지를 위해 `/cmux-agent-harness-loop-plugin:socrates`입니다.
 
@@ -89,8 +105,11 @@ test-fixtures/
 Claude의 `/socrates`가 Codex/OMX pane을 단순 조언자가 아니라 같은 계약을 아는 파트너로 쓰도록, Codex 쪽 companion plugin도 함께 제공합니다.
 
 - `socrates-partner`: 아이디어를 PM/비판자 관점에서 한국어로 점검하고 다음 질문을 제안.
-- `socrates-document-specialist`: Socrates transcript를 한국어 PRD/브리프/HANDOFF 문서로 작성.
+- `socrates-document-specialist`: Socrates transcript를 한국어 PRD/브리프/HANDOFF와 Ralplan-ready bundle로 작성.
 - `harness-reviewer`: 구현 루프에서 `REVIEW_<loop>_<attempt>.md` + `.done` + sentinel 계약을 지키는 리뷰어.
+- `socrates-pm`, `idea-reviewer`, `design-reviewer`, `code-reviewer`, `ai-researcher`, `surfer-researcher`, `ralplan-partner`: Codex PM/Reviewer/Researcher lane profile.
+
+각 Codex 역할은 `SKILL.md` entrypoint와 `agents/openai.yaml` agent profile을 함께 제공합니다. 현재 Codex plugin에서 검증 가능한 agent 배포 표면은 이 skill+agent-profile 쌍입니다.
 
 설치:
 

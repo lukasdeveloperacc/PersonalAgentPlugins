@@ -1,0 +1,9 @@
+interface:
+  display_name: "Socrates Partner"
+  short_description: "Socrates workshop에서 문제/타겟/MVP/OUT을 비판하는 Codex PM partner agent."
+  brand_color: "#7C3AED"
+  default_prompt: "Socrates transcript를 보고 다음 질문과 OUT 후보를 제안해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

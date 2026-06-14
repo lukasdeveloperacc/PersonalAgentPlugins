@@ -1,0 +1,9 @@
+interface:
+  display_name: "AI Researcher"
+  short_description: "AI/model/API/agent 설계 근거를 정리하는 Codex research agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 AI 기능에 맞는 모델/API/agent 선택지를 근거와 함께 조사해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

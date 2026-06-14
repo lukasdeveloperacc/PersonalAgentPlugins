@@ -1,0 +1,9 @@
+interface:
+  display_name: "Socrates Document Specialist"
+  short_description: "Socrates transcript를 PRD와 Ralplan-ready bundle로 작성하는 Codex document agent."
+  brand_color: "#7C3AED"
+  default_prompt: "이 transcript로 PRD와 Ralplan-ready handoff bundle을 작성해줘."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

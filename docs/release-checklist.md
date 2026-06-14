@@ -13,8 +13,10 @@
 - Confirm the required skill file exists: `claude/plugins/cmux-agent-harness-loop-plugin/skills/cmux-agent-harness-loop/SKILL.md`.
 - Confirm the harness skill has role, subcommand dispatch, transport playbook, loop spec, and output format.
 - Confirm the Socrates skill exists, collects idea/mode/experience, uses Codex reflection, offers the direction-choice menu, and hands off to `document-specialist`.
-- Confirm `agents/document-specialist.md` exists and is document-only.
-- Confirm all five contracts exist: `cmux-transport-contract.md`, `harness-loop-contract.md`, `review-verdict.md`, `safety-contract.md`, `socrates-workshop-contract.md`.
+- Confirm `agents/document-specialist.md` exists, is document-only, owns `ULTRAGOAL_DRAFT.md`, and writes the six-file Ralplan-ready bundle.
+- Confirm Claude lane agents exist and do not auto-run from planning modes: `claude-codex-orchestrator`, `front-developer`, `backend-developer`, `infra-developer`, `ai-engineering-developer`.
+- Confirm all six core contracts exist: `cmux-transport-contract.md`, `harness-loop-contract.md`, `review-verdict.md`, `safety-contract.md`, `socrates-workshop-contract.md`, `role-lane-contract.md`.
+- Confirm Socrates bundle templates exist in both Claude and Codex plugin mirrors: `RALPLAN_BRIEF.md`, `INTERVIEW_EVIDENCE.md`, `RALPLAN_DR_SEED.md`, `ULTRAGOAL_DRAFT.md`, `ROLE_PANE_MAP.md`, `MCP_READINESS_CHECKLIST.md`.
 - Confirm root `docs/cmux-transport-contract.md` mirror is synced with the plugin-local `contracts/cmux-transport-contract.md`.
 
 ## Inlined-template / mirror diff gate (FAIL-CLOSED)
@@ -29,6 +31,10 @@
 - Run `python3 /Users/chaejin/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py codex/plugins/socrates-codex-partner-plugin`.
 - Run `python3 codex/plugins/socrates-codex-partner-plugin/tests/test_static.py`.
 - Confirm all Codex companion skills are Korean-first and forbid `/ask`/`omc ask`/`omx ask`.
+- Confirm every Codex role skill has `skills/<role>/agents/openai.yaml` agent metadata.
+- Confirm existing core roles remain valid: `socrates-partner`, `socrates-document-specialist`, `harness-reviewer`.
+- Confirm new Codex companion lanes exist: `socrates-pm`, `idea-reviewer`, `design-reviewer`, `code-reviewer`, `ai-researcher`, `surfer-researcher`, `ralplan-partner`.
+- Confirm `socrates-document-specialist` writes the Ralplan-ready bundle and marks `ULTRAGOAL_DRAFT.md` as draft-only/no-auto-run.
 
 ## Smoke / Dry-run tests (no live cmux pane required)
 
@@ -49,9 +55,9 @@ Inside a real cmux pane:
 3. Kill the reviewer pane mid-review → recovery via respawn/new-split → review completes.
 4. `/cmux-agent-harness-loop status` → correct liveness + last_loop_at.
 5. Confirm no secrets in `REVIEW_LOG.md`; no dangerous flags in any emitted command.
-6. Run `/cmux-agent-harness-loop-plugin:socrates` on a sample idea → choose `토론모드` + one experience level → verify Codex reflection is surfaced, direction menu appears, and docs/changes/SOCRATES_BRIEF.md + PRD.md + OUT_OF_SCOPE.md + HANDOFF.md are produced.
+6. Run `/cmux-agent-harness-loop-plugin:socrates` on a sample idea → choose `토론모드` + one experience level → verify Codex reflection is surfaced, direction menu appears, and docs/changes/SOCRATES_BRIEF.md + PRD.md + OUT_OF_SCOPE.md + HANDOFF.md plus `RALPLAN_BRIEF.md`, `INTERVIEW_EVIDENCE.md`, `RALPLAN_DR_SEED.md`, `ULTRAGOAL_DRAFT.md`, `ROLE_PANE_MAP.md`, and `MCP_READINESS_CHECKLIST.md` are produced.
 7. Optional alias smoke: copy `templates/project-commands/socrates.md.tmpl` to target `.claude/commands/socrates.md`, reload Claude, and verify bare `/socrates` delegates to the plugin skill.
-8. Codex companion live smoke: install `socrates-codex-partner-plugin`, then from the Codex pane run a sample `socrates-partner` reflection and verify Korean structured output.
+8. Codex companion live smoke: install `socrates-codex-partner-plugin`, then from the Codex pane run a sample `socrates-partner` reflection and one role-agent profile such as `socrates-pm` or `ralplan-partner`; verify Korean structured output.
 
 ## Publishing
 

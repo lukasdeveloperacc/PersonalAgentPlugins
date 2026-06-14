@@ -14,7 +14,8 @@ conversation that adapts to:
 2. the user's experience level.
 
 The expected output is not code. The expected output is a clear product brief / PRD / handoff
-that can later feed `cmux-agent-harness-loop plan` or `loop`.
+and a Ralplan-ready bundle that can later feed Codex `$ralplan`, the cmux harness `plan`, or an
+explicit Claude `/ultragoal` prompt draft after human selection.
 
 
 ## 2. Language policy
@@ -133,6 +134,20 @@ Required artifacts:
 - `docs/changes/OUT_OF_SCOPE.md` — explicit non-goals and deferred ideas.
 - `docs/changes/HANDOFF.md` — next prompt for `plan` / `loop`.
 
+Ralplan-ready bundle artifacts:
+
+- `docs/changes/RALPLAN_BRIEF.md` — compact input brief for Codex `$ralplan`.
+- `docs/changes/INTERVIEW_EVIDENCE.md` — interview answers, Codex critique, assumptions, and
+  unresolved questions with source notes.
+- `docs/changes/RALPLAN_DR_SEED.md` — decision-record seed: principles, decision drivers,
+  alternatives, recommendation, risks.
+- `docs/changes/ULTRAGOAL_DRAFT.md` — Claude `/ultragoal` prompt draft only; never auto-run by
+  `/socrates`, `$deep-interview`, or `$ralplan`.
+- `docs/changes/ROLE_PANE_MAP.md` — intended Codex PM/reviewer/researcher panes and Claude
+  orchestrator/developer lanes.
+- `docs/changes/MCP_READINESS_CHECKLIST.md` — MCP/server/tooling readiness, missing authority,
+  and manual checks before execution.
+
 Optional artifacts:
 
 - `docs/changes/EXPERIMENT_PLAN.md` — validation experiments if product risk is high.
@@ -166,6 +181,12 @@ docs/changes/PRD.md
 docs/changes/OUT_OF_SCOPE.md
 docs/changes/EXPERIMENT_PLAN.md  # optional
 docs/changes/QUESTIONS.md        # optional
+docs/changes/RALPLAN_BRIEF.md
+docs/changes/INTERVIEW_EVIDENCE.md
+docs/changes/RALPLAN_DR_SEED.md
+docs/changes/ULTRAGOAL_DRAFT.md
+docs/changes/ROLE_PANE_MAP.md
+docs/changes/MCP_READINESS_CHECKLIST.md
 ```
 
 Do not write secrets. Redact token-like values using the safety contract.
@@ -182,3 +203,34 @@ Socrates stops when one of these is true:
 
 Otherwise keep the conversation moving. Do not ask for permission to continue between obvious
 safe planning steps.
+
+## 8. Ralplan / Ultragoal handoff boundaries
+
+The planning flow is:
+
+```text
+Korean-first `/socrates` planning conversation
+  → Codex `$ralplan` handoff bundle
+  → Claude `/ultragoal` prompt draft only
+  → explicit user-selected execution lane
+```
+
+Terminology boundaries:
+
+- `/socrates` is the Claude plugin command surface for the video-style idea workshop.
+- Codex `$deep-interview` is the conceptual requirements-clarification workflow this skill mirrors.
+- Codex `$ralplan` is a consensus planning gate that may consume the bundle.
+- Claude `/ultragoal` appears only as `ULTRAGOAL_DRAFT.md` prompt text until the user explicitly
+  copies or selects it for execution.
+
+`ULTRAGOAL_DRAFT.md` ownership:
+
+- `document-specialist` writes the draft from the approved workshop evidence.
+- `claude-codex-orchestrator` validates scope fidelity and draft-only wording.
+- Codex `ralplan-partner` may review for scope fidelity, but does not own the final wording.
+
+Source-of-truth ordering:
+
+1. Plugin-local contracts, templates, skills, and agents are canonical.
+2. Root `docs/` files are mirrors or release-facing explanations.
+3. If a root doc conflicts with this contract, this plugin-local contract wins.
