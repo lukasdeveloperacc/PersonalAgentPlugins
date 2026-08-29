@@ -27,6 +27,30 @@
       }
     },
     {
+      "name": "superpowers",
+      "description": "브레인스토밍 → 계획 수립 → 실행 → 완료 검증으로 이어지는 개발 워크플로 스킬 묶음. 기획문서 작성 흐름과 맞는다.",
+      "category": "workflow",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/obra/superpowers.git",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "find-skills",
+      "description": "필요한 기능이 이미 스킬로 있는지 skills.sh에서 찾아 설치까지 안내한다. 업스트림에 plugin.json이 없어 스킬 경로를 명시한다.",
+      "category": "workflow",
+      "version": "1.0.0",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/vercel-labs/skills.git",
+        "ref": "main"
+      },
+      "skills": [
+        "./skills/find-skills"
+      ]
+    },
+    {
       "name": "authoring",
       "description": "이 저장소를 유지보수하기 위한 자작 스킬. 스킬 추가, 번들 경계, 큐레이션 항목 관리 규약.",
       "version": "0.1.0",
