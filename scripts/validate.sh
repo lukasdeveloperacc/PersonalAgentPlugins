@@ -94,10 +94,15 @@ for p in plugins:
                     referenced.add(path)
     elif isinstance(src, dict):
         curated += 1
-        kind = src.get("source")
-        if kind != "url":
-            fail(f"V7 [{nm}] source '{kind}' 금지 — 'url' + HTTPS만 허용 "
+        kind, path = src.get("source"), src.get("path")
+        if kind not in ("url", "git-subdir"):
+            fail(f"V7 [{nm}] source '{kind}' 금지 — 'url' 또는 'git-subdir'만 허용 "
                  f"('github'은 SSH로 클론해 키 없는 머신에서 실패한다)")
+        elif kind == "url" and path:
+            fail(f"V7 [{nm}] 'url' 소스는 path를 무시한다 — 저장소 루트를 통째로 받고 "
+                 f"빈 플러그인이 설치 성공으로 보고된다. 서브디렉토리는 'git-subdir'를 쓴다")
+        elif kind == "git-subdir" and not path:
+            fail(f"V7 [{nm}] 'git-subdir'에는 path가 필요하다")
         url = src.get("url", "")
         if not url.startswith("https://"):
             fail(f"V7 [{nm}] HTTPS가 아니다: {url}")

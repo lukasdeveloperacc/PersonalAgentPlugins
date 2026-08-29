@@ -66,11 +66,24 @@ claude plugin details <bundle>   # 컴포넌트 인벤토리 + 예상 토큰
 }
 ```
 
+플러그인이 저장소 **서브디렉토리**에 있으면 `git-subdir`를 쓴다.
+
+```json
+"source": {
+  "source": "git-subdir",
+  "url": "https://github.com/<owner>/<repo>.git",
+  "path": "product-management",
+  "ref": "main"
+}
+```
+
 ### 반드시 지킬 것
 
-- **`source: "url"` + HTTPS 주소만 쓴다.** `{"source": "github", "repo": "..."}` 형식은 SSH(`git@github.com:`)로 클론을 시도해 키가 없는 머신에서 실패한다. 새 머신에서만 터지므로 로컬에서는 보이지 않는다.
+- **HTTPS만 쓴다.** `{"source": "github", "repo": "..."}` 형식은 SSH(`git@github.com:`)로 클론을 시도해 키가 없는 머신에서 실패한다. 새 머신에서만 터지므로 로컬에서는 보이지 않는다.
+- **`url`에 `path`를 붙이지 않는다.** `url` 소스는 `path`를 **조용히 무시하고** 저장소 루트를 통째로 받는다. 플러그인이 없는데도 설치 성공을 보고하고 스킬 0개가 들어온다. 서브디렉토리는 반드시 `git-subdir`다.
 - **`ref`를 명시한다.** 기본값에 의존하지 않는다.
 - **`name`은 원본 `plugin.json`의 `name`과 맞춘다.** 다르게 쓰면 설치 후 조회가 엇갈린다.
+- 설치 후 **`claude plugin details <name>`으로 스킬 수를 확인한다.** 0개면 소스 형식이 틀린 것이다.
 
 ### 버전 정책
 
