@@ -1,10 +1,22 @@
+# 런타임 상태
 .omc/
 .omx/
-node_modules/
-.env
-
 .claude/
 .codex/
-
+node_modules/
 __pycache__/
 *.pyc
+
+# 비밀 — 이 저장소는 공개다. config/ 에는 .tmpl 만 커밋한다.
+.env
+.env.*
+!.env.example
+auth.json
+.credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# 부트스트랩이 템플릿을 해석해 만든 실값 파일
+config/**/*.resolved.*

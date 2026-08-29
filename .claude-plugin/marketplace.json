@@ -1,0 +1,40 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "personal-agent-plugins",
+  "description": "개인용 에이전트 환경. 자주 쓰는 서드파티 플러그인을 큐레이션하고 자작 스킬을 함께 배포한다.",
+  "owner": {
+    "name": "chaejin"
+  },
+  "plugins": [
+    {
+      "name": "andrej-karpathy-skills",
+      "description": "LLM 코딩에서 흔한 실수를 줄이는 행동 지침. 과설계 방지, 최소 변경, 검증 가능한 완료 조건.",
+      "category": "workflow",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/multica-ai/andrej-karpathy-skills.git",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "ponytail",
+      "description": "가장 단순하고 짧은 해법을 강제한다. YAGNI, 표준 라이브러리 우선, 요청하지 않은 추상화 금지.",
+      "category": "workflow",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/DietrichGebert/ponytail.git",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "authoring",
+      "description": "이 저장소를 유지보수하기 위한 자작 스킬. 스킬 추가, 번들 경계, 큐레이션 항목 관리 규약.",
+      "version": "0.1.0",
+      "category": "workflow",
+      "source": "./",
+      "skills": [
+        "./skills/skill-authoring"
+      ]
+    }
+  ]
+}
