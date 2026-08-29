@@ -81,6 +81,104 @@
       ]
     },
     {
+      "name": "oh-my-claudecode",
+      "category": "workflow",
+      "description": "멀티 에이전트 오케스트레이션 레이어. autopilot/ralph/team 워크플로와 전용 에이전트.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Yeachan-Heo/oh-my-claudecode.git",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "vercel",
+      "category": "deployment",
+      "description": "Vercel 배포·빌드 상태·로그·도메인 관리. Next.js 프로젝트 운영용.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/vercel/vercel-plugin.git",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "vercel-agent-skills",
+      "category": "development",
+      "version": "1.0.0",
+      "description": "React·React Native·웹 디자인 가이드라인과 Vercel 배포 스킬. Expo 앱과 Next.js 양쪽에 쓴다.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/vercel-labs/agent-skills.git",
+        "ref": "main"
+      },
+      "skills": [
+        "./skills/react-best-practices",
+        "./skills/react-native-skills",
+        "./skills/web-design-guidelines",
+        "./skills/composition-patterns",
+        "./skills/react-view-transitions",
+        "./skills/deploy-to-vercel",
+        "./skills/vercel-optimize",
+        "./skills/vercel-cli-with-tokens"
+      ]
+    },
+    {
+      "name": "supabase-skills",
+      "category": "development",
+      "version": "1.0.0",
+      "description": "Postgres 성능·설계 모범사례와 Supabase 사용법.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/supabase/agent-skills.git",
+        "ref": "main"
+      },
+      "skills": [
+        "./skills/supabase-postgres-best-practices",
+        "./skills/supabase"
+      ]
+    },
+    {
+      "name": "document-skills",
+      "category": "productivity",
+      "version": "1.0.0",
+      "description": "xlsx·docx·pptx·pdf 읽기와 생성. Anthropic 공식.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/anthropics/skills.git",
+        "ref": "main"
+      },
+      "skills": [
+        "./skills/xlsx",
+        "./skills/docx",
+        "./skills/pptx",
+        "./skills/pdf"
+      ]
+    },
+    {
+      "name": "example-skills",
+      "category": "productivity",
+      "version": "1.0.0",
+      "description": "프론트엔드 디자인, 아티팩트 제작, 스킬 작성, 문서 협업 등 Anthropic 공식 예제 스킬.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/anthropics/skills.git",
+        "ref": "main"
+      },
+      "skills": [
+        "./skills/algorithmic-art",
+        "./skills/brand-guidelines",
+        "./skills/canvas-design",
+        "./skills/doc-coauthoring",
+        "./skills/frontend-design",
+        "./skills/internal-comms",
+        "./skills/mcp-builder",
+        "./skills/skill-creator",
+        "./skills/slack-gif-creator",
+        "./skills/theme-factory",
+        "./skills/web-artifacts-builder",
+        "./skills/webapp-testing"
+      ]
+    },
+    {
       "name": "authoring",
       "description": "이 저장소를 유지보수하기 위한 자작 스킬. 스킬 추가, 번들 경계, 큐레이션 항목 관리 규약.",
       "version": "0.1.0",
