@@ -51,6 +51,36 @@
       ]
     },
     {
+      "name": "mattpocock-skills",
+      "description": "아이디어를 스펙·티켓으로 바꾸는 흐름과 도메인 모델링, TDD, 코드리뷰. to-spec/to-tickets가 기획문서 작업의 핵심.",
+      "category": "workflow",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/mattpocock/skills.git",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "ui-skills",
+      "description": "디자인 엔지니어용 UI 스킬. 접근성·모션 성능·메타데이터 교정과 UI 개선. 업스트림에 plugin.json이 없어 경로를 명시한다.",
+      "category": "design",
+      "version": "1.0.0",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ibelick/ui-skills.git",
+        "ref": "main"
+      },
+      "skills": [
+        "./skills/baseline-ui",
+        "./skills/create-design-md",
+        "./skills/fixing-accessibility",
+        "./skills/fixing-metadata",
+        "./skills/fixing-motion-performance",
+        "./skills/improve-ui",
+        "./skills/ui-skills-root"
+      ]
+    },
+    {
       "name": "authoring",
       "description": "이 저장소를 유지보수하기 위한 자작 스킬. 스킬 추가, 번들 경계, 큐레이션 항목 관리 규약.",
       "version": "0.1.0",
