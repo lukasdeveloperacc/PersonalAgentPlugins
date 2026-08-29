@@ -42,7 +42,6 @@
   a:focus-visible, summary:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
   code, pre, .mono { font-family:var(--mono); font-variant-ligatures:none; }
 
-  /* ---------- masthead ---------- */
   .masthead { border-bottom:1px solid var(--rule); background:var(--surface); }
   .masthead-in { max-width:76rem; margin:0 auto; padding:2.6rem 2rem 2.2rem;
                  display:flex; flex-wrap:wrap; align-items:flex-end; gap:1.5rem 2.5rem; }
@@ -56,7 +55,6 @@
           border-left:2px solid var(--accent); padding-left:1rem; }
   .meta b { display:block; color:var(--ink-2); font-weight:500; letter-spacing:.02em; }
 
-  /* ---------- shell ---------- */
   .shell { max-width:76rem; margin:0 auto; padding:3.2rem 2rem 7rem;
            display:grid; grid-template-columns:14.5rem minmax(0,1fr); gap:4rem; }
   @media (max-width:1080px){ .shell{grid-template-columns:minmax(0,1fr); gap:0; padding-top:2.4rem;} .toc{display:none;} }
@@ -68,7 +66,6 @@
   .toc a:hover { color:var(--accent); }
   .toc .n { font-family:var(--mono); font-size:.72rem; color:var(--ink-3); flex:none; padding-top:.1rem; }
 
-  /* ---------- sections ---------- */
   section { padding-top:.5rem; margin-bottom:3.4rem; scroll-margin-top:1.5rem; }
   .sec-head { display:flex; align-items:baseline; gap:.85rem; border-top:1px solid var(--rule-strong);
               padding-top:.85rem; margin-bottom:1.3rem; }
@@ -84,7 +81,6 @@
   p code, li code, td code, .toc code { background:var(--surface-2); border:1px solid var(--rule);
     border-radius:3px; padding:.08em .38em; font-size:.84em; color:var(--ink); white-space:nowrap; }
 
-  /* ---------- blocks ---------- */
   pre { background:var(--surface); border:1px solid var(--rule); border-radius:6px;
         padding:1.15rem 1.3rem; overflow-x:auto; font-size:.8rem; line-height:1.7;
         margin:0 0 1.3rem; color:var(--ink-2); }
@@ -95,9 +91,8 @@
   .callout { border:1px solid var(--rule); border-left:2px solid var(--accent);
              background:var(--surface); border-radius:0 6px 6px 0; padding:1rem 1.2rem; margin:0 0 1.3rem; }
   .callout .eyebrow { margin-bottom:.4rem; }
-  .callout p:last-child, .callout ul:last-child { margin-bottom:0; }
+  .callout p:last-child, .callout ul:last-child, .callout ol:last-child { margin-bottom:0; }
 
-  /* ---------- tables ---------- */
   .tw { overflow-x:auto; margin:0 0 1.4rem; border:1px solid var(--rule); border-radius:6px; background:var(--surface); }
   table { border-collapse:collapse; width:100%; font-size:.85rem; min-width:34rem; }
   th, td { text-align:left; padding:.7rem .95rem; border-bottom:1px solid var(--rule); vertical-align:top; }
@@ -106,6 +101,7 @@
   tbody tr:last-child td { border-bottom:none; }
   td.id { font-family:var(--mono); font-size:.76rem; font-weight:500; color:var(--accent); white-space:nowrap; }
   td.num { font-variant-numeric:tabular-nums; }
+  .sub { color:var(--ink-3); font-size:.9em; }
 
   .chip { display:inline-block; font-family:var(--mono); font-size:.66rem; font-weight:500;
           letter-spacing:.07em; text-transform:uppercase; padding:.16rem .48rem; border-radius:3px;
@@ -115,7 +111,6 @@
   .chip-risk { background:var(--risk-wash); color:var(--risk); border-color:var(--risk); }
   .chip-mut  { background:var(--surface-2); color:var(--ink-3); border-color:var(--rule-strong); }
 
-  /* ---------- layer diagram ---------- */
   .layers { display:grid; gap:.6rem; margin:0 0 1.5rem; }
   .layer { display:grid; grid-template-columns:6.5rem minmax(0,1fr); gap:1.2rem;
            border:1px solid var(--rule); background:var(--surface); border-radius:6px; padding:1rem 1.2rem; }
@@ -128,7 +123,6 @@
   .fanout span { font-family:var(--mono); font-size:.7rem; color:var(--ink-2);
                  border:1px solid var(--rule-strong); border-radius:3px; padding:.15rem .45rem; background:var(--surface-2); }
 
-  /* ---------- goal / milestone lists ---------- */
   .glist { list-style:none; padding:0; margin:0 0 1.3rem; display:grid; gap:.75rem; max-width:none; }
   .glist li { margin:0; display:grid; grid-template-columns:3.2rem minmax(0,1fr); gap:1rem;
               border-bottom:1px solid var(--rule); padding-bottom:.75rem; }
@@ -136,6 +130,13 @@
   .glist .gid { font-family:var(--mono); font-size:.74rem; font-weight:500; color:var(--accent); padding-top:.28rem; }
   .glist b { display:block; font-weight:600; margin-bottom:.15rem; }
   .glist span.d { color:var(--ink-2); font-size:.9rem; }
+
+  .steps { counter-reset:step; list-style:none; padding:0; margin:0 0 1.3rem; max-width:none; }
+  .steps li { counter-increment:step; margin:0 0 .55rem; padding-left:2.1rem; position:relative; max-width:70ch; }
+  .steps li::before { content:counter(step); position:absolute; left:0; top:.16rem;
+    font-family:var(--mono); font-size:.68rem; font-weight:700; color:var(--accent);
+    background:var(--accent-wash); border:1px solid var(--accent); border-radius:3px;
+    width:1.35rem; height:1.35rem; display:grid; place-items:center; }
 
   footer { border-top:1px solid var(--rule); margin-top:3rem; padding-top:1.4rem;
            font-family:var(--mono); font-size:.72rem; color:var(--ink-3); }
@@ -150,9 +151,9 @@
       <p class="deck">스킬과 설정을 하나의 공개 저장소에 두고, 감지되는 모든 AI 코딩 런타임에 두 줄로 복원한다.</p>
     </div>
     <div class="meta">
-      <span><b>Status</b>Draft — 구현 전</span>
-      <span><b>작성일</b>2026-08-29</span>
-      <span><b>Baseline</b>20fdc78 (blank slate)</span>
+      <span><b>문서 종류</b>제품 정의 · 유지보수 기준</span>
+      <span><b>독자</b>이 저장소의 유지보수자</span>
+      <span><b>버전</b>1.0</span>
       <span><b>Repo</b>lukasdeveloperacc/PersonalAgentPlugins</span>
     </div>
   </div>
@@ -162,95 +163,101 @@
   <nav class="toc" aria-label="목차">
     <div class="eyebrow">목차</div>
     <ol>
-      <li><a href="#s1"><span class="n">01</span>배경과 문제</a></li>
+      <li><a href="#s1"><span class="n">01</span>제품 정의</a></li>
       <li><a href="#s2"><span class="n">02</span>목표와 비목표</a></li>
       <li><a href="#s3"><span class="n">03</span>사용자와 여정</a></li>
       <li><a href="#s4"><span class="n">04</span>설계 원칙</a></li>
       <li><a href="#s5"><span class="n">05</span>아키텍처</a></li>
       <li><a href="#s6"><span class="n">06</span>저장소 구조</a></li>
-      <li><a href="#s7"><span class="n">07</span>런타임 지원 매트릭스</a></li>
+      <li><a href="#s7"><span class="n">07</span>런타임 지원 정책</a></li>
       <li><a href="#s8"><span class="n">08</span>기능 요구사항</a></li>
       <li><a href="#s9"><span class="n">09</span>비기능 요구사항</a></li>
       <li><a href="#s10"><span class="n">10</span>비밀 취급 원칙</a></li>
-      <li><a href="#s11"><span class="n">11</span>마일스톤</a></li>
-      <li><a href="#s12"><span class="n">12</span>성공 지표</a></li>
-      <li><a href="#s13"><span class="n">13</span>리스크</a></li>
-      <li><a href="#s14"><span class="n">14</span>미해결 질문</a></li>
-      <li><a href="#s15"><span class="n">15</span>검증 근거</a></li>
+      <li><a href="#s11"><span class="n">11</span>유지보수 규약</a></li>
+      <li><a href="#s12"><span class="n">12</span>단계별 계획</a></li>
+      <li><a href="#s13"><span class="n">13</span>성공 지표</a></li>
+      <li><a href="#s14"><span class="n">14</span>리스크</a></li>
+      <li><a href="#s15"><span class="n">15</span>런타임 전제</a></li>
+      <li><a href="#s16"><span class="n">16</span>미해결 질문</a></li>
     </ol>
   </nav>
 
   <main>
 
   <section id="s1">
-    <div class="sec-head"><span class="n">01</span><h2>배경과 문제</h2></div>
-    <p>이 저장소는 원래 Claude용 플러그인과 Codex companion 플러그인을 각각 <code>claude/</code>, <code>codex/</code> 아래에 두는 구조였다. 재설계를 위해 <code>20fdc78</code>에서 트리를 비웠고, 이전 내용은 <code>902ec25</code>에 남아 있다. 다시 채우기 전에 실제로 무엇이 문제였는지 정리한다.</p>
+    <div class="sec-head"><span class="n">01</span><h2>제품 정의</h2></div>
+    <p><b>PersonalAgentPlugins는 한 사람의 AI 코딩 에이전트 환경 — 스킬과 설정 — 을 담아 어느 머신에서든 복원하는 공개 저장소다.</b></p>
 
-    <h3>P1 — 같은 스킬을 두 번 관리했다</h3>
-    <p>런타임별로 디렉토리를 나눈 결과, 내용이 거의 같은 <code>SKILL.md</code>가 <code>claude/</code>와 <code>codex/</code> 양쪽에 존재했다. 한쪽을 고치면 다른 쪽이 조용히 낡는다. 런타임이 하나 늘 때마다 관리 부담이 선형으로 증가한다.</p>
+    <h3>해결하는 문제</h3>
+    <p>여러 AI 코딩 도구를 병행하고 여러 머신을 오가는 개발자는 구조적으로 세 가지 비용을 반복해서 낸다.</p>
+    <ul>
+      <li><b>중복 저작</b> — 도구마다 스킬을 따로 두면 같은 내용을 여러 벌 쓰게 되고, 한쪽을 고치면 나머지가 조용히 낡는다. 비용은 도구 수에 비례해 늘어난다.</li>
+      <li><b>휘발</b> — 머신을 옮기면 스킬은 기억에 의존해 다시 쓰고, 설정은 처음부터 다시 만든다. 축적이 되지 않는다.</li>
+      <li><b>추격</b> — 새 에이전트 도구가 계속 등장한다. 지원 목록을 사람이 관리하면 도구가 늘 때마다 손이 간다.</li>
+    </ul>
 
-    <h3>P2 — 마켓플레이스가 특정 머신의 절대경로에 묶여 있다</h3>
-    <p>현재 등록 상태는 <code>Directory (/Users/chaejin/Desktop/lukas/myGit/PersonalAgentPlugins/claude)</code>다. 이 머신, 이 경로에서만 동작하므로 "다른 곳에서 import"라는 원래 의도가 성립하지 않는다. 실제로 같은 저장소의 클론이 <code>~/Desktop/lukas/myGit/</code>와 <code>~/orca/</code> 두 곳에 존재하며 이미 상태가 갈라져 있다.</p>
+    <h3>해법의 요지</h3>
+    <p>스킬 <b>내용</b>은 이미 도구 간에 거의 호환된다 — 확인된 모든 런타임이 <code>SKILL.md</code>(YAML frontmatter + 마크다운)를 읽는다. 갈리는 것은 <b>포장</b>뿐이다. 따라서 내용은 한 벌만 두고 포장을 얇은 층으로 분리하면, 도구가 늘어도 저장소는 그대로 있을 수 있다. 설정은 매니페스트로 전달되지 않으므로 별도의 부트스트랩 층이 맡는다.</p>
 
-    <h3>P3 — 설정은 어디에도 백업되지 않는다</h3>
-    <p>스킬이 복원되어도 <code>settings.json</code>, <code>config.toml</code>, hooks, MCP 서버 정의, <code>CLAUDE.md</code>·<code>AGENTS.md</code>가 없으면 "내 환경"이 되지 않는다. 새 머신에서는 이 부분이 전부 수작업이다.</p>
-
-    <h3>P4 — 런타임이 계속 늘어난다</h3>
-    <p>이 머신 한 대에만 스킬 디렉토리를 가진 런타임이 6개 있다 — <code>claude</code>, <code>codex</code>, <code>hermes</code>, <code>grok</code>, <code>factory</code>, 그리고 공용 <code>.agents</code>. 지원 목록을 저장소에 하드코딩하면 새 도구가 나올 때마다 저장소를 고쳐야 한다.</p>
+    <div class="callout">
+      <div class="eyebrow">이 문서의 역할</div>
+      <p>무엇을 만들지, 무엇을 <b>만들지 않을지</b>, 구조가 왜 이런지, 그리고 이 저장소를 어떻게 늘려갈지를 정의한다. 스킬을 추가하거나 새 런타임을 받아들이기 전에 <a href="#s11">11장</a>을, 구조를 바꾸기 전에 <a href="#s4">4장</a>과 <a href="#s15">15장</a>을 먼저 읽는다.</p>
+    </div>
   </section>
 
   <section id="s2">
     <div class="sec-head"><span class="n">02</span><h2>목표와 비목표</h2></div>
     <h3>목표</h3>
     <ol class="glist">
-      <li><span class="gid">G1</span><span><b>새 머신에서 두 줄로 복원</b><span class="d">클론과 부트스트랩 명령만으로 스킬과 설정이 자리를 잡는다. 사전 인증·키 발급 없이 시작할 수 있어야 한다.</span></span></li>
-      <li><span class="gid">G2</span><span><b>스킬은 한 번만 작성</b><span class="d"><code>skills/&lt;name&gt;/SKILL.md</code> 하나가 정본이고, 모든 런타임이 그 파일을 읽는다. 런타임별 사본을 만들지 않는다.</span></span></li>
+      <li><span class="gid">G1</span><span><b>새 머신에서 두 줄로 복원</b><span class="d">클론과 부트스트랩 명령만으로 스킬과 설정이 자리를 잡는다. 사전 인증이나 키 발급 없이 시작할 수 있어야 한다.</span></span></li>
+      <li><span class="gid">G2</span><span><b>스킬은 한 번만 작성</b><span class="d"><code>skills/&lt;name&gt;/SKILL.md</code> 하나가 정본이고 모든 런타임이 그 파일을 읽는다. 런타임별 사본을 만들지 않는다.</span></span></li>
       <li><span class="gid">G3</span><span><b>감지되는 모든 런타임에 설치</b><span class="d">지원 목록을 저장소가 소유하지 않는다. 설치 시점에 그 머신에 실제로 있는 에이전트를 찾아 거기에만 설치한다.</span></span></li>
       <li><span class="gid">G4</span><span><b>공개 저장소로 유지</b><span class="d">인증 없이 어디서나 클론·설치할 수 있어야 한다. 그 대가로 비밀이 구조적으로 들어갈 수 없게 만든다.</span></span></li>
-      <li><span class="gid">G5</span><span><b>새 런타임에 무개정 대응</b><span class="d">새 도구가 <code>SKILL.md</code> 규약을 따르면 저장소 수정 없이 커버된다.</span></span></li>
+      <li><span class="gid">G5</span><span><b>새 런타임에 무개정 대응</b><span class="d">새 도구가 <code>SKILL.md</code> 규약을 따르면 저장소를 고치지 않고도 커버된다.</span></span></li>
     </ol>
 
     <h3>비목표</h3>
+    <p>범위를 지키는 것이 이 제품의 유지보수성을 결정한다. 아래는 <b>의도적으로 하지 않는 것</b>이며, 하고 싶어질 때 이 항목을 근거로 거절한다.</p>
     <ol class="glist">
-      <li><span class="gid">NG1</span><span><b>범용 dotfiles</b><span class="d">zsh, git, 터미널 설정은 범위 밖이다. AI 에이전트 환경만 다룬다.</span></span></li>
+      <li><span class="gid">NG1</span><span><b>범용 dotfiles</b><span class="d">셸, git, 터미널 설정은 범위 밖이다. AI 에이전트 환경만 다룬다. 경계를 넓히면 부트스트랩의 실패 반경이 머신 전체로 커진다.</span></span></li>
       <li><span class="gid">NG2</span><span><b>팀 배포·다중 사용자</b><span class="d">사용자는 한 명이다. 권한 모델, 조직 정책, 승인 흐름을 설계하지 않는다.</span></span></li>
-      <li><span class="gid">NG3</span><span><b>설치본 → 저장소 역동기화</b><span class="d">마켓플레이스 설치본은 읽기 전용 캐시로 취급한다. 수정은 항상 저장소 클론에서 하고 <code>update</code>로 받는다.</span></span></li>
-      <li><span class="gid">NG4</span><span><b>자격증명 보관·배포</b><span class="d">토큰, API 키, <code>auth.json</code>류는 저장소가 다루지 않는다. 참조만 하고 값은 환경에서 온다.</span></span></li>
-      <li><span class="gid">NG5</span><span><b>이전 하니스 루프 복원</b><span class="d">cmux 기반 멀티 에이전트 하니스는 이 저장소의 존재 이유가 아니다. 필요하면 나중에 스킬 하나로 다시 들어올 수 있다.</span></span></li>
+      <li><span class="gid">NG3</span><span><b>설치본에서 저장소로의 역동기화</b><span class="d">설치본은 읽기 전용 캐시다. 수정은 항상 저장소 클론에서 하고 <code>update</code>로 받는다. 양방향을 허용하는 순간 "어느 쪽이 최신인가" 문제가 영구히 따라붙는다.</span></span></li>
+      <li><span class="gid">NG4</span><span><b>자격증명 보관·배포</b><span class="d">토큰, API 키, 인증 파일은 저장소가 다루지 않는다. 참조만 하고 값은 환경에서 온다.</span></span></li>
+      <li><span class="gid">NG5</span><span><b>런타임 기능의 재구현</b><span class="d">특정 도구의 오케스트레이션·하니스·에이전트 실행 로직을 저장소가 떠안지 않는다. 이 저장소는 <b>배포 계층</b>이지 런타임이 아니다. 그런 로직이 필요하면 스킬 한 개의 내용으로 들어와야 한다.</span></span></li>
     </ol>
   </section>
 
   <section id="s3">
     <div class="sec-head"><span class="n">03</span><h2>사용자와 여정</h2></div>
-    <p>사용자는 한 명 — 회사 머신, 집 머신, 원격 VM, 일회성 클라우드 샌드박스를 오가며 여러 AI 코딩 도구를 병행해 쓰는 개발자다. 아래 네 여정 중 <b>A가 이 제품의 존재 이유</b>이고, 나머지는 A를 지속 가능하게 만든다.</p>
+    <p>사용자는 한 명 — 회사 머신, 집 머신, 원격 VM, 일회성 클라우드 샌드박스를 오가며 여러 AI 코딩 도구를 병행해 쓰는 개발자다. <b>여정 A가 제품의 존재 이유</b>이고, 나머지 셋은 A를 지속 가능하게 만든다.</p>
 
     <div class="tw">
       <table>
-        <thead><tr><th>여정</th><th>상황</th><th>지금</th><th>목표 상태</th></tr></thead>
+        <thead><tr><th>여정</th><th>상황</th><th>요구되는 동작</th><th>관련 요구사항</th></tr></thead>
         <tbody>
           <tr>
             <td class="id">A</td>
-            <td><b>새 머신 온보딩</b><br><span style="color:var(--ink-3)">방금 받은 노트북, 갓 띄운 VM</span></td>
-            <td>스킬을 기억에 의존해 재작성하고, 설정은 처음부터 다시 만든다. 사실상 복원 불가.</td>
-            <td>클론 → 부트스트랩 두 줄. 감지된 모든 런타임에 스킬과 설정이 배치된다.</td>
+            <td><b>새 머신 온보딩</b><br><span class="sub">방금 받은 노트북, 갓 띄운 VM</span></td>
+            <td>클론 후 부트스트랩 한 번. 감지된 모든 런타임에 스킬이 놓이고, 1급 런타임에는 설정까지 배치된다.</td>
+            <td><a href="#s8">FR-3·4</a>, <a href="#s9">NFR-1</a></td>
           </tr>
           <tr>
             <td class="id">B</td>
             <td><b>스킬 추가·수정</b></td>
-            <td>어느 런타임 디렉토리에 넣을지부터 고민하고, 결국 양쪽에 복사한다.</td>
-            <td><code>skills/</code> 아래 폴더 하나를 만들고 커밋. 배포는 매니페스트가 알아서 한다.</td>
+            <td><code>skills/</code> 아래 폴더 하나를 만들고 번들에 배정한 뒤 커밋. 런타임별 작업은 없다.</td>
+            <td><a href="#s8">FR-1·2·7</a>, <a href="#s11">11장</a></td>
           </tr>
           <tr>
             <td class="id">C</td>
             <td><b>기존 머신 갱신</b></td>
-            <td>로컬 경로 마켓플레이스라 클론을 직접 <code>git pull</code>해야 하고, 클론이 여러 개면 갈라진다.</td>
-            <td>런타임의 <code>update</code> 명령 한 번. 저장소 클론이 없어도 된다.</td>
+            <td>런타임의 <code>update</code> 명령 한 번. 저장소 클론이 그 머신에 없어도 된다.</td>
+            <td><a href="#s2">NG3</a>, <a href="#s8">FR-2</a></td>
           </tr>
           <tr>
             <td class="id">D</td>
-            <td><b>일회성 샌드박스</b><br><span style="color:var(--ink-3)">30분 뒤 버릴 환경</span></td>
-            <td>설정 자체를 포기하고 맨손으로 쓴다.</td>
-            <td>스킬만 골라 임시 설치하거나, 설치 없이 원문을 참조한다.</td>
+            <td><b>일회성 샌드박스</b><br><span class="sub">30분 뒤 버릴 환경</span></td>
+            <td>필요한 스킬만 골라 설치하거나, 설치 없이 원문을 참조한다. 설정은 건드리지 않는다.</td>
+            <td><a href="#s8">FR-9</a></td>
           </tr>
         </tbody>
       </table>
@@ -259,33 +266,34 @@
 
   <section id="s4">
     <div class="sec-head"><span class="n">04</span><h2>설계 원칙</h2></div>
+    <p>구조를 바꾸려는 제안은 이 여섯 항목에 비추어 판단한다. 원칙과 충돌하는 편의는 채택하지 않는다.</p>
     <ol class="glist">
-      <li><span class="gid">DP1</span><span><b>콘텐츠와 포장을 분리한다</b><span class="d">런타임이 바뀌어도 <code>SKILL.md</code>는 바뀌지 않는다. 런타임 차이는 얇은 매니페스트 한 겹이 흡수한다. 매니페스트가 두꺼워진다면 설계가 잘못된 것이다.</span></span></li>
-      <li><span class="gid">DP2</span><span><b>스킬 폴더는 자체 완결 단위다</b><span class="d">참조 문서, 스크립트, 템플릿, 런타임별 프로파일은 전부 그 스킬 폴더 안에 산다. 폴더를 통째로 옮겨도 동작해야 한다. 이전 구조가 <code>contracts/</code>와 <code>templates/</code>를 플러그인 루트에 두어 스킬만 떼어낼 수 없었던 것이 반례다.</span></span></li>
+      <li><span class="gid">DP1</span><span><b>콘텐츠와 포장을 분리한다</b><span class="d">런타임이 바뀌어도 <code>SKILL.md</code>는 바뀌지 않는다. 런타임 차이는 얇은 매니페스트 한 겹이 흡수한다. 매니페스트가 두꺼워지고 있다면 설계가 잘못되고 있다는 신호다.</span></span></li>
+      <li><span class="gid">DP2</span><span><b>스킬 폴더는 자체 완결 단위다</b><span class="d">참조 문서, 스크립트, 템플릿, 런타임별 프로파일은 전부 그 스킬 폴더 안에 산다. 폴더를 통째로 다른 저장소에 옮겨도 동작해야 한다. 공용 디렉토리에 부속 파일을 두면 스킬을 떼어낼 수 없게 된다.</span></span></li>
       <li><span class="gid">DP3</span><span><b>런타임 목록을 소유하지 않는다</b><span class="d">"어떤 도구가 설치돼 있는가"는 머신의 사실이지 저장소의 사실이 아니다. 감지에 위임한다.</span></span></li>
-      <li><span class="gid">DP4</span><span><b>비밀 없음을 규율이 아니라 구조로 만든다</b><span class="d">"조심해서 커밋한다"는 실패한다. 저장소에는 값이 들어갈 자리 자체가 없어야 하고, 자동 게이트가 이를 강제한다.</span></span></li>
-      <li><span class="gid">DP5</span><span><b>설치본은 읽기 전용이다</b><span class="d">진실은 항상 저장소에 있다. 설치된 사본을 고치는 흐름을 만들지 않으면 "어느 쪽이 최신인가" 문제가 애초에 생기지 않는다.</span></span></li>
+      <li><span class="gid">DP4</span><span><b>비밀 없음을 규율이 아니라 구조로 만든다</b><span class="d">"조심해서 커밋한다"는 반드시 실패한다. 저장소에 값이 들어갈 자리 자체가 없어야 하고, 자동 게이트가 이를 강제한다.</span></span></li>
+      <li><span class="gid">DP5</span><span><b>설치본은 읽기 전용이다</b><span class="d">진실은 항상 저장소에 있다. 설치된 사본을 고치는 흐름을 만들지 않으면 동기화 문제가 애초에 발생하지 않는다.</span></span></li>
       <li><span class="gid">DP6</span><span><b>되돌릴 수 있게 바꾼다</b><span class="d">부트스트랩은 기존 설정을 덮기 전에 백업하고, 무엇을 바꿀지 먼저 보여준다. 두 번 실행해도 결과가 같다.</span></span></li>
     </ol>
   </section>
 
   <section id="s5">
     <div class="sec-head"><span class="n">05</span><h2>아키텍처</h2></div>
-    <p>세 겹으로 나눈다. 아래로 갈수록 런타임에 가까워지고, 위로 갈수록 오래 산다.</p>
+    <p>세 겹으로 나눈다. 위로 갈수록 오래 살고, 아래로 갈수록 런타임 사정에 가깝다. <b>변경은 항상 아래층에서 흡수하고 위층을 지킨다.</b></p>
 
     <div class="layers">
       <div class="layer">
         <div class="layer-tag">L1 정본</div>
         <div>
           <h4>플랫폼 중립 콘텐츠</h4>
-          <p><code>skills/&lt;name&gt;/SKILL.md</code>, <code>agents/*.md</code>, <code>commands/*.md</code>. 사람이 쓰고 읽는 유일한 층이다. YAML frontmatter(<code>name</code>, <code>description</code>) + 마크다운 본문이라는, 확인된 모든 런타임이 공유하는 최소 공통 형식을 쓴다.</p>
+          <p><code>skills/&lt;name&gt;/SKILL.md</code>, <code>agents/*.md</code>, <code>commands/*.md</code>. 사람이 쓰고 읽는 유일한 층이다. 확인된 모든 런타임이 공유하는 최소 공통 형식만 쓴다 — 특정 런타임에만 있는 문법에 의존하지 않는다.</p>
         </div>
       </div>
       <div class="layer">
         <div class="layer-tag">L2 포장</div>
         <div>
           <h4>매니페스트 — 얇은 배포 계약</h4>
-          <p><code>.claude-plugin/marketplace.json</code> 하나가 Claude Code와 Codex를 <b>동시에</b> 커버한다. 내용을 복제하지 않고 <code>source: "./"</code> + 경로 배열로 <code>skills/</code>를 여러 번들로 잘라 노출할 뿐이다.</p>
+          <p><code>.claude-plugin/marketplace.json</code> 하나가 Claude Code와 Codex를 동시에 커버한다. 내용을 복제하지 않고 <code>source: "./"</code> + 경로 배열로 <code>skills/</code>를 목적별 번들로 잘라 노출할 뿐이다.</p>
           <div class="fanout"><span>claude plugin marketplace add</span><span>codex plugin marketplace add</span></div>
         </div>
       </div>
@@ -294,20 +302,20 @@
         <div>
           <h4>부트스트랩 — 머신에 실제로 놓기</h4>
           <p>마켓플레이스 개념이 없는 런타임과, 매니페스트로는 전달되지 않는 <b>설정</b>을 담당한다. 런타임 감지 → 스킬 설치 → 설정 템플릿 배치 → 백업 순으로 동작한다.</p>
-          <div class="fanout"><span>bootstrap.sh</span><span>npx skills add</span><span>config/ 템플릿</span></div>
+          <div class="fanout"><span>bootstrap.sh</span><span>skills CLI</span><span>config/ 템플릿</span></div>
         </div>
       </div>
     </div>
 
     <div class="callout">
-      <div class="eyebrow">이 구조가 성립하는 핵심 근거</div>
-      <p>Codex CLI가 Claude 형식 매니페스트를 그대로 읽는다는 사실이 L2를 하나로 합칠 수 있게 한다. 추정이 아니라 이 머신에서 확인한 동작이다 — <code>codex plugin list</code>가 <code>claude-plugins-official</code>과 <code>omc</code> 마켓플레이스를 각자의 <code>.claude-plugin/marketplace.json</code> 경로로 해석하고 있다. 자세한 근거는 <a href="#s15">15장</a>.</p>
+      <div class="eyebrow">L2를 하나로 합칠 수 있는 근거</div>
+      <p>Codex CLI가 Claude 형식 매니페스트를 그대로 읽고, 설치 시 자기 형식의 매니페스트를 <b>자동 생성</b>한다. 즉 런타임 간 변환 계층이 이미 런타임 쪽에 존재하므로 저장소가 그것을 떠안을 필요가 없다. 실측 결과는 <a href="#s15">15장</a>에 있다.</p>
     </div>
   </section>
 
   <section id="s6">
     <div class="sec-head"><span class="n">06</span><h2>저장소 구조</h2></div>
-    <p>저장소 루트가 곧 마켓플레이스 루트다. 런타임별 하위 디렉토리를 두지 않는다.</p>
+    <p>저장소 루트가 곧 마켓플레이스 루트다. <b>런타임별 하위 디렉토리를 두지 않는다</b> — 그렇게 나누는 순간 G2가 깨진다.</p>
 <pre><b>PersonalAgentPlugins/</b>
 ├─ <b>.claude-plugin/marketplace.json</b>   <span class="c">Claude + Codex 공용 진입점 (L2)</span>
 ├─ <b>skills/</b>                           <span class="k">← 정본. 사람이 쓰는 유일한 곳 (L1)</span>
@@ -315,7 +323,7 @@
 │  │  ├─ SKILL.md                    <span class="c">모든 런타임 공용</span>
 │  │  ├─ reference/                  <span class="c">참조 문서 — 폴더 안에 동봉 (DP2)</span>
 │  │  ├─ scripts/                    <span class="c">스킬이 실행하는 스크립트</span>
-│  │  └─ agents/openai.yaml          <span class="c">Codex 전용 프로파일. 타 런타임은 무시</span>
+│  │  └─ agents/openai.yaml          <span class="c">런타임별 사이드카. 타 런타임은 무시</span>
 │  └─ ...
 ├─ <b>agents/</b>*.md                       <span class="c">서브에이전트 정의</span>
 ├─ <b>commands/</b>*.md                     <span class="c">슬래시 커맨드</span>
@@ -341,7 +349,8 @@
   "plugins": [
     {
       "name": "planning",
-      "description": "기획·인터뷰·PRD 작성 스킬 묶음",
+      "description": "기획·인터뷰·문서화 스킬 묶음",
+      "version": "0.1.0",
       "source": <b>"./"</b>,
       "skills":   [<b>"./skills/socrates"</b>],
       "agents":   ["./agents/document-specialist.md"],
@@ -350,70 +359,64 @@
     {
       "name": "everyday",
       "description": "매일 쓰는 범용 스킬",
+      "version": "0.1.0",
       "source": "./",
       "skills": ["./skills/code-review", "./skills/deepsearch"]
     }
   ]
 }</pre>
-    <p>번들 경계는 <b>목적</b>으로 나눈다(기획용 / 일상용 / 도메인용). 런타임으로 나누지 않는다 — 그것이 이전 구조의 실수였다.</p>
   </section>
 
   <section id="s7">
-    <div class="sec-head"><span class="n">07</span><h2>런타임 지원 매트릭스</h2></div>
-    <p>런타임을 <b>1급</b>(보장하고 테스트한다)과 <b>감지 대상</b>(감지되면 설치하되 보장하지 않는다)으로 나눈다. G3에 따라 감지 대상 목록은 저장소가 소유하지 않는다.</p>
+    <div class="sec-head"><span class="n">07</span><h2>런타임 지원 정책</h2></div>
+    <p>런타임을 두 등급으로 나눈다. G3에 따라 <b>감지 대상 목록은 저장소가 소유하지 않으므로</b>, 아래 표에서 관리하는 것은 1급뿐이다.</p>
+
     <div class="tw">
       <table>
-        <thead><tr><th>런타임</th><th>등급</th><th>스킬 전달 경로</th><th>설정 배치</th><th>검증</th></tr></thead>
+        <thead><tr><th>등급</th><th>정의</th><th>받는 것</th><th>보장</th></tr></thead>
         <tbody>
           <tr>
-            <td><b>Claude Code</b><br><span style="color:var(--ink-3);font-size:.9em">~/.claude</span></td>
             <td><span class="chip chip-ok">1급</span></td>
-            <td>마켓플레이스 (<code>.claude-plugin</code>)</td>
-            <td><code>settings.json</code>, <code>CLAUDE.md</code>, hooks, <code>.mcp.json</code></td>
-            <td><span class="chip chip-ok">확인됨</span></td>
+            <td>스킬 로딩과 설정 병합 의미를 모두 검증한 런타임</td>
+            <td>스킬 + 에이전트 + 커맨드 + <b>설정</b></td>
+            <td>릴리스마다 실설치 스모크 테스트</td>
           </tr>
           <tr>
-            <td><b>Codex CLI</b><br><span style="color:var(--ink-3);font-size:.9em">~/.codex</span></td>
-            <td><span class="chip chip-ok">1급</span></td>
-            <td>동일 매니페스트 재사용</td>
-            <td><code>config.toml</code>, <code>AGENTS.md</code>, <code>hooks.json</code></td>
-            <td><span class="chip chip-ok">확인됨</span></td>
-          </tr>
-          <tr>
-            <td><b>Hermes</b><br><span style="color:var(--ink-3);font-size:.9em">~/.hermes</span></td>
-            <td><span class="chip chip-ok">1급</span></td>
-            <td>skills CLI / 심링크 — 마켓플레이스 없음</td>
-            <td><code>config.yaml</code></td>
-            <td><span class="chip chip-warn">부분</span></td>
-          </tr>
-          <tr>
-            <td><b>공용 <code>.agents</code></b><br><span style="color:var(--ink-3);font-size:.9em">~/.agents/skills</span></td>
-            <td><span class="chip chip-ok">1급</span></td>
-            <td>정본 설치 지점. 런타임별 심링크의 원본</td>
-            <td>해당 없음</td>
-            <td><span class="chip chip-ok">확인됨</span></td>
-          </tr>
-          <tr>
-            <td><b>grok · factory</b><br><span style="color:var(--ink-3);font-size:.9em">~/.grok · ~/.factory</span></td>
             <td><span class="chip chip-mut">감지</span></td>
-            <td>skills CLI 감지에 위임</td>
-            <td>미지원</td>
-            <td><span class="chip chip-risk">미검증</span></td>
-          </tr>
-          <tr>
-            <td><b>그 외 신규 도구</b></td>
-            <td><span class="chip chip-mut">감지</span></td>
-            <td>skills CLI가 인식하면 자동 포함</td>
-            <td>미지원</td>
-            <td><span class="chip chip-mut">해당 없음</span></td>
+            <td>설치 도구가 그 머신에서 찾아낸 나머지 전부</td>
+            <td><b>스킬만</b></td>
+            <td>없음. 동작하면 보너스</td>
           </tr>
         </tbody>
       </table>
     </div>
+
     <div class="callout">
-      <div class="eyebrow">설계 결정</div>
-      <p>설정 배치는 1급 런타임 3개로 제한한다. 설정 파일 형식이 런타임마다 다르고(JSON / TOML / YAML) 병합 의미도 달라, 검증하지 않은 런타임의 설정을 건드리면 그 도구를 망가뜨릴 위험이 실이익보다 크다. 감지 대상 런타임은 <b>스킬만</b> 받는다.</p>
+      <div class="eyebrow">감지 런타임에 설정을 배치하지 않는 이유</div>
+      <p>설정 파일 형식이 런타임마다 다르고(JSON · TOML · YAML) 병합 의미도 다르다. 검증하지 않은 런타임의 설정을 건드리면 <b>그 도구를 망가뜨릴 위험이 얻는 이익보다 크다.</b> 스킬은 파일을 추가할 뿐이라 되돌리기 쉽지만, 설정은 기존 상태를 덮는다.</p>
     </div>
+
+    <h3>현재 1급 런타임</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>런타임</th><th>스킬 전달 경로</th><th>설정 대상</th></tr></thead>
+        <tbody>
+          <tr><td><b>Claude Code</b><br><span class="sub">~/.claude</span></td><td>마켓플레이스</td><td><code>settings.json</code>, <code>CLAUDE.md</code>, hooks, <code>.mcp.json</code></td></tr>
+          <tr><td><b>Codex CLI</b><br><span class="sub">~/.codex</span></td><td>동일 매니페스트 재사용</td><td><code>config.toml</code>, <code>AGENTS.md</code>, <code>hooks.json</code></td></tr>
+          <tr><td><b>Hermes</b><br><span class="sub">~/.hermes</span></td><td>skills CLI · 심링크</td><td><code>config.yaml</code></td></tr>
+          <tr><td><b>공용 <code>.agents</code></b><br><span class="sub">~/.agents/skills</span></td><td>정본 설치 지점 — 런타임별 심링크의 원본</td><td>해당 없음</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>1급 승격 절차</h3>
+    <ol class="steps">
+      <li>감지 대상으로 스킬만 배포한 상태에서 <b>실제로 스킬이 로드되는지</b> 확인한다.</li>
+      <li>그 런타임의 설정 파일 <b>형식과 병합 의미</b>를 파악한다 — 배열은 덮어쓰는가 이어붙이는가, 주석이 보존되는가.</li>
+      <li>설정 템플릿을 <code>config/&lt;runtime&gt;/</code>에 추가하고 <b>백업·드라이런·되돌리기</b>를 검증한다.</li>
+      <li>스모크 테스트에 편입하고 이 문서의 1급 표를 갱신한다.</li>
+    </ol>
+    <p>세 번째 단계를 통과하지 못하면 승격하지 않는다. 감지 등급으로 남는 것은 실패가 아니라 정상 상태다.</p>
   </section>
 
   <section id="s8">
@@ -423,10 +426,10 @@
         <thead><tr><th>ID</th><th>요구사항</th><th>완료 조건</th><th>우선</th></tr></thead>
         <tbody>
           <tr><td class="id">FR-1</td><td><b>단일 정본 스킬 트리</b><br>모든 스킬이 <code>skills/&lt;name&gt;/SKILL.md</code>에 존재하고 부속 파일은 같은 폴더에 동봉된다.</td><td>런타임별 <code>SKILL.md</code> 사본이 저장소에 0개다.</td><td><span class="chip chip-ok">필수</span></td></tr>
-          <tr><td class="id">FR-2</td><td><b>Claude·Codex 공용 마켓플레이스</b><br>매니페스트 하나로 두 런타임이 설치 가능하다.</td><td>두 CLI 모두에서 <code>marketplace add</code> → <code>install</code>이 성공한다.</td><td><span class="chip chip-ok">필수</span></td></tr>
-          <tr><td class="id">FR-3</td><td><b>런타임 자동 감지 설치</b><br>지원 목록을 하드코딩하지 않고 그 머신에 있는 에이전트에만 설치한다.</td><td>에이전트가 없는 런타임의 설정 디렉토리를 새로 만들지 않는다.</td><td><span class="chip chip-ok">필수</span></td></tr>
-          <tr><td class="id">FR-4</td><td><b>설정 부트스트랩</b><br><code>config/</code> 템플릿을 1급 런타임의 규정 경로에 배치한다.</td><td>새 머신에서 hooks·MCP·<code>CLAUDE.md</code>가 동작 상태로 놓인다.</td><td><span class="chip chip-ok">필수</span></td></tr>
-          <tr><td class="id">FR-5</td><td><b>비밀 분리</b><br>템플릿은 <code>${ENV_VAR}</code> 자리표시자만 담고 실제 값을 담지 않는다.</td><td>비밀 스캐너가 전체 히스토리에서 0건을 보고한다.</td><td><span class="chip chip-ok">필수</span></td></tr>
+          <tr><td class="id">FR-2</td><td><b>공용 마켓플레이스</b><br>매니페스트 하나로 마켓플레이스를 지원하는 모든 런타임이 설치 가능하다.</td><td>1급 런타임 전부에서 <code>marketplace add</code> → <code>install</code>이 성공한다.</td><td><span class="chip chip-ok">필수</span></td></tr>
+          <tr><td class="id">FR-3</td><td><b>런타임 자동 감지 설치</b><br>지원 목록을 하드코딩하지 않고 그 머신에 있는 에이전트에만 설치한다.</td><td>설치되지 않은 런타임의 설정 디렉토리를 새로 만들지 않는다.</td><td><span class="chip chip-ok">필수</span></td></tr>
+          <tr><td class="id">FR-4</td><td><b>설정 부트스트랩</b><br><code>config/</code> 템플릿을 1급 런타임의 규정 경로에 배치한다.</td><td>새 머신에서 hooks·MCP·에이전트 지침이 동작 상태로 놓인다.</td><td><span class="chip chip-ok">필수</span></td></tr>
+          <tr><td class="id">FR-5</td><td><b>비밀 분리</b><br>템플릿은 자리표시자만 담고 실제 값을 담지 않는다.</td><td>비밀 스캐너가 전체 히스토리에서 0건을 보고한다.</td><td><span class="chip chip-ok">필수</span></td></tr>
           <tr><td class="id">FR-6</td><td><b>멱등 재실행</b><br>부트스트랩을 두 번 돌려도 결과가 같고 기존 설정을 파괴하지 않는다.</td><td>연속 2회 실행 후 대상 파일 diff가 비어 있다.</td><td><span class="chip chip-ok">필수</span></td></tr>
           <tr><td class="id">FR-7</td><td><b>검증 게이트</b><br>매니페스트·frontmatter·비밀을 CI에서 검사한다.</td><td>규칙 위반 커밋이 CI에서 실패한다.</td><td><span class="chip chip-ok">필수</span></td></tr>
           <tr><td class="id">FR-8</td><td><b>드라이런</b><br>무엇을 바꿀지 먼저 출력하고 실행하지 않는 모드.</td><td><code>--dry-run</code>이 파일시스템을 변경하지 않는다.</td><td><span class="chip chip-warn">권장</span></td></tr>
@@ -444,11 +447,12 @@
         <thead><tr><th>ID</th><th>항목</th><th>기준</th></tr></thead>
         <tbody>
           <tr><td class="id">NFR-1</td><td>온보딩 시간</td><td>새 머신에서 클론부터 사용 가능까지 <b class="num">10분</b> 이내. 사전 인증 <b class="num">0회</b>.</td></tr>
-          <tr><td class="id">NFR-2</td><td>저장소 크기</td><td>클론 <b class="num">20MB</b> 이하. 바이너리·대용량 에셋 금지. 스킬은 텍스트다.</td></tr>
-          <tr><td class="id">NFR-3</td><td>런타임 의존</td><td>부트스트랩은 POSIX <code>sh</code> + <code>git</code>만 요구한다. Node는 skills CLI 경로를 쓸 때만 필요하고, 없으면 심링크 경로로 폴백한다.</td></tr>
+          <tr><td class="id">NFR-2</td><td>저장소 크기</td><td>클론 <b class="num">20MB</b> 이하. 바이너리·대용량 에셋 금지 — 스킬은 텍스트다.</td></tr>
+          <tr><td class="id">NFR-3</td><td>런타임 의존</td><td>부트스트랩은 POSIX <code>sh</code>와 <code>git</code>만 요구한다. Node는 skills CLI 경로를 쓸 때만 필요하고, 없으면 심링크 경로로 폴백한다.</td></tr>
           <tr><td class="id">NFR-4</td><td>오프라인 동작</td><td>저장소 클론만 있으면 네트워크 없이 심링크 모드로 설치된다.</td></tr>
           <tr><td class="id">NFR-5</td><td>비파괴</td><td>덮어쓰기 전 타임스탬프 백업을 남긴다. 백업 없는 덮어쓰기 경로가 존재하지 않는다.</td></tr>
-          <tr><td class="id">NFR-6</td><td>플랫폼</td><td>macOS와 Linux. Windows는 WSL 경유만 고려한다.</td></tr>
+          <tr><td class="id">NFR-6</td><td>컨텍스트 예산</td><td>기본 설치의 always-on 토큰 총합에 상한을 두고 릴리스마다 측정한다(<a href="#s11">11장</a>).</td></tr>
+          <tr><td class="id">NFR-7</td><td>플랫폼</td><td>macOS와 Linux. Windows는 WSL 경유만 고려한다.</td></tr>
         </tbody>
       </table>
     </div>
@@ -456,44 +460,83 @@
 
   <section id="s10">
     <div class="sec-head"><span class="n">10</span><h2>비밀 취급 원칙</h2></div>
-    <p><b>공개 저장소</b>와 <b>설정 복원</b>을 동시에 하기로 한 결정이 이 제품의 가장 큰 제약을 만든다. 설정 파일은 원래 비밀이 모이는 곳이다. 따라서 경계를 문서가 아니라 구조로 긋는다.</p>
+    <p><b>공개 저장소</b>와 <b>설정 복원</b>을 동시에 하기로 한 결정이 이 제품의 가장 큰 제약을 만든다. 설정 파일은 원래 비밀이 모이는 곳이다. 따라서 경계를 문서가 아니라 구조로 긋는다(DP4).</p>
 
-    <h3>저장소에 들어가는 것 / 들어가지 않는 것</h3>
     <div class="tw">
       <table>
         <thead><tr><th>구분</th><th>내용</th><th>형태</th></tr></thead>
         <tbody>
           <tr><td><span class="chip chip-ok">포함</span></td><td>설정의 <b>형태</b> — 어떤 hook을 어떤 이벤트에 걸지, 어떤 MCP 서버를 어떤 명령으로 띄울지, 어떤 권한을 허용할지</td><td><code>*.tmpl</code> 템플릿</td></tr>
           <tr><td><span class="chip chip-ok">포함</span></td><td>비밀이 필요한 <b>자리</b>와 그 이름</td><td><code>${TAVILY_API_KEY}</code></td></tr>
-          <tr><td><span class="chip chip-risk">제외</span></td><td>토큰·API 키·<code>auth.json</code>·<code>.credentials.json</code>의 실제 값</td><td>환경변수 또는 OS 키체인</td></tr>
+          <tr><td><span class="chip chip-risk">제외</span></td><td>토큰·API 키·인증 파일의 실제 값</td><td>환경변수 또는 OS 키체인</td></tr>
           <tr><td><span class="chip chip-risk">제외</span></td><td>회사 내부 호스트명, 고객사명, 사내 경로가 박힌 스킬</td><td>별도 private 저장소로 분리</td></tr>
-          <tr><td><span class="chip chip-risk">제외</span></td><td>세션 로그, 히스토리, 캐시</td><td><code>.gitignore</code></td></tr>
+          <tr><td><span class="chip chip-risk">제외</span></td><td>세션 로그·히스토리·캐시</td><td><code>.gitignore</code></td></tr>
         </tbody>
       </table>
     </div>
 
     <h3>강제 수단</h3>
     <ul>
-      <li><b>템플릿 전용</b> — <code>config/</code>에는 <code>.tmpl</code>만 커밋한다. 실값 파일은 <code>.gitignore</code>가 막는다.</li>
-      <li><b>CI 비밀 스캔</b> — 모든 푸시에서 스캔하고, 발견 시 실패시킨다 (FR-7).</li>
+      <li><b>템플릿 전용</b> — <code>config/</code>에는 <code>.tmpl</code>만 커밋한다. 해석된 실값 파일은 <code>.gitignore</code>가 막는다.</li>
+      <li><b>CI 비밀 스캔</b> — 모든 푸시에서 스캔하고 발견 시 실패시킨다(FR-7).</li>
       <li><b>부트스트랩의 비침습 규칙</b> — 병합 시 기존 파일의 비밀 필드는 읽지도 쓰지도 않는다. 자리표시자가 해석되지 않으면 그 항목을 건너뛰고 사용자에게 알린다.</li>
-      <li><b>사고 대응 절차</b> — 실수로 커밋한 경우 히스토리 재작성이 아니라 <b>즉시 키 회전</b>이 1순위임을 README에 명시한다. 공개 저장소에 올라간 값은 이미 유출된 것으로 간주한다.</li>
+      <li><b>사고 대응</b> — 실수로 커밋한 경우 히스토리 재작성이 아니라 <b>즉시 키 회전</b>이 1순위다. 공개 저장소에 올라간 값은 이미 유출된 것으로 간주한다.</li>
     </ul>
   </section>
 
   <section id="s11">
-    <div class="sec-head"><span class="n">11</span><h2>마일스톤</h2></div>
-    <p>순서가 의미를 갖는다 — 각 단계는 앞 단계의 검증 결과 위에서만 성립한다.</p>
-    <ol class="glist">
-      <li><span class="gid">M1</span><span><b>골격과 첫 스킬</b><span class="d">루트 <code>.claude-plugin/marketplace.json</code>, <code>skills/</code> 하나, <code>scripts/validate.sh</code>, CI. <b>완료 조건</b> — GitHub에서 <code>marketplace add</code> → <code>install</code>이 Claude와 Codex 양쪽에서 성공한다. 여기서 <a href="#s5">L1·L2</a> 가설이 실증된다.</span></span></li>
-      <li><span class="gid">M2</span><span><b>스킬 이관</b><span class="d">실제로 자주 쓰는 스킬들을 정본 형식으로 작성해 옮긴다. 번들 경계를 목적별로 확정한다. <b>완료 조건</b> — 두 번째 머신에서 스킬이 전부 뜬다.</span></span></li>
-      <li><span class="gid">M3</span><span><b>설정 부트스트랩</b><span class="d"><code>config/</code> 템플릿과 <code>bootstrap.sh</code>. 1급 런타임 3개 대상. 백업·드라이런·멱등성 포함. <b>완료 조건</b> — 깨끗한 VM에서 <a href="#s3">여정 A</a>가 NFR-1을 만족한다.</span></span></li>
-      <li><span class="gid">M4</span><span><b>확장과 다듬기</b><span class="d">부분 설치(FR-9), 되돌리기(FR-10), 감지 런타임 검증 확대, README 정비. <b>완료 조건</b> — 저장소를 처음 보는 사람이 README만으로 설치할 수 있다.</span></span></li>
+    <div class="sec-head"><span class="n">11</span><h2>유지보수 규약</h2></div>
+    <p>이 장이 일상 작업의 기준이다. 아래 절차를 벗어나는 변경은 <a href="#s4">4장</a>의 원칙에 비추어 정당화되어야 한다.</p>
+
+    <h3>스킬 추가</h3>
+    <ol class="steps">
+      <li><code>skills/&lt;name&gt;/SKILL.md</code>를 만들고 frontmatter에 <code>name</code>과 <code>description</code>을 쓴다.</li>
+      <li>참조 문서·스크립트·런타임 사이드카를 <b>같은 폴더 안에</b> 넣는다(DP2). 공용 디렉토리를 새로 만들지 않는다.</li>
+      <li>번들에 배정한다 — 새 번들을 만들지, 기존 번들에 넣을지는 아래 경계 규칙을 따른다.</li>
+      <li>검증을 돌리고, 컨텍스트 비용을 확인한 뒤 커밋한다.</li>
     </ol>
+
+    <h3>번들 경계 규칙</h3>
+    <ul>
+      <li><b>목적으로 나눈다.</b> 기획용, 일상용, 특정 도메인용 — 함께 켜고 끄고 싶은 단위가 번들이다.</li>
+      <li><b>런타임으로 나누지 않는다.</b> 그것이 G2를 깨는 가장 흔한 방식이다.</li>
+      <li><b>always-on 비용으로 나눈다.</b> 항상 켜둘 스킬과 가끔만 필요한 스킬은 다른 번들에 둔다. 그래야 여정 D에서 필요한 것만 설치할 수 있다.</li>
+    </ul>
+
+    <h3><code>description</code> 작성</h3>
+    <p>스킬의 실효 품질은 본문보다 <code>description</code>이 좌우한다 — 그것이 트리거이기 때문이다. <b>언제 쓰는지</b>를 사용자의 표현으로 쓰고, 무엇을 하는지만 쓰지 않는다. 겹치는 스킬이 여럿이면 서로를 배제하는 조건까지 적는다.</p>
+
+    <h3>컨텍스트 예산 관리</h3>
+    <p>설치된 스킬은 모두 always-on 비용을 낸다. 번들을 늘리기 전에 컴포넌트 인벤토리와 예상 토큰 비용을 확인하고, NFR-6 상한을 넘기면 번들을 쪼갠다. 스킬을 늘리는 것보다 <b>안 쓰는 스킬을 지우는 것</b>이 대개 더 큰 개선이다.</p>
+
+    <h3>릴리스 전 검증</h3>
+    <ol class="steps">
+      <li><b>매니페스트</b> — 스키마 검증을 strict 모드로 통과한다.</li>
+      <li><b>frontmatter</b> — 모든 <code>SKILL.md</code>에 <code>name</code>·<code>description</code>이 있고 이름이 폴더명과 일치한다.</li>
+      <li><b>비밀 스캔</b> — 전체 트리에서 0건.</li>
+      <li><b>실설치 스모크</b> — 1급 런타임 각각에서 <code>marketplace add</code> → <code>install</code> → 컴포넌트 인벤토리 확인 → 정리까지 수행한다. 정리를 빠뜨리면 다음 실행이 오염된다.</li>
+    </ol>
+
+    <h3>변경 반영</h3>
+    <p>설치본은 읽기 전용이므로(DP5·NG3), 수정은 저장소에 push한 뒤 각 머신에서 런타임의 <code>update</code>로 받는다. 설치본을 직접 고쳐 문제를 해결하는 습관이 생기면 이 제품의 전제가 무너진다.</p>
+
+    <h3>이 문서의 유지</h3>
+    <p>다음 경우에 이 문서를 함께 고친다 — 1급 런타임이 늘거나 줄 때(7장), 원칙과 충돌하는 결정을 내릴 때(4장), 런타임 전제가 실측으로 뒤집힐 때(15장), 미해결 질문이 해소될 때(16장).</p>
   </section>
 
   <section id="s12">
-    <div class="sec-head"><span class="n">12</span><h2>성공 지표</h2></div>
+    <div class="sec-head"><span class="n">12</span><h2>단계별 계획</h2></div>
+    <p>순서가 의미를 갖는다 — 각 단계는 앞 단계의 검증 결과 위에서만 성립한다.</p>
+    <ol class="glist">
+      <li><span class="gid">단계 1</span><span><b>골격</b><span class="d">루트 매니페스트, 스킬 하나, 검증 스크립트, CI. <b>완료 조건</b> — 공개 저장소에서 1급 런타임 전부가 설치에 성공한다.</span></span></li>
+      <li><span class="gid">단계 2</span><span><b>스킬 이관</b><span class="d">자주 쓰는 스킬을 정본 형식으로 작성하고 번들 경계를 확정한다. <b>완료 조건</b> — 두 번째 머신에서 스킬이 전부 뜬다.</span></span></li>
+      <li><span class="gid">단계 3</span><span><b>설정 부트스트랩</b><span class="d"><code>config/</code> 템플릿과 <code>bootstrap.sh</code>. 1급 런타임 대상. 백업·드라이런·멱등성 포함. <b>완료 조건</b> — 깨끗한 VM에서 <a href="#s3">여정 A</a>가 NFR-1을 만족한다.</span></span></li>
+      <li><span class="gid">단계 4</span><span><b>확장</b><span class="d">부분 설치(FR-9), 되돌리기(FR-10), 감지 런타임 검증 확대, README 정비. <b>완료 조건</b> — 저장소를 처음 보는 사람이 README만으로 설치할 수 있다.</span></span></li>
+    </ol>
+  </section>
+
+  <section id="s13">
+    <div class="sec-head"><span class="n">13</span><h2>성공 지표</h2></div>
     <p>사용자가 한 명인 제품이므로 지표는 통계가 아니라 <b>관찰 가능한 사실</b>로 정의한다.</p>
     <div class="tw">
       <table>
@@ -502,73 +545,70 @@
           <tr><td>새 머신 복원 시간</td><td>깨끗한 VM에서 클론부터 스킬 호출 성공까지 실측</td><td class="num">≤ 10분</td></tr>
           <tr><td>스킬 중복 사본</td><td><code>SKILL.md</code> 내용 해시 중복 개수</td><td class="num">0</td></tr>
           <tr><td>런타임 추가 비용</td><td><code>SKILL.md</code> 규약을 따르는 새 도구 지원에 필요한 저장소 커밋 수</td><td class="num">0</td></tr>
-          <tr><td>비밀 유출</td><td>CI 스캔 + 수동 히스토리 감사</td><td class="num">0건</td></tr>
-          <tr><td>클론 분기</td><td>서로 다른 경로의 클론이 갈라진 채 방치된 기간</td><td>해당 없음 — 설치본이 클론을 대체</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="s13">
-    <div class="sec-head"><span class="n">13</span><h2>리스크</h2></div>
-    <div class="tw">
-      <table>
-        <thead><tr><th>ID</th><th>리스크</th><th>영향</th><th>완화</th></tr></thead>
-        <tbody>
-          <tr><td class="id">R-1</td><td>런타임의 매니페스트 스펙이 바뀐다</td><td><span class="chip chip-warn">중</span></td><td>정본을 가장 안정적인 형식(<code>SKILL.md</code> + frontmatter)에 두고 매니페스트를 얇게 유지한다(DP1). 스펙이 바뀌어도 고칠 파일이 한두 개다.</td></tr>
-          <tr><td class="id">R-2</td><td>공개 저장소에 비밀을 실수로 커밋한다</td><td><span class="chip chip-risk">높음</span></td><td>구조적 차단 + CI 스캔 + 키 회전 우선 절차(<a href="#s10">10장</a>).</td></tr>
-          <tr><td class="id">R-3</td><td>서드파티 skills CLI에 의존한다</td><td><span class="chip chip-warn">중</span></td><td>심링크 폴백 경로를 항상 유지한다(NFR-3, NFR-4). CLI는 편의 경로이지 유일 경로가 아니다.</td></tr>
-          <tr><td class="id">R-4</td><td>설정 병합이 런타임 설정을 망가뜨린다</td><td><span class="chip chip-risk">높음</span></td><td>1급 3개로 범위 제한, 백업 필수, 드라이런 우선, 비밀 필드 비침습(FR-4·6·8, NFR-5).</td></tr>
-          <tr><td class="id">R-5</td><td>스킬이 늘면서 컨텍스트를 잠식한다</td><td><span class="chip chip-warn">중</span></td><td>번들을 목적별로 쪼개 필요한 것만 설치한다(FR-9). <code>description</code>을 트리거가 정확히 걸리도록 쓴다.</td></tr>
-          <tr><td class="id">R-6</td><td>공개 범위 때문에 정작 쓰고 싶은 스킬을 못 넣는다</td><td><span class="chip chip-warn">중</span></td><td>private 저장소 분리를 미해결 질문으로 열어둔다(<a href="#s14">Q-4</a>). 구조는 두 저장소를 같은 형식으로 지원할 수 있게 설계한다.</td></tr>
+          <tr><td>비밀 유출</td><td>CI 스캔 + 정기 히스토리 감사</td><td class="num">0건</td></tr>
+          <tr><td>always-on 토큰</td><td>기본 설치 번들의 컴포넌트 인벤토리 합계</td><td>NFR-6 상한 이내</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
   <section id="s14">
-    <div class="sec-head"><span class="n">14</span><h2>미해결 질문</h2></div>
+    <div class="sec-head"><span class="n">14</span><h2>리스크</h2></div>
     <div class="tw">
       <table>
-        <thead><tr><th>ID</th><th>질문</th><th>해소 시점</th></tr></thead>
+        <thead><tr><th>ID</th><th>리스크</th><th>영향</th><th>완화</th></tr></thead>
         <tbody>
-          <tr><td class="id">Q-1</td><td><code>grok</code>·<code>factory</code>의 <code>skills/</code>가 <code>SKILL.md</code> 규약과 실제로 호환되는가? 디렉토리 존재만 확인했고 형식은 미검증이다.</td><td>M4</td></tr>
-          <tr><td class="id">Q-2</td><td>스킬 폴더 안에 <code>agents/openai.yaml</code>을 동봉했을 때 Claude 스킬 로더가 문제없이 무시하는가? 검증은 통과했으나 실제 설치 후 동작은 미확인이다.</td><td>M1</td></tr>
-          <tr><td class="id">Q-3</td><td><code>CLAUDE.md</code>와 <code>AGENTS.md</code>를 하나의 소스에서 생성할 것인가, 각각 손으로 쓸 것인가? 내용이 상당히 겹친다.</td><td>M3</td></tr>
-          <tr><td class="id">Q-4</td><td>회사·개인 도메인 스킬이 생기면 private 저장소로 분리할 것인가? 분리한다면 부트스트랩이 두 소스를 어떻게 합치는가?</td><td>M2 이후</td></tr>
-          <tr><td class="id">Q-5</td><td>이전 하니스 루프(<code>902ec25</code>)에서 살릴 스킬이 있는가? NG5에 따라 기본은 "없음"이나, 실제 내용을 훑고 판단해야 한다.</td><td>M2</td></tr>
+          <tr><td class="id">R-1</td><td>런타임의 매니페스트 스펙이 바뀐다</td><td><span class="chip chip-warn">중</span></td><td>정본을 가장 안정적인 형식(<code>SKILL.md</code> + frontmatter)에 두고 매니페스트를 얇게 유지한다(DP1). 스펙이 바뀌어도 고칠 파일이 한두 개다.</td></tr>
+          <tr><td class="id">R-2</td><td>공개 저장소에 비밀을 실수로 커밋한다</td><td><span class="chip chip-risk">높음</span></td><td>구조적 차단 + CI 스캔 + 키 회전 우선 절차(<a href="#s10">10장</a>).</td></tr>
+          <tr><td class="id">R-3</td><td>서드파티 설치 CLI에 의존한다</td><td><span class="chip chip-warn">중</span></td><td>심링크 폴백 경로를 항상 유지한다(NFR-3·4). CLI는 편의 경로이지 유일 경로가 아니다.</td></tr>
+          <tr><td class="id">R-4</td><td>설정 병합이 런타임 설정을 망가뜨린다</td><td><span class="chip chip-risk">높음</span></td><td>1급으로 범위 제한, 백업 필수, 드라이런 우선, 비밀 필드 비침습(FR-4·6·8, NFR-5).</td></tr>
+          <tr><td class="id">R-5</td><td>스킬이 늘면서 컨텍스트를 잠식한다</td><td><span class="chip chip-warn">중</span></td><td>번들을 목적별로 쪼개 필요한 것만 설치하고(FR-9), 릴리스마다 always-on 비용을 측정한다(NFR-6).</td></tr>
+          <tr><td class="id">R-6</td><td>공개 범위 때문에 정작 쓰고 싶은 스킬을 못 넣는다</td><td><span class="chip chip-warn">중</span></td><td>private 저장소 분리를 열어두고(<a href="#s16">Q-3</a>), 구조가 두 저장소를 같은 형식으로 지원할 수 있게 설계한다.</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
   <section id="s15">
-    <div class="sec-head"><span class="n">15</span><h2>검증 근거</h2></div>
-    <p>이 PRD의 구조적 결정은 아래 관찰에 근거한다. 2026-08-29, macOS 24.6.0, Claude Code 2.1.251, Codex CLI 기준으로 이 머신에서 직접 확인한 것과 아직 확인하지 못한 것을 구분한다.</p>
+    <div class="sec-head"><span class="n">15</span><h2>런타임 전제</h2></div>
+    <p>이 설계는 아래 런타임 동작을 전제한다. <b>전제가 뒤집히면 구조가 흔들리므로</b>, 상태 열은 실측 결과로만 채우고 런타임이 업데이트될 때마다 재확인한다. 마지막 실측: 2026-08-29 (macOS, Claude Code 2.1.251, Codex CLI).</p>
     <div class="tw">
       <table>
-        <thead><tr><th>주장</th><th>확인 방법</th><th>상태</th></tr></thead>
+        <thead><tr><th>전제</th><th>확인 방법</th><th>의존</th><th>상태</th></tr></thead>
         <tbody>
-          <tr><td>Codex가 <code>.claude-plugin/marketplace.json</code>을 그대로 읽는다</td><td><code>codex plugin list</code>가 <code>claude-plugins-official</code>·<code>omc</code>를 각자의 <code>.claude-plugin/marketplace.json</code> 경로로 해석</td><td><span class="chip chip-ok">확인됨</span></td></tr>
-          <tr><td><code>plugin.json</code> 없이 <code>skills</code>·<code>agents</code>·<code>commands</code> 경로 배열로 번들을 만들 수 있다</td><td>해당 형태를 만들어 <code>claude plugin validate --strict</code> 통과. <code>anthropics/skills</code>가 실사용 중</td><td><span class="chip chip-ok">확인됨</span></td></tr>
-          <tr><td>공용 <code>~/.agents/skills</code>가 런타임별 디렉토리로 심링크 팬아웃된다</td><td><code>~/.claude/skills/*</code>와 <code>~/.hermes/skills/*</code>가 <code>../../.agents/skills/*</code>를 가리킴</td><td><span class="chip chip-ok">확인됨</span></td></tr>
-          <tr><td>커뮤니티 skills CLI가 런타임을 자동 감지한다</td><td><code>npx skills add</code> 실행 시 <code>claude-code_2-1-251_agent  Agent detected</code> 출력</td><td><span class="chip chip-ok">확인됨</span></td></tr>
-          <tr><td>네트워크 마켓플레이스는 user 또는 managed settings에서만 신뢰된다</td><td>CLI 진단 문자열: <i>"project/local scope cannot vouch for it"</i></td><td><span class="chip chip-ok">확인됨</span></td></tr>
-          <tr><td>Hermes는 <code>~/.hermes/skills/&lt;name&gt;/SKILL.md</code> 규약을 쓰며, 플러그인은 별개 표면이다</td><td><code>~/.hermes/skills</code>의 심링크와 <code>plugins/*/plugin.yaml</code>(Python) 구조 확인</td><td><span class="chip chip-ok">확인됨</span></td></tr>
-          <tr><td>Hermes에 마켓플레이스 개념이 없다</td><td><code>config.yaml</code>에 <code>plugins.enabled</code>만 존재. CLI 미설치로 직접 확인 불가</td><td><span class="chip chip-warn">추정</span></td></tr>
-          <tr><td><code>grok</code>·<code>factory</code>의 스킬 형식</td><td>디렉토리 존재만 확인</td><td><span class="chip chip-risk">미검증</span></td></tr>
-          <tr><td>설정 병합이 각 런타임에서 안전하다</td><td>구현 후 검증 필요</td><td><span class="chip chip-risk">미검증</span></td></tr>
+          <tr><td>루트 단일 매니페스트로 <code>skills</code>·<code>agents</code>·<code>commands</code> 경로 참조가 모두 해석된다</td><td>설치 후 컴포넌트 인벤토리에서 세 종류가 모두 확인됨</td><td>L2</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>Codex가 동일한 Claude 형식 매니페스트로 설치되며, 자기 형식 매니페스트를 자동 생성한다</td><td>같은 디렉토리를 두 CLI에 등록·설치. Codex 캐시에 <code>.codex-plugin/plugin.json</code>이 생성됨</td><td>L2 통합</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>Codex가 Claude 커맨드를 자기 스킬로 자동 변환한다</td><td>Codex 캐시의 <code>migrated-command-skills/</code> 산출물 확인</td><td>L2 통합</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>스킬 폴더 안의 런타임 사이드카를 다른 런타임이 무시한다</td><td>스킬에 <code>agents/openai.yaml</code>을 동봉해 설치. 유령 에이전트가 생기지 않음</td><td>DP2</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>스킬 폴더의 부속 파일이 설치 캐시까지 그대로 전달된다</td><td>두 런타임 캐시에서 <code>reference/</code>·<code>scripts/</code> 존재 확인</td><td>DP2</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>설치 CLI가 <code>skills/&lt;name&gt;/SKILL.md</code> 레이아웃을 인식하고 런타임을 자동 감지한다</td><td>이 레이아웃에 대해 스킬 목록 출력 + 에이전트 감지 로그 확인</td><td>L3, G3</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>공용 <code>~/.agents/skills</code>가 런타임별 디렉토리로 심링크 팬아웃된다</td><td>런타임 스킬 디렉토리가 공용 경로를 가리키는 것을 확인</td><td>L3</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>네트워크 마켓플레이스는 user 또는 managed settings에서만 신뢰된다</td><td>CLI 진단 메시지 — 프로젝트/로컬 스코프는 네트워크 소스를 보증하지 못함</td><td>설치 문서</td><td><span class="chip chip-ok">확인됨</span></td></tr>
+          <tr><td>Hermes에 마켓플레이스 개념이 없어 스킬은 파일 배치로만 전달된다</td><td>설정 파일에 플러그인 활성화 목록만 존재. CLI 직접 확인은 미실시</td><td>L3</td><td><span class="chip chip-warn">추정</span></td></tr>
+          <tr><td>감지 등급 런타임이 <code>SKILL.md</code> 규약과 호환된다</td><td>스킬 디렉토리 존재만 확인. 형식 미검증</td><td>G3</td><td><span class="chip chip-risk">미검증</span></td></tr>
+          <tr><td>설정 병합이 각 1급 런타임에서 안전하다</td><td>구현 후 검증 필요</td><td>L3, FR-4</td><td><span class="chip chip-risk">미검증</span></td></tr>
         </tbody>
       </table>
     </div>
-    <div class="callout">
-      <div class="eyebrow">현재 상태에서 확인된 문제</div>
-      <p>마켓플레이스 <code>personal-claude-tools</code>가 <code>Directory (/Users/chaejin/Desktop/lukas/myGit/PersonalAgentPlugins/claude)</code>로 등록돼 있다. M1에서 GitHub 소스로 재등록하기 전까지는 이 머신 밖에서 설치가 불가능하다. 기존 등록은 M1 완료 시 제거한다.</p>
+  </section>
+
+  <section id="s16">
+    <div class="sec-head"><span class="n">16</span><h2>미해결 질문</h2></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>질문</th><th>해소 시점</th></tr></thead>
+        <tbody>
+          <tr><td class="id">Q-1</td><td>감지 등급 런타임들이 <code>SKILL.md</code> 규약과 실제로 호환되는가? 호환되지 않는 런타임이 있다면 설치 대상에서 제외할 방법이 필요한가?</td><td>단계 4</td></tr>
+          <tr><td class="id">Q-2</td><td>런타임별 에이전트 지침 문서(<code>CLAUDE.md</code>·<code>AGENTS.md</code> 등)를 하나의 소스에서 생성할 것인가, 각각 손으로 쓸 것인가? 내용이 상당히 겹친다.</td><td>단계 3</td></tr>
+          <tr><td class="id">Q-3</td><td>공개할 수 없는 도메인 스킬이 생기면 private 저장소로 분리할 것인가? 분리한다면 부트스트랩이 두 소스를 어떻게 합치는가?</td><td>단계 2 이후</td></tr>
+          <tr><td class="id">Q-4</td><td>always-on 토큰 상한(NFR-6)을 얼마로 잡을 것인가? 실제 번들 구성이 나온 뒤에야 의미 있는 수치를 정할 수 있다.</td><td>단계 2</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
   <footer>
-    PersonalAgentPlugins PRD · Draft · 2026-08-29 · baseline 20fdc78 · branch redesign/multi-platform-skill-repo
+    PersonalAgentPlugins PRD · v1.0 · 런타임 전제 최종 실측 2026-08-29
   </footer>
   </main>
 </div>
