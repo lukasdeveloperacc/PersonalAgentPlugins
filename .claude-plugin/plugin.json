@@ -1,0 +1,10 @@
+{
+  "name": "lukas-plugin",
+  "version": "0.1.0",
+  "description": "Personal Claude Code plugin",
+  "skills": "./skills/",
+  "dependencies": [
+    { "name": "ponytail", "marketplace": "ponytail" },
+    { "name": "impeccable", "marketplace": "impeccable" }
+  ]
+}
