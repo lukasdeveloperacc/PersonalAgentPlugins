@@ -16,14 +16,21 @@ MARKETPLACE_NAME="$(jq -r '.name' "$ROOT_DIR/.claude-plugin/marketplace.json")"
 PLUGIN_ID="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 
 # "<plugin>@<marketplace> <marketplace source>". Claude also needs each in .claude-plugin/plugin.json "dependencies".
-CODEX_DEPS=("ponytail@ponytail DietrichGebert/ponytail")
+ELI5_MARKETPLACE="claude-community"
+ELI5_ID="eli5@$ELI5_MARKETPLACE"
+ELI5_SRC="anthropics/claude-plugins-community"
+CODEX_DEPS=(
+  "ponytail@ponytail DietrichGebert/ponytail"
+  "$ELI5_ID $ELI5_SRC"
+)
 # impeccable ships no Codex plugin, so install_codex_deps puts its skill in ~/.agents/skills via its own CLI.
 CLAUDE_DEPS=("${CODEX_DEPS[@]}" "impeccable@impeccable pbakaus/impeccable")
 
 # Codex skips plugin hooks until trusted; write the trust hashes it would write after TUI review.
 trust_codex_hooks() {
-  local root="$1" id="$2" hooks_rel
-  hooks_rel="$(jq -r '.hooks // empty' "$root/.codex-plugin/plugin.json")"
+  local root="$1" id="$2" hooks_rel manifest="$1/.codex-plugin/plugin.json"
+  [ -f "$manifest" ] || return 0
+  hooks_rel="$(jq -r '.hooks // empty' "$manifest")"
   [ -n "$hooks_rel" ] || return 0
   hooks_rel="${hooks_rel#./}"
   python3 "$ROOT_DIR/scripts/codex-trust-hooks.py" \
@@ -31,10 +38,14 @@ trust_codex_hooks() {
 }
 
 install_codex_deps() {
-  local dep id src out
+  local dep id src out refresh="${1:-}"
   for dep in "${CODEX_DEPS[@]}"; do
     read -r id src <<<"$dep"
     codex plugin marketplace add "$src" --json
+    if [ "$refresh" = "--refresh" ]; then
+      codex plugin marketplace upgrade "${id#*@}" --json
+      codex plugin remove "$id" --json || true
+    fi
     out="$(codex plugin add "$id" --json)"
     echo "$out"
     trust_codex_hooks "$(jq -r '.installedPath' <<<"$out")" "$id"
@@ -107,7 +118,7 @@ case "$TOOL" in
         codex plugin marketplace add "$ROOT_DIR" --json
         codex plugin add "$PLUGIN_ID" --json
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
-        install_codex_deps
+        install_codex_deps --refresh
         ;;
       *) usage ;;
     esac
@@ -119,6 +130,8 @@ case "$TOOL" in
         claude plugin marketplace add "$ROOT_DIR"
         claude plugin install "$PLUGIN_ID"
         claude plugin enable "$PLUGIN_ID"
+        claude plugin marketplace update "$ELI5_MARKETPLACE"
+        claude plugin update "$ELI5_ID" --scope user --yes
         deny_claude_connector
         claude plugin details "$PLUGIN_ID"
         ;;
@@ -135,6 +148,8 @@ case "$TOOL" in
         # `plugin update` is a no-op while the version stays 0.1.0, so reinstall to refresh the cache.
         claude plugin uninstall "$PLUGIN_ID" || true
         claude plugin install "$PLUGIN_ID"
+        claude plugin marketplace update "$ELI5_MARKETPLACE"
+        claude plugin update "$ELI5_ID" --scope user --yes
         deny_claude_connector
         claude plugin details "$PLUGIN_ID"
         ;;

@@ -29,4 +29,4 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
 - `remove` : plugin 제거
 - `reload` : plugin 업데이트
   - 업데이트 후 codex, claude 세션 모두 재실행 필요
-
+  - `eli5` 의존성도 각 마켓플레이스에서 갱신 후 재설치

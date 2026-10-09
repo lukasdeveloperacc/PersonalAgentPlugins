@@ -8,6 +8,8 @@ MARKETPLACE_NAME="$(jq -r '.name' "$ROOT_DIR/.claude-plugin/marketplace.json")"
 PLUGIN_ID="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 DEP_ID="ponytail@ponytail"
 DEP_SRC="DietrichGebert/ponytail"
+ELI5_ID="eli5@claude-community"
+ELI5_SRC="anthropics/claude-plugins-community"
 CLAUDE_DEP_ID="impeccable@impeccable"
 CLAUDE_DEP_SRC="pbakaus/impeccable"
 MCP_NAMES=($(jq -r '.mcpServers | keys[]' "$ROOT_DIR/mcp/servers.json"))
@@ -73,6 +75,8 @@ expect_calls \
   "codex plugin add $PLUGIN_ID --json" \
   "codex plugin marketplace add $DEP_SRC --json" \
   "codex plugin add $DEP_ID --json" \
+  "codex plugin marketplace add $ELI5_SRC --json" \
+  "codex plugin add $ELI5_ID --json" \
   "$IMPECCABLE_CODEX" \
   "codex plugin list"
 [[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:pre_tool_use")" == 1 ]]
@@ -85,6 +89,7 @@ run codex remove >/dev/null
 expect_calls \
   "codex plugin remove $PLUGIN_ID --json" \
   "codex plugin remove $DEP_ID --json" \
+  "codex plugin remove $ELI5_ID --json" \
   "${MCP_NAMES[@]/#/codex mcp remove }"
 [[ ! -e "$FAKE_HOME/.agents/skills/impeccable" ]]
 
@@ -97,7 +102,13 @@ expect_calls \
   "codex plugin marketplace add $ROOT_DIR --json" \
   "codex plugin add $PLUGIN_ID --json" \
   "codex plugin marketplace add $DEP_SRC --json" \
+  "codex plugin marketplace upgrade ponytail --json" \
+  "codex plugin remove $DEP_ID --json" \
   "codex plugin add $DEP_ID --json" \
+  "codex plugin marketplace add $ELI5_SRC --json" \
+  "codex plugin marketplace upgrade claude-community --json" \
+  "codex plugin remove $ELI5_ID --json" \
+  "codex plugin add $ELI5_ID --json" \
   "$IMPECCABLE_CODEX"
 [[ ! -e "$CACHE_DIR" ]]
 [[ "$(trust_count "$PLUGIN_ID")" == 2 ]]
@@ -109,10 +120,13 @@ mkdir -p "$FAKE_HOME/.claude" && echo '{"model":"keep"}' > "$FAKE_HOME/.claude/s
 run claude install >/dev/null
 expect_calls \
   "claude plugin marketplace add $DEP_SRC" \
+  "claude plugin marketplace add $ELI5_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
   "claude plugin marketplace add $ROOT_DIR" \
   "claude plugin install $PLUGIN_ID" \
   "claude plugin enable $PLUGIN_ID" \
+  "claude plugin marketplace update claude-community" \
+  "claude plugin update $ELI5_ID --scope user --yes" \
   "claude plugin details $PLUGIN_ID"
 
 : > "$CALL_LOG"
@@ -122,6 +136,7 @@ run claude remove >/dev/null
 expect_calls \
   "claude plugin uninstall $PLUGIN_ID" \
   "claude plugin uninstall $DEP_ID" \
+  "claude plugin uninstall $ELI5_ID" \
   "claude plugin uninstall $CLAUDE_DEP_ID" \
   "${MCP_NAMES[@]/#/claude mcp remove -s user }"
 
@@ -136,13 +151,16 @@ run claude reload >/dev/null
 run claude reload >/dev/null
 expect_calls \
   "claude plugin marketplace add $DEP_SRC" \
+  "claude plugin marketplace add $ELI5_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
   "claude plugin marketplace update $MARKETPLACE_NAME" \
   "claude plugin uninstall $PLUGIN_ID" \
   "claude plugin install $PLUGIN_ID" \
+  "claude plugin marketplace update claude-community" \
+  "claude plugin update $ELI5_ID --scope user --yes" \
   "claude plugin details $PLUGIN_ID"
 
-for id in "$DEP_ID" "$CLAUDE_DEP_ID"; do
+for id in "$DEP_ID" "$ELI5_ID" "$CLAUDE_DEP_ID"; do
   jq -e --arg n "${id%@*}" --arg m "${id#*@}" \
     '.dependencies[] | select(.name == $n and .marketplace == $m)' \
     "$ROOT_DIR/.claude-plugin/plugin.json" >/dev/null

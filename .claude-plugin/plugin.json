@@ -5,6 +5,7 @@
   "skills": "./skills/",
   "dependencies": [
     { "name": "ponytail", "marketplace": "ponytail" },
+    { "name": "eli5", "marketplace": "claude-community" },
     { "name": "impeccable", "marketplace": "impeccable" }
   ]
 }
