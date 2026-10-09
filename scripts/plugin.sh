@@ -24,7 +24,30 @@ CODEX_DEPS=(
   "$ELI5_ID $ELI5_SRC"
 )
 # impeccable ships no Codex plugin, so install_codex_deps puts its skill in ~/.agents/skills via its own CLI.
-CLAUDE_DEPS=("${CODEX_DEPS[@]}" "impeccable@impeccable pbakaus/impeccable")
+CLAUDE_DEPS=(
+  "${CODEX_DEPS[@]}"
+  "impeccable@impeccable pbakaus/impeccable"
+  "oh-my-claudecode@omc Yeachan-Heo/oh-my-claudecode"
+)
+
+setup_claude_harness() {
+  if ! command -v omc >/dev/null 2>&1; then
+    npm install -g oh-my-claude-sisyphus@latest
+  fi
+  omc setup --quiet </dev/null
+}
+
+setup_codex_harness() {
+  if ! command -v omx >/dev/null 2>&1; then
+    npm install -g oh-my-codex@latest
+  fi
+  # OMX's merge flag skips initial AGENTS.md creation; use it only for an existing file.
+  if [ -e "${CODEX_HOME:-$HOME/.codex}/AGENTS.md" ]; then
+    omx setup --scope user --plugin --merge-agents </dev/null
+  else
+    omx setup --scope user --plugin --clear-merge-agents-policy </dev/null
+  fi
+}
 
 # Codex skips plugin hooks until trusted; write the trust hashes it would write after TUI review.
 trust_codex_hooks() {
@@ -44,7 +67,7 @@ install_codex_deps() {
     codex plugin marketplace add "$src" --json
     if [ "$refresh" = "--refresh" ]; then
       codex plugin marketplace upgrade "${id#*@}" --json
-      codex plugin remove "$id" --json || true
+      codex plugin remove "$id" --json
     fi
     out="$(codex plugin add "$id" --json)"
     echo "$out"
@@ -65,11 +88,23 @@ remove_codex_deps() {
 }
 
 # Not --prune: it skips deps the user had installed by hand before (no "auto" flag).
+remove_claude_plugin() {
+  local result
+  if result="$(claude plugin uninstall "$1" --keep-data --json 2>/dev/null)"; then
+    echo "$result"
+  elif [ "$(jq -r '.failureCode // empty' <<<"$result")" = not_installed ]; then
+    echo "Already removed: $1"
+  else
+    echo "Failed to uninstall $1: $result" >&2
+    return 1
+  fi
+}
+
 remove_claude_deps() {
   local dep id src
   for dep in "${CLAUDE_DEPS[@]}"; do
     read -r id src <<<"$dep"
-    claude plugin uninstall "$id"
+    remove_claude_plugin "$id"
   done
 }
 
@@ -104,21 +139,22 @@ case "$TOOL" in
         codex plugin add "$PLUGIN_ID" --json
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps
+        setup_codex_harness
         codex plugin list | grep "$PLUGIN_NAME"
         ;;
       remove)
         codex plugin remove "$PLUGIN_ID" --json
         remove_codex_deps
         "$ROOT_DIR/scripts/mcp.sh" codex disable
-        "$ROOT_DIR/scripts/glitchtip-forward.sh" stop
         ;;
       reload)
-        codex plugin remove "$PLUGIN_ID" --json || true
-        rm -rf "$HOME/.codex/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
+        codex plugin remove "$PLUGIN_ID" --json
+        rm -rf "${CODEX_HOME:-$HOME/.codex}/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
         codex plugin marketplace add "$ROOT_DIR" --json
         codex plugin add "$PLUGIN_ID" --json
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps --refresh
+        setup_codex_harness
         ;;
       *) usage ;;
     esac
@@ -129,28 +165,28 @@ case "$TOOL" in
         add_claude_dep_marketplaces
         claude plugin marketplace add "$ROOT_DIR"
         claude plugin install "$PLUGIN_ID"
-        claude plugin enable "$PLUGIN_ID"
         claude plugin marketplace update "$ELI5_MARKETPLACE"
         claude plugin update "$ELI5_ID" --scope user --yes
         deny_claude_connector
+        setup_claude_harness
         claude plugin details "$PLUGIN_ID"
         ;;
       remove)
-        claude plugin uninstall "$PLUGIN_ID"
+        remove_claude_plugin "$PLUGIN_ID"
         remove_claude_deps
         "$ROOT_DIR/scripts/mcp.sh" claude disable
         allow_claude_connector
-        "$ROOT_DIR/scripts/glitchtip-forward.sh" stop
         ;;
       reload)
         add_claude_dep_marketplaces
-        claude plugin marketplace update "$MARKETPLACE_NAME" || true
+        claude plugin marketplace update "$MARKETPLACE_NAME"
         # `plugin update` is a no-op while the version stays 0.1.0, so reinstall to refresh the cache.
-        claude plugin uninstall "$PLUGIN_ID" || true
+        remove_claude_plugin "$PLUGIN_ID"
         claude plugin install "$PLUGIN_ID"
         claude plugin marketplace update "$ELI5_MARKETPLACE"
         claude plugin update "$ELI5_ID" --scope user --yes
         deny_claude_connector
+        setup_claude_harness
         claude plugin details "$PLUGIN_ID"
         ;;
       *) usage ;;
