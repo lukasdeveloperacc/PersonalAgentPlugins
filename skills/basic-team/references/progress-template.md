@@ -20,6 +20,8 @@ Serialize JSON with a real JSON serializer and replace every literal `<` with `\
 
 The template is a saved view. It does not start agents, poll, fetch external resources, automatically reload, or replace basic-team's reviewer and final-revision gates.
 
+New pages use a dark screen palette with readable text, status badges, tooltips, and dialogs; printing uses a light palette. Preserve these template colors when populating reports. Updating an existing page keeps that page's saved styles.
+
 ## Agent graph recipe
 
 Edges exist only where `dependsOn` records them, so every dispatch save must write the edge in the same patch as the agent. A receipt with `graph_warnings` means a stage would render as a disconnected column; the same list is saved in `_progress.graph_warnings` and shown at the top of the Agent Progress tab (pages created from an older template keep their old renderer and show it only in the receipt). A link counts if it reaches the upstream stage through any chain of `dependsOn`. Fix it in the next patch if the dependency is real. The standard shape:
