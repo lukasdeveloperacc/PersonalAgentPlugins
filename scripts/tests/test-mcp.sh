@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/mcp.sh"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT="$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh"
 SANDBOX="$(mktemp -d)"
 trap 'rm -rf "$SANDBOX"' EXIT
 STUB_BIN="$SANDBOX/bin"
@@ -47,7 +48,7 @@ run claude list | grep -x 'codegraph off' >/dev/null
 # disable with no names removes every catalog server.
 : > "$CALL_LOG"
 run claude disable
-[[ "$(wc -l < "$CALL_LOG")" -eq "$(jq '.mcpServers | length' "$(dirname "$SCRIPT")/../mcp/servers.json")" ]]
+[[ "$(wc -l < "$CALL_LOG")" -eq "$(jq '.mcpServers | length' "$ROOT_DIR/mcp/servers.json")" ]]
 
 # list reports per-tool state from each tool's user config.
 echo '{"mcpServers":{"glitchtip":{}}}' > "$SANDBOX/home/.claude.json"

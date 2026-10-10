@@ -164,7 +164,7 @@ case "$TOOL" in
       remove)
         codex plugin remove "$PLUGIN_ID" --json
         remove_codex_deps
-        "$ROOT_DIR/scripts/mcp.sh" codex disable
+        "$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh" codex disable
         ;;
       reload)
         codex update </dev/null
@@ -195,7 +195,7 @@ case "$TOOL" in
       remove)
         remove_claude_plugin "$PLUGIN_ID"
         remove_claude_deps
-        "$ROOT_DIR/scripts/mcp.sh" claude disable
+        "$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh" claude disable
         allow_claude_connector
         ;;
       reload)
@@ -220,7 +220,7 @@ esac
 if [ "$ACTION" = remove ]; then
   # Keep the shared CLI while the other tool still has its MCP enabled.
   if [ "$TOOL" = codex ]; then other_tool=claude; else other_tool=codex; fi
-  if ! "$ROOT_DIR/scripts/mcp.sh" "$other_tool" list | grep -qx 'codegraph on'; then
+  if ! "$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh" "$other_tool" list | grep -qx 'codegraph on'; then
     npm uninstall -g @colbymchenry/codegraph
   fi
 fi

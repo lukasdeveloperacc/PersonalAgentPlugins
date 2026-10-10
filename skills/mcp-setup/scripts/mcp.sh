@@ -14,7 +14,7 @@ ACTION="${2:-}"
 [ -n "$TOOL" ] && [ -n "$ACTION" ] || usage
 shift 2
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CATALOG="$ROOT_DIR/mcp/servers.json"
 FORWARD="$ROOT_DIR/scripts/glitchtip-forward.sh"
 

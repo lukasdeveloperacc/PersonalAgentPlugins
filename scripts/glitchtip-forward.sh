@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keeps `kubectl port-forward` to GlitchTip alive while the glitchtip MCP (scripts/mcp.sh) is enabled.
+# Keeps `kubectl port-forward` to GlitchTip alive while the glitchtip MCP (skills/mcp-setup/scripts/mcp.sh) is enabled.
 # `start` is run by the SessionStart hook on every Claude/Codex session; no-op if disabled or already running.
 set -u
 PORT=38088  # uncommon on purpose: 8088 collides with dev servers and manual port-forwards
@@ -7,7 +7,7 @@ STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/lukas-plugin"
 PIDFILE="$STATE_DIR/glitchtip-forward.pid"
 LOG="$STATE_DIR/glitchtip-forward.log"
 
-# Enabled in either tool's user config (see scripts/mcp.sh).
+# Enabled in either tool's user config (see skills/mcp-setup/scripts/mcp.sh).
 enabled() {
   jq -e '.mcpServers.glitchtip' "$HOME/.claude.json" >/dev/null 2>&1 ||
     grep -q '^\[mcp_servers\.glitchtip\]' "${CODEX_HOME:-$HOME/.codex}/config.toml" 2>/dev/null

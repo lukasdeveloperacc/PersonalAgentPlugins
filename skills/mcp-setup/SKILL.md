@@ -5,11 +5,11 @@ description: lukas-plugin이 제공하는 MCP 서버(gcloud, observability, noti
 
 # MCP 켜고 끄기
 
-lukas-plugin의 MCP 서버는 기본으로 꺼져 있다. Claude Code는 플러그인 MCP를 전역으로 꺼둘 수 없어서, 서버 정의를 자동으로 로드되지 않는 카탈로그(`mcp/servers.json`)에 두고 필요한 것만 사용자 설정(user scope)에 추가한다. 그래서 `/mcp` 목록에 없는 것이 정상이고, 켜고 끄는 일은 전부 `scripts/mcp.sh`가 한다.
+lukas-plugin의 MCP 서버는 기본으로 꺼져 있다. Claude Code는 플러그인 MCP를 전역으로 꺼둘 수 없어서, 서버 정의를 자동으로 로드되지 않는 카탈로그(`mcp/servers.json`)에 두고 필요한 것만 사용자 설정(user scope)에 추가한다. 그래서 `/mcp` 목록에 없는 것이 정상이고, 켜고 끄는 일은 전부 이 스킬의 `scripts/mcp.sh`가 한다.
 
 ## 스크립트 위치
 
-이 스킬 디렉터리에서 두 단계 위가 플러그인 루트다: `<이 스킬의 base directory>/../../scripts/mcp.sh`.
+이 스킬에 포함된 스크립트를 사용한다: `<이 스킬의 base directory>/scripts/mcp.sh`. 스크립트가 플러그인 루트를 계산해 `mcp/servers.json`과 공용 터널 스크립트를 참조한다.
 
 ```
 mcp.sh <claude|codex> list                  # 서버별 on/off
