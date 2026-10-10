@@ -1,4 +1,4 @@
 interface:
   display_name: "Basic Team"
   short_description: "Plan, implement, and pass required independent reviews"
-  default_prompt: "Use $basic-team to plan and implement this task, consult impeccable for Frontend planning, add design and E2E reviewers when needed, use Orca browser or temporarily enable Chrome DevTools MCP for browser validation and disable it afterward, brief me with eli5, and continue until all required reviewers pass."
+  default_prompt: "Use $basic-team to plan and implement this task, consult impeccable for Frontend planning, add design and E2E reviewers when needed, use Orca browser or temporarily enable Chrome DevTools MCP for browser validation and disable it afterward, save progress checkpoints before dependent dispatch or eli5 briefings, include the same progress file's link and confirmed save time, and continue until all required reviewers pass."
