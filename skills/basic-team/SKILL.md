@@ -17,11 +17,11 @@ Use native agents in the current host: Codex native collaboration or the install
 
 Use the host column for every stage; all reviewers, including activated Impeccable and E2E reviewers, use the Reviewer settings.
 
-| Role | Codex model | Reasoning | Claude model | Effort |
-| --- | --- | --- | --- | --- |
-| Planner | `gpt-6.1-sol` | `medium` | `claude-opus-5-5` | `medium` |
-| Executor | `gpt-6-luna` | `max` | `claude-haiku-5-5` | `max` |
-| Reviewer (each) | `gpt-6-luna` | `max` | `claude-sonnet-5-5` | `high` |
+| Role            | Codex model   | Reasoning | Claude model        | Effort   |
+| --------------- | ------------- | --------- | ------------------- | -------- |
+| Planner         | `gpt-6.1-sol` | `medium`  | `claude-opus-5.5`   | `medium` |
+| Executor        | `gpt-6-luna`  | `max`     | `claude-haiku-5.5`  | `max`    |
+| Reviewer (each) | `gpt-6-luna`  | `max`     | `claude-sonnet-5.5` | `high`   |
 
 Inspect the actual tool schema and installed skill catalog before launching. Resolve `ralplan`, `plan`, `lukas-plugin:karpathy-guidelines`, `ponytail:ponytail`, and `eli5:eli5` (or the host's equivalent qualified names) to their real SKILL.md paths. On Claude also resolve and invoke `oh-my-claudecode:team` as described below. Load only the skills needed by the current stage. Pass exact paths to children; they may not inherit the leader's skill context. Missing `ralplan` selects `plan`; if both planning skills, either review skill, eli5, or Claude's native team skill are missing, report the dependency blocker rather than inventing their contents.
 
