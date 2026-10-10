@@ -1,3 +1,4 @@
 .omc/
 .omx/
 __pycache__/
+.codegraph/
