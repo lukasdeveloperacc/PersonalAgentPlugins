@@ -46,10 +46,12 @@ Harness setup은 사용자 전역 설정을 갱신합니다. OMC는 `~/.claude/C
 
 Codex는 `$basic-team <작업>`, Claude는 `/lukas-plugin:basic-team <작업>`으로 호출합니다. 플러그인 reload 후 새 세션에서 사용할 수 있습니다.
 
-- Planner: `ralplan` 기반 계획, 미설치 시 `plan` 사용. Frontend/Backend 각각의 병렬 작업을 찾아 작업·파일·담당자·의존성·연결 규약을 명시
+- Planner: `ralplan` 기반 계획, 미설치 시 `plan` 사용. Frontend/Backend 각각의 병렬 작업을 찾아 작업·파일·담당자·의존성·연결 규약을 명시. Frontend 계획에는 `impeccable`의 UX·디자인 기준을 참고
 - Executor: Frontend/Backend 각각 여러 네이티브 에이전트가 독립 작업을 병렬 구현. 준비된 작업부터 가용 슬롯에 배정하고 공용 파일·통합 작업은 단일 담당자를 지정
 - Karpathy Agent와 Ponytail Senior Agent: 독립 리뷰 후 둘 다 같은 최종 구현에 `PASS`할 때까지 수정·재검토
+- Impeccable reviewer: Frontend 디자인·UX 평가가 필요할 때만 생성해 `impeccable`로 평가. 생성된 경우 이 리뷰어의 최종 `PASS`도 필요하며 기존 Reviewer 모델·추론 설정 사용
 - Main Session: `eli5`로 하나의 HTML 진행판을 유지. 계획 / 에이전트별 진행 / 리뷰·검증 / 결정·막힌 일 탭으로 나누고, 회신 수신·단계 전환 시 갱신하여 파일 링크와 짧은 설명으로 브리핑
+- 진행판 디자인: [공통 HTML 템플릿](skills/basic-team/assets/progress-template.html)을 사용. 반응형 레이아웃·에이전트 상세 펼치기·진행 파일 절대 경로와 복사 버튼을 제공하고, 시작·완료 브리핑에도 파일 링크와 경로를 명시
 - 협업: 반복 상태 조회 대신 네이티브 회신·완료 알림으로 후속 작업을 진행. 할 일이 없으면 이벤트 대기하고, 필요한 변경 사항만 전달하여 토큰 낭비를 줄임
 - 막힌 작업: 코드·설정·오류 근거·공식 문서를 먼저 조사해 합리적인 해결책을 적용. 중요한 모호함이나 사용자 결정이 남으면 Main Session이 조사 결과·추천안과 함께 질문하고, 영향 없는 작업은 계속 진행
 

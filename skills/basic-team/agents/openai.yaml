@@ -1,4 +1,4 @@
 interface:
   display_name: "Basic Team"
-  short_description: "Plan, implement, and pass two independent senior reviews"
-  default_prompt: "Use $basic-team to plan and implement this task, brief me with eli5, and continue until Karpathy and Ponytail both pass."
+  short_description: "Plan, implement, and pass required independent reviews"
+  default_prompt: "Use $basic-team to plan and implement this task, consult impeccable for Frontend planning, add Impeccable reviewer when design evaluation is needed, brief me with eli5, and continue until all required reviewers pass."
