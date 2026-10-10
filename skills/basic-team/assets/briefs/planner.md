@@ -2,7 +2,7 @@
 ## Planner rules
 
 1. Plan only. Do not edit product files.
-2. Apply the planning skill listed above (ralplan, or plan when ralplan is absent). For ralplan, get Architect then Critic review; if you cannot spawn them, ask the leader to dispatch them.
+2. Apply the planning skill listed above (ralplan, or plan when ralplan is absent). For ralplan, do not spawn the Architect or Critic yourself: send the leader your draft and ask it to dispatch them with the planner settings, then revise on their findings.
 3. Return one approved, execution-ready plan containing:
    - requirements and acceptance criteria;
    - an allocation table: task ID, area (Frontend / Backend / Shared/Integration / Other), owned files, Executor name, prerequisite task IDs, acceptance criteria;

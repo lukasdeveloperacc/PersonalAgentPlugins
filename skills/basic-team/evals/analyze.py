@@ -9,7 +9,7 @@ for line in (run / "stream.jsonl").read_text(encoding="utf-8", errors="replace")
         event = json.loads(line)
     except json.JSONDecodeError:
         continue
-    if event.get("type") == "assistant":
+    if event.get("type") == "assistant" and not event.get("parent_tool_use_id"):  # leader's own calls only
         for block in event.get("message", {}).get("content", []):
             if block.get("type") == "tool_use" and block.get("name") in ("Agent", "Task"):
                 spawns.append(block.get("input", {}))
