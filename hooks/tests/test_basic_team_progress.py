@@ -74,6 +74,17 @@ class HookTest(unittest.TestCase):
                 self.assertIn(str(self.page), self.post(host))
         self.assertEqual("unchanged", self.page.read_text())
 
+    def test_spawn_arguments_are_logged_without_prompt_text(self):
+        self.post("claude", "Agent", tool_input={"model": "haiku", "effort": "max", "name": "x", "prompt": "SECRET brief"})
+        self.assertFalse((self.state / "lukas-plugin/basic-team/spawn-calls.jsonl").exists())
+        self.post("claude", "Bash", self.arm("claude"))
+        self.post("claude", "Agent", tool_input={"model": "haiku", "effort": "max", "name": "x", "prompt": "SECRET brief"})
+        log = (self.state / "lukas-plugin/basic-team/spawn-calls.jsonl").read_text()
+        entry = json.loads(log)
+        self.assertEqual(entry["seen"], {"model": "haiku", "effort": "max", "name": "x"})
+        self.assertIn("prompt", entry["keys"])
+        self.assertNotIn("SECRET", log)
+
     def test_identity_failure_does_not_create_state(self):
         env = self.env(CODEX_THREAD_ID="one", CODEX_SESSION_ID="two")
         proc = subprocess.run(["uv", "run", "--script", str(ENGINE), "arm", str(self.page), "--host", "codex"],

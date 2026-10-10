@@ -322,8 +322,25 @@ def _progress(args, event, session=None, turn=None) -> int:
     for run in record.get("runs", []):
         if args.host == "codex" and run.get("turn_id") != turn:
             continue
+        if event.get("tool_name") in ("Agent", "spawn_agent"):
+            _log_spawn(run, event)
         return _emit(f"Basic-team run is active. Reconcile received progress and save verified new facts to {run['page']} before dependent dispatch or briefing. Reuse this page; no new facts means no rewrite.")
     return 0
+
+
+def _log_spawn(run: dict, event: dict) -> None:
+    """Record which spawn arguments the hook sees (never prompt text), to learn what a blocking check could rely on."""
+    tool_input = event.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return
+    seen = {k: v for k, v in tool_input.items() if k in ("model", "effort", "reasoning_effort", "subagent_type", "name", "task_name", "agent_type", "fork_turns") and isinstance(v, (str, int))}
+    entry = {"at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "run_id": run.get("run_id"), "tool": event.get("tool_name"), "keys": sorted(tool_input), "seen": seen}
+    try:
+        with _locked():
+            with (STATE_HOME / "spawn-calls.jsonl").open("a", encoding="utf-8") as log:
+                log.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
 
 
 def _emit(message: str) -> int:

@@ -24,6 +24,8 @@ GATE_FIELDS = {"planApproved", "requiredReviewers", "reviewTarget", "verdicts", 
 VERDICTS = {"PASS", "CHANGES_REQUIRED", "BLOCKED"}
 MANDATORY_REVIEWERS = {"karpathy", "ponytail"}
 UNOBSERVED = "미확인"
+UNOBSERVED_FORMS = {UNOBSERVED, "unknown"}
+ROLE_NAMES = ("planner", "executor", "reviewer")
 COMPLIANCE_ROWS = (
     ("page", "HTML progress page, final save, link/absolute path/save time"),
     ("hook", "Hook arm/disarm and actual confirmation or manual checkpoints"),
@@ -136,11 +138,13 @@ def validate_gates(gates):
     if not isinstance(gates, dict) or gates.keys() - GATE_FIELDS:
         fail(f"gates must be an object with only: {', '.join(sorted(GATE_FIELDS))}")
     for key in ("planApproved", "reviewTarget"):
-        if key in gates and not isinstance(gates[key], str):
-            fail(f"gates.{key} must be a string")
-    for key in ("requiredReviewers", "exceptions"):
-        if key in gates and not is_text_list(gates[key]):
-            fail(f"gates.{key} must be an array of nonempty strings")
+        if key in gates and (not isinstance(gates[key], str) or not gates[key].strip()):
+            fail(f"gates.{key} must be a nonempty string")
+    if "requiredReviewers" in gates and not is_text_list(gates["requiredReviewers"]):
+        fail("gates.requiredReviewers must be an array of nonempty strings")
+    exceptions = gates.get("exceptions", {})
+    if not isinstance(exceptions, dict) or any(not isinstance(k, str) or not isinstance(v, str) or not v.strip() for k, v in exceptions.items()):
+        fail("gates.exceptions must be an object of agent-id -> nonempty reason")
     verdicts = gates.get("verdicts")
     if verdicts:
         if not isinstance(verdicts, dict):
@@ -149,14 +153,18 @@ def validate_gates(gates):
         if set(verdicts) != set(gates.get("requiredReviewers", [])):
             fail("gates.verdicts must contain exactly the requiredReviewers; save verdicts only after all required reviews arrive")
         for name, verdict in verdicts.items():
-            if not isinstance(verdict, dict) or verdict.keys() != {"revision", "verdict"} or not isinstance(verdict["revision"], str) or verdict["verdict"] not in VERDICTS:
+            if not isinstance(verdict, dict) or verdict.keys() != {"revision", "verdict"} or not isinstance(verdict["revision"], str) or not verdict["revision"].strip() or verdict["verdict"] not in VERDICTS:
                 fail(f"gates.verdicts.{name} needs revision and verdict ({' | '.join(sorted(VERDICTS))})")
     models = gates.get("models", {})
     if not isinstance(models, dict):
         fail("gates.models must be an object")
     for agent_id, record in models.items():
-        if not isinstance(record, dict) or record.keys() != {"requested", "invocation", "observed"} or any(not isinstance(v, str) or not v for v in record.values()):
-            fail(f"gates.models.{agent_id} needs nonempty requested, invocation, and observed strings")
+        if not isinstance(record, dict) or record.keys() != {"role", "requested", "invocation", "observed"} or any(not isinstance(v, str) or not v.strip() for v in record.values()):
+            fail(f"gates.models.{agent_id} needs nonempty role, requested, invocation, and observed strings")
+        if record["role"] not in ROLE_NAMES:
+            fail(f"gates.models.{agent_id}.role must be one of {', '.join(ROLE_NAMES)}")
+        if record["requested"] not in requested_ids(record["role"]):
+            fail(f"gates.models.{agent_id}.requested must be the spawn-args requested ID for {record['role']}: {', '.join(sorted(requested_ids(record['role'])))}")
     evidence = gates.get("evidence", {})
     if not isinstance(evidence, dict):
         fail("gates.evidence must be an object")
@@ -167,19 +175,25 @@ def validate_gates(gates):
             fail(f"gates.evidence.{key} needs status (함 | 부분 | 안 함) and nonempty evidence")
 
 
-def model_problems(gates):
+def requested_ids(role):
+    entry = json.loads(ROLES.read_text(encoding="utf-8")).get(role)
+    return {entry["claude"]["id"], entry["codex"]["model"]} if entry else set()
+
+
+def model_problems(gates, need=("planner",), reviewers=()):
     models = gates.get("models", {})
-    if not models:
-        return ["no model records: save gates.models for each spawned agent"]
-    problems = []
+    problems = [f"no {role} model record: save gates.models.<agent-id> with role {role}" for role in need
+                if not any(record["role"] == role for record in models.values())]
+    problems += [f"no model record for reviewer {name}: use the reviewer name as the agent id" for name in reviewers if name not in models]
+    exceptions = gates.get("exceptions", {})
     for agent_id, record in models.items():
         if record["observed"] == record["requested"]:
             continue
-        if record["observed"] == UNOBSERVED:
-            if not any(agent_id in exception for exception in gates.get("exceptions", [])):
-                problems.append(f"{agent_id}: observed {UNOBSERVED}; ask the user and record an approved exception naming {agent_id}, or stop as BLOCKED")
+        if record["observed"].strip().lower() in UNOBSERVED_FORMS:
+            if agent_id not in exceptions:
+                problems.append(f"{agent_id}: observed {UNOBSERVED}; ask the user and add gates.exceptions.{agent_id} with the approval, or stop as BLOCKED")
         else:
-            problems.append(f"{agent_id}: observed {record['observed']} != requested {record['requested']}; BLOCKED, respawn with spawn-args")
+            problems.append(f"{agent_id}: observed {record['observed']} != requested {record['requested']}; BLOCKED, respawn with spawn-args and overwrite this record using the same agent id")
     return problems
 
 
@@ -205,7 +219,8 @@ def review_problems(gates, stage):
 def gate_problems(data, stage):
     gates = data.get("gates", {})
     problems = [] if gates.get("planApproved") else ["plan not approved: set gates.planApproved to the approved plan revision"]
-    problems += model_problems(gates)
+    need = {"implementation": ("planner",), "review": ("planner", "executor"), "complete": ("planner", "executor")}[stage]
+    problems += model_problems(gates, need, gates.get("requiredReviewers", []) if stage == "complete" else ())
     if stage != "implementation":
         problems += review_problems(gates, stage)
     return problems
@@ -216,9 +231,11 @@ def compliance_table(data):
     meta = data.get("_progress")
     derived = {"page": ("함", f"{data.get('path')} · 마지막 저장 {meta['saved_at']} · checkpoint {meta['checkpoint']}") if meta else ("안 함", "저장 기록 없음")}
     models = gates.get("models", {})
-    problems = model_problems(gates)
+    problems = model_problems(gates, ("planner", "executor"), gates.get("requiredReviewers", []))
+    excepted = [a for a, r in models.items() if r["observed"] != r["requested"] and a in gates.get("exceptions", {})]
+    summary = "; ".join(f"{a}: requested {r['requested']} / invocation {r['invocation']} / observed {r['observed']}" for a, r in models.items())
     derived["models"] = ("안 함", "기록 없음") if not models else ("부분", "; ".join(problems)) if problems else (
-        "함", "; ".join(f"{a}: requested {r['requested']} / invocation {r['invocation']} / observed {r['observed']}" for a, r in models.items()))
+        "부분" if excepted else "함", summary + ("; 사용자 승인 예외: " + ", ".join(f"{a} ({gates['exceptions'][a]})" for a in excepted) if excepted else "") + "; effort는 호스트가 노출하지 않아 관측 미확인")
     verdicts = gates.get("verdicts")
     open_reviews = review_problems(gates, "complete")
     derived["reviews"] = ("안 함", "판정 기록 없음") if not verdicts else ("부분", "; ".join(open_reviews)) if open_reviews else (
@@ -227,7 +244,7 @@ def compliance_table(data):
     for key, label in COMPLIANCE_ROWS:
         row = gates.get("evidence", {}).get(key)
         status, evidence = derived.get(key) or ((row["status"], row["evidence"]) if row else ("안 함", "증거 기록 없음"))
-        lines.append(f"| {label} | {status} | {evidence.replace('|', '/')} |")
+        lines.append(f"| {label} | {status} | {" ".join(evidence.replace("|", "/").split())} |")
     return "\n".join(lines)
 
 
@@ -429,7 +446,10 @@ def main():
                     # Gate keys merge like agents; models/evidence merge per entry so records can arrive one at a time.
                     gates = dict(data.get("gates", {}))
                     for key, value in incoming["gates"].items():
-                        gates[key] = {**gates.get(key, {}), **value} if key in ("models", "evidence") and isinstance(value, dict) else value
+                        gates[key] = {**gates.get(key, {}), **value} if key in ("models", "evidence", "exceptions") and isinstance(value, dict) else value
+                    for key in ("models", "evidence", "exceptions"):
+                        if isinstance(gates.get(key), dict):
+                            gates[key] = {k: v for k, v in gates[key].items() if v is not None}  # null deletes a stale record
                     incoming["gates"] = gates
                 data.update(incoming)
                 revision = data.get("_progress", {}).get("revision", 0) + 1
@@ -452,9 +472,9 @@ def main():
                 receipt["graph_warnings"] = warnings
         print(json.dumps(receipt, ensure_ascii=False))
         return 0
-    except (OSError, ValueError, json.JSONDecodeError) as error:
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
         print(f"progress.py: {error}", file=sys.stderr)
-        return 1
+        return 2  # tool error; exit 1 is reserved for an unmet gate
 
 
 if __name__ == "__main__":

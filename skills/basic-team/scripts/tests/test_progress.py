@@ -192,7 +192,13 @@ class ProgressCliTests(CliCase):
 
 
 class GateAndBriefTests(CliCase):
-    MODEL_OK = {"requested": "claude-haiku-5-5", "invocation": "model=haiku, effort=max", "observed": "claude-haiku-5-5"}
+    PLANNER = {"role": "planner", "requested": "claude-opus-5-5", "invocation": "model=opus, effort=medium", "observed": "claude-opus-5-5"}
+    EXECUTOR = {"role": "executor", "requested": "claude-haiku-5-5", "invocation": "model=haiku, effort=max", "observed": "claude-haiku-5-5"}
+    REVIEWER = {"role": "reviewer", "requested": "claude-sonnet-5-5", "invocation": "model=sonnet, effort=high", "observed": "claude-sonnet-5-5"}
+    MODEL_OK = EXECUTOR
+
+    def all_models(self):
+        return {"planner": self.PLANNER, "b1": self.EXECUTOR, "karpathy": self.REVIEWER, "ponytail": self.REVIEWER}
 
     def gate(self, stage):
         result = self.run_cli("gate", self.page, "--stage", stage)
@@ -216,15 +222,33 @@ class GateAndBriefTests(CliCase):
         code, result = self.gate("implementation")
         self.assertEqual(code, 1)
         self.assertEqual(len(result["problems"]), 2)
-        self.assertEqual(self.patch({"planApproved": "plan-r2", "models": {"b1": dict(self.MODEL_OK, observed="claude-sonnet-5-5")}}).returncode, 0)
+        self.assertEqual(self.patch({"planApproved": "plan-r2", "models": {"planner": dict(self.PLANNER, observed="claude-sonnet-5-5")}}).returncode, 0)
         self.assertIn("BLOCKED", self.gate("implementation")[1]["problems"][0])
-        self.patch({"models": {"b1": dict(self.MODEL_OK, observed="미확인")}})
-        self.assertIn("exception", self.gate("implementation")[1]["problems"][0])
-        self.patch({"exceptions": ["b1: 사용자가 미확인 진행 승인"]})
+        # A second record for a respawn overwrites by the same agent id, and unknown is normalized.
+        self.patch({"models": {"planner": dict(self.PLANNER, observed="unknown")}})
+        self.assertIn("exceptions.planner", self.gate("implementation")[1]["problems"][0])
+        self.patch({"exceptions": {"planner2": "다른 에이전트 승인"}})
+        self.assertEqual(self.gate("implementation")[0], 1)
+        self.patch({"exceptions": {"planner": "사용자가 미확인 진행 승인"}})
         self.assertEqual(self.gate("implementation"), (0, {"gate": "implementation", "ok": True, "problems": []}))
 
+    def test_model_record_must_use_the_role_requested_id_and_can_be_deleted(self):
+        self.init({"gates": {"models": {"x": self.EXECUTOR}}})
+        self.assertNotEqual(self.patch({"models": {"x": dict(self.EXECUTOR, requested="claude-sonnet-5-5")}}).returncode, 0)
+        self.assertNotEqual(self.patch({"models": {"y": {k: v for k, v in self.EXECUTOR.items() if k != "role"}}}).returncode, 0)
+        self.assertEqual(self.patch({"models": {"x": None}}).returncode, 0)
+        self.assertEqual(self.data()["gates"]["models"], {})
+
+    def test_review_and_complete_gates_need_executor_and_reviewer_records(self):
+        models = self.all_models()
+        del models["ponytail"]
+        self.init({"gates": {"planApproved": "p1", "models": models, "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2"}})
+        self.assertEqual(self.gate("review")[0], 0)
+        problems = self.gate("complete")[1]["problems"]
+        self.assertTrue(any("reviewer ponytail" in p for p in problems), problems)
+
     def test_partial_verdicts_are_rejected_and_complete_needs_all_pass_on_target(self):
-        self.init({"gates": {"planApproved": "p1", "models": {"b1": self.MODEL_OK}, "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2"}})
+        self.init({"gates": {"planApproved": "p1", "models": self.all_models(), "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2"}})
         before = self.page.read_bytes()
         self.assertNotEqual(self.patch({"verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}}}).returncode, 0)
         self.assertEqual(self.page.read_bytes(), before)
@@ -232,22 +256,31 @@ class GateAndBriefTests(CliCase):
         code, result = self.gate("complete")
         self.assertEqual((code, len(result["problems"])), (1, 1))
         self.assertIn("ponytail: reviewed r1", result["problems"][0])
-        self.patch({"verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}, "ponytail": {"revision": "r2", "verdict": "PASS"}}})
+        self.patch({"verdicts": {}, "reviewTarget": "r3"})  # new round clears saved verdicts
+        self.assertEqual(self.data()["gates"]["verdicts"], {})
+        self.patch({"verdicts": {"karpathy": {"revision": "r3", "verdict": "PASS"}, "ponytail": {"revision": "r3", "verdict": "PASS"}}})
         self.assertEqual(self.gate("complete")[0], 0)
 
     def test_compliance_derives_rows_and_marks_missing_evidence(self):
-        self.init({"gates": {"planApproved": "p1", "models": {"b1": self.MODEL_OK}, "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2",
+        self.init({"gates": {"planApproved": "p1", "models": self.all_models(), "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2",
                              "verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}, "ponytail": {"revision": "r2", "verdict": "CHANGES_REQUIRED"}},
-                             "evidence": {"hook": {"status": "함", "evidence": "run_id x | confirmed"}}}})
+                             "evidence": {"hook": {"status": "함", "evidence": "run_id x | confirmed\nline2"}}}})
         result = self.run_cli("compliance", self.page)
         self.assertEqual(result.returncode, 0, result.stderr)
         rows = {line.split("|")[1].strip(): line.split("|")[2].strip() for line in result.stdout.splitlines()[2:]}
         self.assertEqual(len(rows), 10)
         self.assertEqual(rows["HTML progress page, final save, link/absolute path/save time"], "함")
         self.assertEqual(rows["Hook arm/disarm and actual confirmation or manual checkpoints"], "함")
+        self.assertEqual(rows["Per-call model/effort arguments, alias resolution evidence, requested/invocation/observed report"], "함")
         self.assertEqual(rows["All required independent reviews on the final revision"], "부분")
         self.assertEqual(rows["Teammate shutdown, unresponsive-agent recovery, inactive team-state verification"], "안 함")
         self.assertNotEqual(self.patch({"evidence": {"reviews": {"status": "함", "evidence": "trust me"}}}).returncode, 0)
+
+    def test_tool_errors_exit_2_and_unmet_gates_exit_1(self):
+        self.assertEqual(self.run_cli("gate", self.root / "docs/inprogress/missing.html", "--stage", "review").returncode, 2)
+        self.init()
+        self.assertEqual(self.run_cli("gate", self.page, "--stage", "review").returncode, 1)
+        self.assertEqual(self.run_cli("spawn-args", "--host", "claude", "--role", "nobody").returncode, 2)
 
     def test_brief_rejects_missing_fields_and_renders_without_expected_model_id(self):
         fields = {key: f"{key} value" for key in ("task_id", "request", "project_instructions", "workdir", "area", "owned", "inputs", "deliverable", "validation", "contacts")}
@@ -260,7 +293,10 @@ class GateAndBriefTests(CliCase):
         self.assertIn("MODEL: <the exact model ID", brief)
         self.assertIn("Reviewed revision: r2", brief)
         self.assertNotIn("claude-", brief)
-        self.assertNotIn("$", brief)
+        self.assertNotIn("$role", brief)
+        dollar = self.run_cli("brief", "--role", "executor", "--input", self.input_file(dict(fields, request="costs $5 and ${HOME} $role_title")))
+        self.assertEqual(dollar.returncode, 0, dollar.stderr)
+        self.assertIn("costs $5 and ${HOME} $role_title", dollar.stdout)
         for role in ("planner", "executor"):
             out = self.run_cli("brief", "--role", role, "--input", self.input_file(fields))
             self.assertEqual(out.returncode, 0, out.stderr)

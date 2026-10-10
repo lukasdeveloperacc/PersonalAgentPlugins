@@ -50,16 +50,21 @@ $contacts
 ## When blocked
 
 1. Find the cause in code, configuration, docs, or logs.
-2. If a safe fix exists inside your owned files, apply it and say why.
+2. Apply a safe fix only if your role rules below allow editing and the file is one you own; say why.
 3. Otherwise send the leader one message: what you checked, the decision needed, and your recommended option.
 4. Continue other assigned work. If none remains, wait for the reply. Do not poll or send "still waiting" messages.
 
+## Boundaries
+
+Do not create or edit agent definitions or user settings, and do not publish, push, or deploy. Send each result once, through the completion surface or one targeted message, not both. Do not message other agents unless the leader gave you their address.
+
 ## Reports
 
-Report to the leader when you finish a milestone, change scope or dependencies, hit a blocker, or finish. Send each result once, in this shape:
+Report to the leader when you finish a milestone, change scope or dependencies, or hit a blocker. Executors and the Planner finish with this shape (a Reviewer's final block replaces it):
 
 ```text
 id: $task_id
+area: $area
 status: working | waiting | blocked | done
 done: <what changed, with file paths>
 evidence: <commands run and their results, or "not run" and why>
