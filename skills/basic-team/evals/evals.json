@@ -4,7 +4,7 @@
     {
       "id": 1,
       "name": "backend-only-small-feature",
-      "prompt": "/lukas-plugin:basic-team util.py에 slugify(text) 함수를 추가해줘. 소문자로 바꾸고 공백과 특수문자는 '-' 하나로 합치고 양끝 '-'은 제거해. test_util.py에 테스트도 추가하고 python3 test_util.py로 검증해. 커밋/푸시는 하지 마.",
+      "prompt": "/lukas-plugin:basic-team util.py에 slugify(text) 함수를 추가해줘. 소문자로 바꾸고 공백과 특수문자는 '-' 하나로 합치고 양끝 '-'은 제거해. test_util.py에 테스트도 추가하고 python3 test_util.py로 검증해. 커밋/푸시는 하지 마. 사용자 승인: 자식이 모델 ID를 보고하지 않아 관측값이 미확인이면 예외로 승인하니 그대로 진행해. 비대화형 실행이라 질문하지 말고 끝까지 진행해.",
       "fixture": "fixture/",
       "assertions": [
         "every Agent spawn passes model and effort arguments and none uses fork",
