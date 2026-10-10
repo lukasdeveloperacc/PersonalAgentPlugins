@@ -121,16 +121,78 @@ remove_claude_deps() {
 # claude.ai's Notion connector is tied to the claude.ai login's Notion account; block it so
 # mcp/servers.json's notion (own OAuth, any account) is the only one. User settings honor deniedMcpServers.
 DENIED_CONNECTOR="claude.ai Notion"
-CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+CLAUDE_SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+CLAUDE_AGENT_TEAMS_KEY="CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"
+CLAUDE_AGENT_TEAMS_STATE="$HOME/.local/state/lukas-plugin/agent-teams.json"
 
 edit_claude_settings() {
-  local tmp
+  local filter="$1" tmp
+  shift
+  mkdir -p "$(dirname "$CLAUDE_SETTINGS")"
   [ -f "$CLAUDE_SETTINGS" ] || echo '{}' > "$CLAUDE_SETTINGS"
   tmp="$(mktemp)"
-  jq --arg n "$DENIED_CONNECTOR" "$1" "$CLAUDE_SETTINGS" > "$tmp" && mv "$tmp" "$CLAUDE_SETTINGS"
+  jq "$@" "$filter" "$CLAUDE_SETTINGS" > "$tmp" && mv "$tmp" "$CLAUDE_SETTINGS"
 }
-deny_claude_connector() { edit_claude_settings '.deniedMcpServers = ((.deniedMcpServers // []) - [{serverName: $n}] + [{serverName: $n}])'; }
-allow_claude_connector() { edit_claude_settings '.deniedMcpServers = ((.deniedMcpServers // []) - [{serverName: $n}]) | if .deniedMcpServers == [] then del(.deniedMcpServers) else . end'; }
+deny_claude_connector() { edit_claude_settings '.deniedMcpServers = ((.deniedMcpServers // []) - [{serverName: $n}] + [{serverName: $n}])' --arg n "$DENIED_CONNECTOR"; }
+allow_claude_connector() { edit_claude_settings '.deniedMcpServers = ((.deniedMcpServers // []) - [{serverName: $n}]) | if .deniedMcpServers == [] then del(.deniedMcpServers) else . end' --arg n "$DENIED_CONNECTOR"; }
+
+enable_claude_agent_teams() {
+  local had_value=false previous=null tmp state_dir
+  if [ -f "$CLAUDE_AGENT_TEAMS_STATE" ] && ! jq -e \
+    '.managed == true and (.had_value | type == "boolean") and has("previous")' \
+    "$CLAUDE_AGENT_TEAMS_STATE" >/dev/null; then
+    echo "Cannot configure Claude Agent Teams: invalid state file $CLAUDE_AGENT_TEAMS_STATE" >&2
+    return 1
+  fi
+  if [ -f "$CLAUDE_SETTINGS" ]; then
+    jq -e '(.env // {}) | type == "object"' "$CLAUDE_SETTINGS" >/dev/null || {
+      echo "Cannot configure Claude Agent Teams: .env in $CLAUDE_SETTINGS must be an object" >&2
+      return 1
+    }
+    if jq -e --arg key "$CLAUDE_AGENT_TEAMS_KEY" '.env[$key] == "1"' "$CLAUDE_SETTINGS" >/dev/null; then
+      return 0
+    fi
+  fi
+
+  if [ ! -f "$CLAUDE_AGENT_TEAMS_STATE" ]; then
+    if [ -f "$CLAUDE_SETTINGS" ] && jq -e --arg key "$CLAUDE_AGENT_TEAMS_KEY" '.env | has($key)' "$CLAUDE_SETTINGS" >/dev/null; then
+      had_value=true
+      previous="$(jq -c --arg key "$CLAUDE_AGENT_TEAMS_KEY" '.env[$key]' "$CLAUDE_SETTINGS")"
+    fi
+    state_dir="$(dirname "$CLAUDE_AGENT_TEAMS_STATE")"
+    mkdir -p "$state_dir"
+    tmp="$(mktemp "$state_dir/agent-teams.XXXXXX")"
+    jq -n --argjson had_value "$had_value" --argjson previous "$previous" \
+      '{managed: true, had_value: $had_value, previous: $previous}' > "$tmp"
+    mv "$tmp" "$CLAUDE_AGENT_TEAMS_STATE"
+  fi
+
+  edit_claude_settings '.env = ((.env // {}) + {($key): "1"})' --arg key "$CLAUDE_AGENT_TEAMS_KEY"
+}
+
+restore_claude_agent_teams() {
+  local had_value previous
+  [ -f "$CLAUDE_AGENT_TEAMS_STATE" ] || return 0
+  jq -e '.managed == true and (.had_value | type == "boolean") and has("previous")' \
+    "$CLAUDE_AGENT_TEAMS_STATE" >/dev/null || {
+    echo "Cannot restore Claude Agent Teams setting: invalid state file $CLAUDE_AGENT_TEAMS_STATE" >&2
+    return 1
+  }
+
+  if [ -f "$CLAUDE_SETTINGS" ] && jq -e --arg key "$CLAUDE_AGENT_TEAMS_KEY" \
+    '(.env | type) == "object" and .env[$key] == "1"' "$CLAUDE_SETTINGS" >/dev/null; then
+    had_value="$(jq -r '.had_value' "$CLAUDE_AGENT_TEAMS_STATE")"
+    if [ "$had_value" = true ]; then
+      previous="$(jq -c '.previous' "$CLAUDE_AGENT_TEAMS_STATE")"
+      edit_claude_settings '.env = ((.env // {}) + {($key): $previous})' \
+        --arg key "$CLAUDE_AGENT_TEAMS_KEY" --argjson previous "$previous"
+    else
+      edit_claude_settings 'del(.env[$key]) | if .env == {} then del(.env) else . end' \
+        --arg key "$CLAUDE_AGENT_TEAMS_KEY"
+    fi
+  fi
+  rm "$CLAUDE_AGENT_TEAMS_STATE"
+}
 
 # Claude installs dependencies itself, but only from marketplaces it already knows.
 add_claude_dep_marketplaces() {
@@ -191,12 +253,14 @@ case "$TOOL" in
         deny_claude_connector
         setup_claude_harness
         claude plugin details "$PLUGIN_ID"
+        enable_claude_agent_teams
         ;;
       remove)
         remove_claude_plugin "$PLUGIN_ID"
         remove_claude_deps
         "$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh" claude disable
         allow_claude_connector
+        restore_claude_agent_teams
         ;;
       reload)
         claude update </dev/null
@@ -210,6 +274,7 @@ case "$TOOL" in
         deny_claude_connector
         setup_claude_harness
         claude plugin details "$PLUGIN_ID"
+        enable_claude_agent_teams
         ;;
       *) usage ;;
     esac

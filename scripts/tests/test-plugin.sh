@@ -74,7 +74,10 @@ STUB
 chmod +x "$STUB_BIN/npm"
 
 run() {
-  HOME="$FAKE_HOME" CODEX_HOME="${TEST_CODEX_HOME:-$FAKE_HOME/.codex}" PATH="$STUB_BIN:/usr/bin:/bin" "$SCRIPT" "$@"
+  HOME="$FAKE_HOME" CLAUDE_CONFIG_DIR="$FAKE_HOME/.claude" CODEX_HOME="${TEST_CODEX_HOME:-$FAKE_HOME/.codex}" PATH="$STUB_BIN:/usr/bin:/bin" "$SCRIPT" "$@"
+}
+run_with_custom_claude_config() {
+  HOME="$FAKE_HOME" CLAUDE_CONFIG_DIR="$SANDBOX/custom-claude-config" CODEX_HOME="${TEST_CODEX_HOME:-$FAKE_HOME/.codex}" PATH="$STUB_BIN:/usr/bin:/bin" "$SCRIPT" "$@"
 }
 
 expect_usage_error() {
@@ -190,6 +193,7 @@ expect_calls \
 
 : > "$CALL_LOG"
 [[ "$(denied_count)" == 1 ]]
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 
 run claude remove >/dev/null
 expect_calls \
@@ -204,11 +208,40 @@ expect_calls \
 : > "$CALL_LOG"
 [[ "$(denied_count)" == 0 ]]
 [[ -x "$STUB_BIN/omc" ]]
-jq -e '.model == "keep" and (has("deniedMcpServers") | not)' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '.model == "keep" and (has("deniedMcpServers") | not) and ((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not)' "$FAKE_HOME/.claude/settings.json" >/dev/null
+
+# Restore a pre-existing value on removal, but do not claim a setting that was already enabled.
+echo '{"model":"keep","env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"0","OTHER":"keep"}}' > "$FAKE_HOME/.claude/settings.json"
+run claude install >/dev/null
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+run claude remove >/dev/null
+jq -e '.model == "keep" and .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+
+echo '{"env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}' > "$FAKE_HOME/.claude/settings.json"
+run claude install >/dev/null
+run claude remove >/dev/null
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+
+# Preserve a later user override instead of restoring over it.
+echo '{"model":"keep"}' > "$FAKE_HOME/.claude/settings.json"
+run claude install >/dev/null
+jq '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "0"' "$FAKE_HOME/.claude/settings.json" > "$SANDBOX/settings.json"
+mv "$SANDBOX/settings.json" "$FAKE_HOME/.claude/settings.json"
+run claude remove >/dev/null
+jq -e '.model == "keep" and .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+
+# Honor Claude's configured settings directory, including creating it when absent.
+run_with_custom_claude_config claude install >/dev/null
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
+run_with_custom_claude_config claude remove >/dev/null
+jq -e '((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not)' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
+
+echo '{"model":"keep"}' > "$FAKE_HOME/.claude/settings.json"
 
 run claude reload >/dev/null
 run claude reload >/dev/null
 [[ "$(denied_count)" == 1 ]]
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 : > "$CALL_LOG"
 run claude reload >/dev/null
 expect_calls \
