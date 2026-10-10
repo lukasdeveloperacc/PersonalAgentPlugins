@@ -34,12 +34,13 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
 - `remove` : plugin 제거
   - 별도로 사용할 수 있는 OMC/OMX npm 패키지와 사용자 설정·실행 기록은 보존
   - 이미 없는 플러그인은 건너뛰며, 다른 도구에서 사용 중인 GlitchTip 터널은 유지
-- `reload` : plugin 업데이트
+- `reload` : CLI·harness·의존 플러그인 업데이트 후 plugin 재설치
   - 업데이트 후 codex, claude 세션 모두 재실행 필요
-  - `eli5` 의존성도 각 마켓플레이스에서 갱신 후 재설치
-  - OMC/OMX setup도 다시 실행. 이미 있는 CLI는 자동 업그레이드하지 않음
+  - Codex: `codex update`, OMX npm 최신 안정 버전 설치, Ponytail·ELI5 마켓플레이스 갱신 및 재설치, Impeccable 최신 CLI로 스킬 강제 갱신
+  - Claude: `claude update`, OMC npm 최신 안정 버전 설치, Ponytail·ELI5·Impeccable·OMC 마켓플레이스 및 플러그인 업데이트
+  - 마지막에 OMC/OMX setup을 다시 실행. 명령이 실패하면 종료하고 다음 단계는 실행하지 않음
 
-Harness setup은 사용자 전역 설정을 갱신합니다. OMC는 `~/.claude/CLAUDE.md`의 사용자 내용을 병합하고, OMX는 사용자 범위의 `AGENTS.md`를 병합하며 프로젝트의 `AGENTS.md`는 변경하지 않습니다. OMC 업데이트는 `omc update`, OMX 업데이트는 `omx update`로 관리합니다.
+Harness setup은 사용자 전역 설정을 갱신합니다. OMC는 `~/.claude/CLAUDE.md`의 사용자 내용을 병합하고, OMX는 사용자 범위의 `AGENTS.md`를 병합하며 프로젝트의 `AGENTS.md`는 변경하지 않습니다. `reload`는 harness를 npm의 `@latest`로 업데이트한 뒤 기존 사용자 범위의 setup 정책을 적용합니다.
 
 ## Basic Team
 

@@ -16,7 +16,7 @@ OMC_ID="oh-my-claudecode@omc"
 OMC_SRC="Yeachan-Heo/oh-my-claudecode"
 OMX_SETUP="omx setup --scope user --plugin --merge-agents"
 MCP_NAMES=($(jq -r '.mcpServers | keys[]' "$ROOT_DIR/mcp/servers.json"))
-IMPECCABLE_CODEX="npx -y impeccable install --providers=codex --scope=user --yes --no-hooks"
+IMPECCABLE_CODEX="npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks"
 
 SANDBOX="$(mktemp -d)"
 trap 'rm -rf "$SANDBOX"' EXIT
@@ -130,6 +130,8 @@ echo 'Keep my user guidance' > "$FAKE_HOME/.codex/AGENTS.md"
 mkdir -p "$CACHE_DIR" && touch "$CACHE_DIR/marker"
 run codex reload >/dev/null
 expect_calls \
+  "codex update" \
+  "npm install -g oh-my-codex@latest" \
   "codex plugin remove $PLUGIN_ID --json" \
   "codex plugin marketplace add $ROOT_DIR --json" \
   "codex plugin add $PLUGIN_ID --json" \
@@ -141,7 +143,7 @@ expect_calls \
   "codex plugin marketplace upgrade claude-community --json" \
   "codex plugin remove $ELI5_ID --json" \
   "codex plugin add $ELI5_ID --json" \
-  "$IMPECCABLE_CODEX" \
+  "$IMPECCABLE_CODEX --force" \
   "$OMX_SETUP"
 [[ ! -e "$CACHE_DIR" ]]
 [[ "$(cat "$FAKE_HOME/.codex/AGENTS.md")" == 'Keep my user guidance' ]]
@@ -196,6 +198,8 @@ run claude reload >/dev/null
 : > "$CALL_LOG"
 run claude reload >/dev/null
 expect_calls \
+  "claude update" \
+  "npm install -g oh-my-claude-sisyphus@latest" \
   "claude plugin marketplace add $DEP_SRC" \
   "claude plugin marketplace add $ELI5_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
@@ -203,8 +207,14 @@ expect_calls \
   "claude plugin marketplace update $MARKETPLACE_NAME" \
   "claude plugin uninstall $PLUGIN_ID --keep-data --json" \
   "claude plugin install $PLUGIN_ID" \
+  "claude plugin marketplace update ponytail" \
+  "claude plugin update $DEP_ID --scope user --yes" \
   "claude plugin marketplace update claude-community" \
   "claude plugin update $ELI5_ID --scope user --yes" \
+  "claude plugin marketplace update impeccable" \
+  "claude plugin update $CLAUDE_DEP_ID --scope user --yes" \
+  "claude plugin marketplace update omc" \
+  "claude plugin update $OMC_ID --scope user --yes" \
   "omc setup --quiet" \
   "claude plugin details $PLUGIN_ID"
 

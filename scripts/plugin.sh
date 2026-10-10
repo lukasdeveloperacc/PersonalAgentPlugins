@@ -74,7 +74,11 @@ install_codex_deps() {
     trust_codex_hooks "$(jq -r '.installedPath' <<<"$out")" "$id"
   done
   # --no-hooks: its Codex hook is project-local (.codex/hooks.json), not something a user-scope install can set up.
-  npx -y impeccable install --providers=codex --scope=user --yes --no-hooks
+  if [ "$refresh" = "--refresh" ]; then
+    npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks --force
+  else
+    npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks
+  fi
 }
 
 remove_codex_deps() {
@@ -131,6 +135,15 @@ add_claude_dep_marketplaces() {
   done
 }
 
+update_claude_deps() {
+  local dep id src
+  for dep in "${CLAUDE_DEPS[@]}"; do
+    read -r id src <<<"$dep"
+    claude plugin marketplace update "${id#*@}"
+    claude plugin update "$id" --scope user --yes
+  done
+}
+
 case "$TOOL" in
   codex)
     case "$ACTION" in
@@ -148,6 +161,8 @@ case "$TOOL" in
         "$ROOT_DIR/scripts/mcp.sh" codex disable
         ;;
       reload)
+        codex update </dev/null
+        npm install -g oh-my-codex@latest
         codex plugin remove "$PLUGIN_ID" --json
         rm -rf "${CODEX_HOME:-$HOME/.codex}/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
         codex plugin marketplace add "$ROOT_DIR" --json
@@ -178,13 +193,14 @@ case "$TOOL" in
         allow_claude_connector
         ;;
       reload)
+        claude update </dev/null
+        npm install -g oh-my-claude-sisyphus@latest
         add_claude_dep_marketplaces
         claude plugin marketplace update "$MARKETPLACE_NAME"
         # `plugin update` is a no-op while the version stays 0.1.0, so reinstall to refresh the cache.
         remove_claude_plugin "$PLUGIN_ID"
         claude plugin install "$PLUGIN_ID"
-        claude plugin marketplace update "$ELI5_MARKETPLACE"
-        claude plugin update "$ELI5_ID" --scope user --yes
+        update_claude_deps
         deny_claude_connector
         setup_claude_harness
         claude plugin details "$PLUGIN_ID"
