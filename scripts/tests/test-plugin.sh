@@ -116,6 +116,8 @@ expect_calls \
   "omx setup --scope user --plugin --clear-merge-agents-policy" \
   "codex plugin list"
 [[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:pre_tool_use")" == 1 ]]
+[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:session_start")" == 2 ]]
+[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:post_tool_use")" == 1 ]]
 [[ "$(trust_count "$DEP_ID:hooks/codex-hooks.json:session_start")" == 1 ]]
 grep -qE '^trusted_hash = "sha256:[0-9a-f]{64}"$' "$FAKE_HOME/.codex/config.toml"
 

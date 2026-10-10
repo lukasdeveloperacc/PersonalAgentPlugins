@@ -9,6 +9,28 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "^(resume|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/skills/basic-team/scripts/progress-reminder.sh\" SessionStart",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(Agent|spawn_agent|wait_agent|wait)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/skills/basic-team/scripts/progress-reminder.sh\" PostToolUse",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PreToolUse": [

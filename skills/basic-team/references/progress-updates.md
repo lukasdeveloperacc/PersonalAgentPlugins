@@ -58,3 +58,14 @@ Every briefing includes `진행판: [<작업명>](<절대 경로>) — <절대 �
 Before compaction or handoff, preserve the exact page path, last confirmed checkpoint/revision/save time, unsaved patches, outstanding agent/task IDs, and actual implementation/review target. Put this in the existing handoff or context summary; do not write hook-owned OMX runtime state.
 
 On resume, run `status` on that exact page and reconcile it with real host messages and current repository evidence. Restore pending updates before dependent dispatch or briefing. The saved stage and IDs are diagnostic information, never execution authority. Do not find a run by selecting the newest file or create a replacement page automatically. For an older page without checkpoint metadata, inspect its saved JSON and use the first verified `update` to adopt it; do not fabricate a previous receipt.
+
+## Nonblocking host reminders
+
+The plugin's shared `hooks/hooks.json` adds only `additionalContext` reminders through `scripts/progress-reminder.sh`, for Codex and Claude:
+
+- `SessionStart`, matching `resume|compact`: remind the coordinating Main of an already-active basic-team run to recover its exact page and pending reports.
+- `PostToolUse`, matching `Agent|spawn_agent|wait_agent|wait`: remind Main to save newly received facts before dependent dispatch or briefing. A spawn result or wait timeout is not completion. No new facts means no save.
+
+These reminders do not identify an active run mechanically. Ignore them outside an already-active basic-team coordinator; they do not start a workflow. They read no transcripts, store no session state, modify no files, and return no permission, blocking, or continuation decision. No new `PreToolUse`, `Stop`, or `SubagentStop` gate is installed. In particular, `SubagentStop` feedback can continue a child rather than instruct Main.
+
+Codex documents the `Agent` alias for `spawn_agent`; wait names are compatibility matches, not a guaranteed completion signal. Unsupported events, async notifications, and silent periods can bypass these reminders, so Main's save/receipt rule still applies. Hook execution depends on host version, plugin loading, and host trust settings; do not claim live coverage merely because the scripts pass tests. See [Codex hooks](https://learn.chatgpt.com/docs/hooks) and [Claude hooks](https://code.claude.com/docs/en/hooks).
