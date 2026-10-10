@@ -5,6 +5,8 @@ description: Coordinate native Codex or Claude agents through planning, parallel
 
 # Basic Team
 
+**No size exception.** When this skill is invoked, run the whole workflow for every task, including a one-line change or a task you could finish alone in one step. Never decide that a task is too small, implement it yourself in the main session, or skip the Planner, Executors, reviewers, or progress page. If you think the workflow is too heavy, ask the user with a structured question and wait; only an explicit user instruction authorizes skipping. The first action is runbook step 1 below.
+
 The main session is the leader and the user's contact. Run one Planner, multiple Executors for independent work within and across implementation areas, and two mandatory independent reviewers: **Karpathy Agent** and **Ponytail Senior Agent**. Add **Impeccable reviewer** when Frontend implementation needs design/UX evaluation and **E2E reviewer** when changed behavior spans connected parts, as defined below. Frontend and Backend are work classifications, not a limit of one Executor each; size the active Executor group to the ready work and host capacity. These are review personas, not claims that the named people reviewed the code.
 
 Use native agents in the current host: Codex native collaboration or the installed OMC `team` skill's Claude native-team path. Keep orchestration in the main session; do not launch OMX/OMC tmux teams or another leader. Follow the user's scope, permissions, and test policy. Invoking this skill does not authorize publishing, pushing, deployment, or unrelated changes.
@@ -14,6 +16,8 @@ Use native agents in the current host: Codex native collaboration or the install
 **Configuration boundary:** do not create, edit, or delete `.claude/agents`, `.codex/agents`, user settings, or project agent configuration to satisfy this workflow without explicit user authorization for that change, except the scoped browser/MCP operations explicitly authorized in [references/e2e-review.md](references/e2e-review.md). Existing task authorization is not agent-configuration authorization. Inspect existing selection first; report unsupported settings instead of creating temporary definitions and later removing them.
 
 ## Leader runbook
+
+The main session never edits product files itself; only Executors do.
 
 Follow these steps in order; the sections below hold the details. `<bt>` is this skill's directory. Run `uv run "<bt>/scripts/progress.py" <command> ...` from the executing project root; `PAGE` is the absolute progress page path. Gate commands print `ok` and a `problems` list and exit 1 until every problem is fixed, so the leader does not have to remember the preconditions. Exit 2 means the tool itself failed (bad path or input), not that a gate is unmet; read its stderr. Identify required reviewers by these names only: `karpathy`, `ponytail`, and when activated `impeccable`, `e2e`; use the same name as the reviewer's agent id and its `gates.models` key.
 

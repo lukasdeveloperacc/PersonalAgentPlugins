@@ -1,0 +1,19 @@
+{
+  "skill_name": "basic-team",
+  "evals": [
+    {
+      "id": 1,
+      "name": "backend-only-small-feature",
+      "prompt": "/lukas-plugin:basic-team util.py에 slugify(text) 함수를 추가해줘. 소문자로 바꾸고 공백과 특수문자는 '-' 하나로 합치고 양끝 '-'은 제거해. test_util.py에 테스트도 추가하고 python3 test_util.py로 검증해. 커밋/푸시는 하지 마.",
+      "fixture": "fixture/",
+      "assertions": [
+        "every Agent spawn passes model and effort arguments and none uses fork",
+        "planner spawn is model=opus effort=medium; executor spawns are haiku/max; reviewer spawns are sonnet/high",
+        "both karpathy and ponytail reviewers were spawned",
+        "a docs/inprogress/*-progress.html page exists",
+        "the final answer contains the compliance table",
+        "util.py defines slugify and python3 test_util.py passes"
+      ]
+    }
+  ]
+}
