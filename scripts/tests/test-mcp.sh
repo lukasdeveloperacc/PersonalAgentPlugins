@@ -45,6 +45,14 @@ expect_calls 'claude|mcp|add-json|-s|user|codegraph|{"command":"codegraph","args
 run codex list | grep -x 'codegraph off' >/dev/null
 run claude list | grep -x 'codegraph off' >/dev/null
 
+# Browser and documentation servers use their existing npx package commands.
+: > "$CALL_LOG"
+run codex enable chrome-devtools
+expect_calls 'codex|mcp|add|chrome-devtools|--|npx|-y|chrome-devtools-mcp@latest|'
+: > "$CALL_LOG"
+run claude enable context7
+expect_calls 'claude|mcp|add-json|-s|user|context7|{"command":"npx","args":["-y","@upstash/context7-mcp"]}|'
+
 # disable with no names removes every catalog server.
 : > "$CALL_LOG"
 run claude disable

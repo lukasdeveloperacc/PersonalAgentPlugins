@@ -1,6 +1,6 @@
 ---
 name: mcp-setup
-description: lukas-plugin이 제공하는 MCP 서버(gcloud, observability, notion, glitchtip, aws-api, aws-docs, aws-eks, terraform, codegraph)를 목록으로 보여주고 켜고 끈다. 이 서버들은 기본으로 꺼져 있어서 /mcp에 보이지 않는다. 사용자가 "MCP 켜줘", "gcloud MCP 쓰고 싶어", "notion 연결해줘", "어떤 MCP 있어?", "glitchtip MCP 꺼줘", "aws mcp 활성화", "codegraph MCP 켜줘" 라고 하거나, 위 서버의 도구가 필요한데 세션에 없을 때 반드시 이 스킬을 사용한다.
+description: lukas-plugin이 제공하는 MCP 서버(chrome-devtools, context7, gcloud, observability, notion, glitchtip, aws-api, aws-docs, aws-eks, terraform, codegraph)를 목록으로 보여주고 켜고 끈다. 이 서버들은 기본으로 꺼져 있어서 /mcp에 보이지 않는다. 사용자가 "MCP 켜줘", "gcloud MCP 쓰고 싶어", "notion 연결해줘", "어떤 MCP 있어?", "glitchtip MCP 꺼줘", "aws mcp 활성화", "codegraph MCP 켜줘", "context7 켜줘", "chrome devtools MCP 켜줘" 라고 하거나, 위 서버의 도구가 필요한데 세션에 없을 때 반드시 이 스킬을 사용한다.
 ---
 
 # MCP 켜고 끄기
@@ -30,7 +30,9 @@ mcp.sh <claude|codex> disable [server...]   # 이름 없이 쓰면 카탈로그 
 
 | 서버 | 용도 |
 |---|---|
+| chrome-devtools | Chrome 브라우저 원격 디버깅·페이지 확인·상호작용 |
 | codegraph | 로컬 코드의 호출·의존 관계와 변경 영향 조회 |
+| context7 | 라이브러리·프레임워크 공식 문서 검색 |
 | gcloud | gcloud CLI 명령 실행 (GCP 리소스 조회와 조작) |
 | observability | GCP Cloud Logging, Monitoring, Trace 조회 |
 | notion | Notion 공식 MCP (`mcp.notion.com`), 자체 OAuth라서 어떤 Notion 계정이든 붙을 수 있다 |
