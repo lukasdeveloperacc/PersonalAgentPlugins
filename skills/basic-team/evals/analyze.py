@@ -3,7 +3,7 @@ import glob, json, subprocess, sys
 from pathlib import Path
 
 run = Path(sys.argv[1])
-spawns, final = [], ""
+spawns, final, commands = [], "", []
 for line in (run / "stream.jsonl").read_text(encoding="utf-8", errors="replace").splitlines():
     try:
         event = json.loads(line)
@@ -13,6 +13,8 @@ for line in (run / "stream.jsonl").read_text(encoding="utf-8", errors="replace")
         for block in event.get("message", {}).get("content", []):
             if block.get("type") == "tool_use" and block.get("name") in ("Agent", "Task"):
                 spawns.append(block.get("input", {}))
+            if block.get("type") == "tool_use" and block.get("name") == "Bash":
+                commands.append(str(block.get("input", {}).get("command", "")))
     if event.get("type") == "result":
         final = event.get("result", "")
 
@@ -33,6 +35,7 @@ checks = {
     "roles_match_table": bool(spawns) and all(role(s) == "other" or (s.get("model"), s.get("effort")) == expected[role(s)] for s in spawns),
     "both_mandatory_reviewers_spawned": "karpathy" in names and "ponytail" in names,
     "progress_page_exists": bool(glob.glob(str(work / "docs" / "inprogress" / "*-progress.html"))),
+    "ran_gate_review_complete_and_compliance": all(any(f"progress.py" in c and word in c for c in commands) for word in (" gate ", " compliance ", "spawn-args", " brief ")),
     "final_has_compliance_table": "Requirement" in final and "함 / 부분 / 안 함" in final,
     "slugify_implemented_and_tests_pass": "def slugify" in util and test.returncode == 0,
 }
