@@ -59,13 +59,30 @@ Before compaction or handoff, preserve the exact page path, last confirmed check
 
 On resume, run `status` on that exact page and reconcile it with real host messages and current repository evidence. Restore pending updates before dependent dispatch or briefing. The saved stage and IDs are diagnostic information, never execution authority. Do not find a run by selecting the newest file or create a replacement page automatically. For an older page without checkpoint metadata, inspect its saved JSON and use the first verified `update` to adopt it; do not fabricate a previous receipt.
 
-## Nonblocking host reminders
+## Scoped nonblocking host reminders
 
-The plugin's shared `hooks/hooks.json` adds only `additionalContext` reminders through `hooks/basic-team-progress.sh` at the plugin root, for Codex and Claude. Progress-page commands remain in the skill's `scripts/` directory.
+The plugin's shared `hooks/hooks.json` invokes `hooks/basic-team-progress.sh`, backed by `hooks/basic-team-progress.py`. The handlers are silent by default, including outside basic-team. Progress-page commands remain in the skill's `scripts/` directory; reminder state never edits the HTML.
 
-- `SessionStart`, matching `resume|compact`: remind the coordinating Main of an already-active basic-team run to recover its exact page and pending reports.
-- `PostToolUse`, matching `Agent|spawn_agent|wait_agent|wait`: remind Main to save newly received facts before dependent dispatch or briefing. A spawn result or wait timeout is not completion. No new facts means no save.
+Only the coordinating Main actually executing basic-team requests `arm` after initializing or verifying the exact progress page. Use the host-specific commands in SKILL.md; Claude substitutes `${CLAUDE_SESSION_ID}` in that skill body. A helper receipt is an activation request, not proof of activation. Retain its `basic_team_hook.run_id`. The corresponding successful shell-tool `PostToolUse` must verify the one-time request against actual host identity and confirm registration before reminders are available. Missing identity, unsupported payloads, errors, and absent hooks leave reminders off; apply the existing save/receipt rule and continue without treating that as a workflow blocker.
 
-These reminders do not identify an active run mechanically. Ignore them outside an already-active basic-team coordinator; they do not start a workflow. They read no transcripts, store no session state, modify no files, and return no permission, blocking, or continuation decision. No new `PreToolUse`, `Stop`, or `SubagentStop` gate is installed. In particular, `SubagentStop` feedback can continue a child rather than instruct Main.
+At completion, explicit cancellation, failure exit, or a switch to unrelated work, request disarm for that exact `run_id`:
 
-Codex documents the `Agent` alias for `spawn_agent`; wait names are compatibility matches, not a guaranteed completion signal. Unsupported events, async notifications, and silent periods can bypass these reminders, so Main's save/receipt rule still applies. Hook execution depends on host version, plugin loading, and host trust settings; do not claim live coverage merely because the scripts pass tests. See [Codex hooks](https://learn.chatgpt.com/docs/hooks) and [Claude hooks](https://code.claude.com/docs/en/hooks).
+```sh
+uv run "<plugin-root>/hooks/basic-team-progress.py" disarm --host codex --run-id "<retained-run-id>"
+uv run "<plugin-root>/hooks/basic-team-progress.py" disarm --host claude --session-id "<Claude Main session ID>" --run-id "<retained-run-id>"
+```
+
+The Claude session ID comes from the substituted skill-body command, not a guessed process environment. Never reuse a child ID or select another session's registration. Late requests from an older run cannot disable its replacement.
+
+The event roles are:
+
+- `PostToolUse` on supported shell tools consumes valid arm/disarm requests. Registered Main agent-tool returns receive a short save/briefing reminder. Agent launch and wait timeout are not completion; no new facts means no page rewrite.
+- `UserPromptSubmit` silently resets the current session's existing guard. Rearm at the first step of every continuing basic-team work interval. Claude can emit this event for automatic continuations, including background reports; rearm then too. A missed rearm suppresses reminders.
+- `SessionStart` on startup/resume/clear/compact resets an existing guard. Recover the same page and explicitly rearm when basic-team actually continues. This conservative reset avoids carrying an old registration into another task.
+- `SessionEnd` removes only this session's own registration as supplementary cleanup. Main's explicit disarm and new-input reset remain necessary because termination callbacks are not guaranteed after a crash.
+
+Records and one-time requests live under `${XDG_STATE_HOME:-~/.local/state}/lukas-plugin/basic-team`, separate from OMX/OMC runtime state. They hold routing identifiers, generation, run ID, and page path, not transcripts or report text. Generation changes reject delayed requests after a reset. No transcript or prompt-content scans, periodic reads, permission decisions, tool denials, or Stop/SubagentStop continuations are added. Generic event callbacks may still execute outside basic-team, but return no model context.
+
+Codex activation conservatively requires the observed local shell's `CODEX_THREAD_ID` and `CODEX_SESSION_ID` to match. The verified request is then bound to the actual hook session and turn. These environment variables are a local runtime adapter, not a documented guarantee for all Codex hosts; absent or differing values disable activation. Claude uses the explicit substituted session ID and rejects child events carrying `agent_id`. Missing scope fields suppress output. These checks route advisory context and never establish permission or lifecycle authority.
+
+Wait names and shell-output layouts vary between hosts; unsupported events and async notifications can bypass reminders. Hook execution also depends on host version, plugin loading, and trust settings. Tests of these adapters do not establish live event coverage in every App/CLI host. See [Codex hooks](https://learn.chatgpt.com/docs/hooks), [Claude hooks](https://code.claude.com/docs/en/hooks), and [Claude skill substitutions](https://code.claude.com/docs/en/skills#available-string-substitutions).

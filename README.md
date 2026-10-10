@@ -61,7 +61,7 @@ Codex는 `$basic-team <작업>`, Claude는 `/lukas-plugin:basic-team <작업>`�
   - MCP 설정 변경은 현재 세션의 연결·토큰 사용에 즉시 반영되지 않을 수 있음. 도구가 없는 Codex 세션에서는 새 세션으로 같은 진행판·검토 대상을 이어가며, 연결 전에는 E2E 성공으로 표시하지 않음
 - Main Session: 실행 프로젝트의 `docs/inprogress/<작업명>-<시작시각>-progress.html`에 `eli5`로 하나의 HTML 진행판을 유지. 같은 작업의 추가 요청·세션 재개는 기존 파일을 갱신하고, 별도 작업은 새 파일 생성. 모든 브리핑에 진행판 링크·절대 경로·확인된 저장 시각을 표시. 계획 / 에이전트별 진행 / 리뷰·검증 / 결정·막힌 일 탭으로 나누고 짧게 브리핑
 - 진행판 저장: `uv run`으로 실행하는 [업데이트 스크립트](skills/basic-team/scripts/progress.py)로 부분 JSON을 병합하고 안전하게 저장. Main은 회신 수신 → 저장 성공 확인 → 다음 배정·브리핑 순서를 지키며, 실패한 업데이트는 미처리로 유지. 세션 재개 시 기존 경로·체크포인트·미저장 보고를 이어감. [저장·재개·테스트 명령](skills/basic-team/references/progress-updates.md)
-- 진행판 훅: Codex·Claude 공통 `SessionStart(resume/compact)`와 에이전트 도구의 `PostToolUse`에서 활성 basic-team Main에게 짧은 저장·재개 안내만 전달. 파일·세션 상태를 직접 수정하거나 도구·종료를 차단하지 않음. 비동기 완료를 모두 감지하는 기능은 아니므로 Main의 저장 규칙은 계속 적용
+- 진행판 훅: 기본 비활성. Codex·Claude에서 basic-team Main이 기존 진행판을 확인하고 현재 작업 구간을 명시적으로 등록한 경우에만 안내. 새 입력·재개·compaction 때 등록을 초기화하고, 계속하는 Main이 다시 등록. 일반 작업·자식·식별 불가 이벤트는 안내 없이 종료. 플러그인 전용 상태만 관리하며 진행판·OMX/OMC 상태를 수정하거나 작업을 차단하지 않음. [활성화·해제 규칙](skills/basic-team/references/progress-updates.md#scoped-nonblocking-host-reminders)
 - 진행판 디자인: [공통 HTML 템플릿](skills/basic-team/assets/progress-template.html)을 사용. 반응형 에이전트 그래프·보고 요약 툴팁·노드 클릭 상세 모달·진행 파일 절대 경로와 복사 버튼을 제공. 실제 선행 관계만 연결선으로 표시하고 모델·상태는 노드에서 바로 확인하며, 시작·완료 브리핑에도 파일 링크와 경로를 명시
 - 협업: 반복 상태 조회 대신 네이티브 회신·완료 알림으로 후속 작업을 진행. 할 일이 없으면 이벤트 대기하고, 필요한 변경 사항만 전달하여 토큰 낭비를 줄임
 - 막힌 작업: 코드·설정·오류 근거·공식 문서를 먼저 조사해 합리적인 해결책을 적용. 중요한 모호함이나 사용자 결정이 남으면 Main Session이 조사 결과·추천안과 함께 질문하고, 영향 없는 작업은 계속 진행
