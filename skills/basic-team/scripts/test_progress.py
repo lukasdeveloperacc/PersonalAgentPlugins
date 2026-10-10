@@ -157,6 +157,24 @@ class ProgressCliTests(unittest.TestCase):
         receipt = self.invoke("update", self.page, "--checkpoint", "reviewers", "--input", self.input_file({"agents": [queued]}))
         self.assertNotIn("graph_warnings", receipt)
 
+    def test_transitive_links_pass_and_wrong_stage_links_warn(self):
+        agents = [self.agent("critic", stage="planning", status="done", tone="good"),
+                  self.agent("backend", dependsOn=["critic"]),
+                  self.agent("backend-2", dependsOn=["backend"]),
+                  self.agent("karpathy", stage="review", status="대기", tone="neutral", dependsOn=["backend-2"]),
+                  self.agent("ponytail", stage="review", status="대기", tone="neutral", dependsOn=["critic"])]
+        receipt = self.init({"agents": agents})
+        self.assertEqual(len(receipt["graph_warnings"]), 1)
+        self.assertIn("ponytail", receipt["graph_warnings"][0])
+
+    def test_warnings_are_saved_for_the_page_and_cleared_when_fixed(self):
+        self.init({"agents": [self.agent("critic", stage="planning", status="done", tone="good"), self.agent("backend")]})
+        self.assertEqual(len(self.data()["_progress"]["graph_warnings"]), 2)
+        fixes = [{"id": "backend", "dependsOn": ["critic"]}, self.agent("karpathy", stage="review", status="대기", tone="neutral", dependsOn=["backend"])]
+        self.invoke("update", self.page, "--checkpoint", "fixed", "--input", self.input_file({"agents": fixes}))
+        self.assertNotIn("graph_warnings", self.data()["_progress"])
+        self.assertIn("data._progress?.graph_warnings", self.page.read_text())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -20,7 +20,7 @@ The template is a saved view. It does not start agents, poll, fetch external res
 
 ## Agent graph recipe
 
-Edges exist only where `dependsOn` records them, so every dispatch save must write the edge in the same patch as the agent. A receipt with `graph_warnings` means a stage would render as a disconnected column; fix it in the next patch if the dependency is real. The standard shape:
+Edges exist only where `dependsOn` records them, so every dispatch save must write the edge in the same patch as the agent. A receipt with `graph_warnings` means a stage would render as a disconnected column; the same list is saved in `_progress.graph_warnings` and shown at the top of the Agent Progress tab (pages created from an older template keep their old renderer and show it only in the receipt). A link counts if it reaches the upstream stage through any chain of `dependsOn`. Fix it in the next patch if the dependency is real. The standard shape:
 
 | id | stage | dependsOn |
 |---|---|---|

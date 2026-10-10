@@ -112,10 +112,17 @@ def graph_warnings(data):
     for agent in agents:
         if not agent.get("id") or agent.get("stage") not in STAGES - {"other"}:
             notes.append(f"{agent.get('name')}: missing id or stage; renders under 단계 미분류 with no edges")
+    by_id = {a["id"]: a for a in agents if a.get("id")}
+
+    def reaches(agent, stage, seen=()):
+        # Transitive, so a chain like backend-2 -> backend -> critic counts as linked to planning.
+        return any(dep in by_id and dep not in seen and (by_id[dep].get("stage") == stage or reaches(by_id[dep], stage, seen + (dep,)))
+                   for dep in agent.get("dependsOn", []))
+
     for stage, upstream in (("implementation", "planning"), ("review", "implementation")):
         if upstream in by_stage:
-            notes += [f"{a.get('id')}: {stage} agent has no recorded predecessor; set dependsOn to the {upstream} agent(s) that actually gated it"
-                      for a in by_stage.get(stage, []) if a.get("id") and not a.get("dependsOn")]
+            notes += [f"{a.get('id')}: {stage} agent is not linked to any {upstream} agent; set dependsOn to the {upstream} agent(s) that actually gated it"
+                      for a in by_stage.get(stage, []) if a.get("id") and not reaches(a, upstream)]
     if "implementation" in by_stage and "review" not in by_stage:
         notes.append("no review agents registered; add required reviewers as queued nodes (stage review, dependsOn the implementation agents)")
     return notes
@@ -170,8 +177,9 @@ def main():
             if not meta:
                 fail("progress page has no resume metadata")
             receipt = {"path": str(path), "saved_at": meta["saved_at"], "checkpoint": meta["checkpoint"], "revision": meta["revision"]}
-            if graph_warnings(data):
-                receipt["graph_warnings"] = graph_warnings(data)
+            warnings = graph_warnings(data)
+            if warnings:
+                receipt["graph_warnings"] = warnings
         else:
             if not args.checkpoint or not args.checkpoint.strip():
                 fail("init and update require a nonempty --checkpoint")
@@ -231,6 +239,9 @@ def main():
             data["updated"] = now
             data["path"] = str(path)
             data["_progress"] = {"checkpoint": args.checkpoint, "revision": revision, "saved_at": now}
+            warnings = graph_warnings(data)
+            if warnings:
+                data["_progress"]["graph_warnings"] = warnings
             validate(data, strict_dependency_ids)
             contents = html[:match.start()] + embedded(match, data) + html[match.end():]
             if args.command == "init":
@@ -238,8 +249,8 @@ def main():
             else:
                 write_atomic(path, contents)
             receipt = {"path": str(path), "saved_at": now, "checkpoint": args.checkpoint, "revision": revision}
-            if graph_warnings(data):
-                receipt["graph_warnings"] = graph_warnings(data)
+            if warnings:
+                receipt["graph_warnings"] = warnings
         print(json.dumps(receipt, ensure_ascii=False))
         return 0
     except (OSError, ValueError, json.JSONDecodeError) as error:

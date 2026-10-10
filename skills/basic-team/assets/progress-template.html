@@ -195,6 +195,8 @@ data.flow.forEach((step,i)=>{if(i){const arrow=node('span',undefined,'connector'
 list('plan',data.plan,'Planner의 계획이 도착하면 작업 배정·의존성·완료 기준을 여기에 표시합니다.');
 list('reviews',data.reviews,'아직 리뷰 보고가 없습니다. 미실행 검증은 통과로 표시하지 않습니다.');
 list('decisions',data.decisions,'결정이나 막힌 일이 보고되면 선택한 이유와 다음 행동을 여기에 기록합니다.');
+const warnings=data._progress?.graph_warnings;
+if(Array.isArray(warnings)&&warnings.length){const box=node('div',undefined,'notice');box.append(node('strong','그래프 연결 점검: 선이 빠졌을 수 있습니다.'));const ul=node('ul');warnings.forEach(text=>ul.append(node('li',String(text))));box.append(ul);byId('agents').append(box)}
 if(!data.agents.length)byId('agents').append(node('p','아직 배정된 에이전트가 없습니다. 배정 후 최근 회신이 여기에 표시됩니다.','empty'));
 renderAgents(data.agents);
 byId('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(displayPath);byId('copy-status').textContent='복사했습니다.'}catch{byId('copy-status').textContent='자동 복사가 허용되지 않았습니다. 표시된 경로를 선택해 복사하세요.'}});
