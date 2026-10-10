@@ -25,7 +25,7 @@ FAKE_HOME="$SANDBOX/home"
 INSTALLED="$SANDBOX/installed"
 CALL_LOG="$SANDBOX/calls.log"
 mkdir -p "$STUB_BIN" "$FAKE_HOME"
-for name in jq python3; do
+for name in jq uv; do
   ln -s "$(command -v "$name")" "$STUB_BIN/$name"
 done
 

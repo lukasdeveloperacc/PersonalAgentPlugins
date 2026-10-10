@@ -27,8 +27,8 @@ trusted_hash = "sha256:stale"
 enabled = false
 TOML
 
-python3 "$SCRIPT" "$HOOKS" "omx@local:hooks/hooks.json" "$CONFIG" >/dev/null
-python3 "$SCRIPT" "$HOOKS" "omx@local:hooks/hooks.json" "$CONFIG" >/dev/null
+uv run --script "$SCRIPT" "$HOOKS" "omx@local:hooks/hooks.json" "$CONFIG" >/dev/null
+uv run --script "$SCRIPT" "$HOOKS" "omx@local:hooks/hooks.json" "$CONFIG" >/dev/null
 
 expect_hash() {
   local key="$1" hash="$2"

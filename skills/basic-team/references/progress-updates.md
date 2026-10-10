@@ -61,15 +61,15 @@ On resume, run `status` on that exact page and reconcile it with real host messa
 
 ## Scoped nonblocking host reminders
 
-The plugin's shared `hooks/hooks.json` invokes `hooks/basic-team-progress.sh`, backed by `hooks/basic-team-progress.py`. The handlers are silent by default, including outside basic-team. Progress-page commands remain in the skill's `scripts/` directory; reminder state never edits the HTML.
+The plugin's shared `hooks/hooks.json` invokes `hooks/basic-team-progress.sh`, backed by this skill's `scripts/basic-team-progress.py`. The handlers are silent by default, including outside basic-team. The progress-page command lives beside it in `scripts/`; reminder state never edits the HTML.
 
 Only the coordinating Main actually executing basic-team requests `arm` after initializing or verifying the exact progress page. Use the host-specific commands in SKILL.md; Claude substitutes `${CLAUDE_SESSION_ID}` in that skill body. A helper receipt is an activation request, not proof of activation. Retain its `basic_team_hook.run_id`. The corresponding successful shell-tool `PostToolUse` must verify the one-time request against actual host identity and confirm registration before reminders are available. Missing identity, unsupported payloads, errors, and absent hooks leave reminders off; apply the existing save/receipt rule and continue without treating that as a workflow blocker.
 
 At completion, explicit cancellation, failure exit, or a switch to unrelated work, request disarm for that exact `run_id`:
 
 ```sh
-uv run "<plugin-root>/hooks/basic-team-progress.py" disarm --host codex --run-id "<retained-run-id>"
-uv run "<plugin-root>/hooks/basic-team-progress.py" disarm --host claude --session-id "<Claude Main session ID>" --run-id "<retained-run-id>"
+uv run "<basic-team-base>/scripts/basic-team-progress.py" disarm --host codex --run-id "<retained-run-id>"
+uv run "<basic-team-base>/scripts/basic-team-progress.py" disarm --host claude --session-id "<Claude Main session ID>" --run-id "<retained-run-id>"
 ```
 
 The Claude session ID comes from the substituted skill-body command, not a guessed process environment. Never reuse a child ID or select another session's registration. Late requests from an older run cannot disable its replacement.

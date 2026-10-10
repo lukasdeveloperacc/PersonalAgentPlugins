@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-ENGINE = ROOT / "hooks" / "basic-team-progress.py"
+ENGINE = ROOT / "skills" / "basic-team" / "scripts" / "basic-team-progress.py"
 WRAPPER = ROOT / "hooks" / "basic-team-progress.sh"
 
 
@@ -37,7 +37,7 @@ class HookTest(unittest.TestCase):
         return env
 
     def run_json(self, args, payload=None, host="codex", env=None):
-        return subprocess.run(["python3", str(ENGINE), *args], cwd=self.root,
+        return subprocess.run(["uv", "run", "--script", str(ENGINE), *args], cwd=self.root,
                               env=env or self.env(host), input="" if payload is None else json.dumps(payload),
                               text=True, capture_output=True, check=True).stdout.strip()
 
@@ -76,7 +76,7 @@ class HookTest(unittest.TestCase):
 
     def test_identity_failure_does_not_create_state(self):
         env = self.env(CODEX_THREAD_ID="one", CODEX_SESSION_ID="two")
-        proc = subprocess.run(["python3", str(ENGINE), "arm", str(self.page), "--host", "codex"],
+        proc = subprocess.run(["uv", "run", "--script", str(ENGINE), "arm", str(self.page), "--host", "codex"],
                               cwd=self.root, env=env, text=True, capture_output=True, check=True)
         self.assertIn("unarmed", proc.stdout)
         self.assertFalse(self.state.exists())

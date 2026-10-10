@@ -62,7 +62,7 @@ trust_codex_hooks() {
   hooks_rel="$(jq -r '.hooks // empty' "$manifest")"
   [ -n "$hooks_rel" ] || return 0
   hooks_rel="${hooks_rel#./}"
-  python3 "$ROOT_DIR/scripts/codex-trust-hooks.py" \
+  uv run --script "$ROOT_DIR/scripts/codex-trust-hooks.py" \
     "$root/$hooks_rel" "$id:$hooks_rel" "${CODEX_HOME:-$HOME/.codex}/config.toml"
 }
 

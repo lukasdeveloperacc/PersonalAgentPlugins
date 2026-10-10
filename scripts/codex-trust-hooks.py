@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 # Mirrors codex-rs hook_hash + version_for_toml (verified on codex-cli 0.157.1).
 # usage: codex-trust-hooks.py <hooks.json> <plugin_id>:<hooks_rel_path> <config.toml>
 import hashlib

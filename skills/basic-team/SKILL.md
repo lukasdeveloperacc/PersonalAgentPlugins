@@ -42,9 +42,9 @@ Shared Codex/Claude hooks default to silent. Only the Main actually executing th
 
 ```sh
 # Codex Main: identity is read from the current shell's runtime environment.
-uv run "<plugin-root>/hooks/basic-team-progress.py" arm "<absolute-progress-page>" --host codex
+uv run "<basic-team-base>/scripts/basic-team-progress.py" arm "<absolute-progress-page>" --host codex
 # Claude Main: Claude substitutes this variable when invoking this skill.
-uv run "<plugin-root>/hooks/basic-team-progress.py" arm "<absolute-progress-page>" --host claude --session-id "${CLAUDE_SESSION_ID}"
+uv run "<basic-team-base>/scripts/basic-team-progress.py" arm "<absolute-progress-page>" --host claude --session-id "${CLAUDE_SESSION_ID}"
 ```
 
 Retain the request's `basic_team_hook.run_id`; actual registration is confirmed by the host's matching PostToolUse hook, not by the helper request alone. Do not arm from a child or while only discussing/editing this skill. Missing runtime identity or hook confirmation leaves reminders unavailable; continue applying the save/receipt rule without blocking the task. Disarm that exact run at completion, cancellation, failure exit, or an unrelated task switch. These records route reminders only and grant no workflow authority. See the same reference for disarm commands and host limits.
