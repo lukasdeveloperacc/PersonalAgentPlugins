@@ -61,7 +61,7 @@ On resume, run `status` on that exact page and reconcile it with real host messa
 
 ## Nonblocking host reminders
 
-The plugin's shared `hooks/hooks.json` adds only `additionalContext` reminders through `scripts/progress-reminder.sh`, for Codex and Claude:
+The plugin's shared `hooks/hooks.json` adds only `additionalContext` reminders through `hooks/basic-team-progress.sh` at the plugin root, for Codex and Claude. Progress-page commands remain in the skill's `scripts/` directory.
 
 - `SessionStart`, matching `resume|compact`: remind the coordinating Main of an already-active basic-team run to recover its exact page and pending reports.
 - `PostToolUse`, matching `Agent|spawn_agent|wait_agent|wait`: remind Main to save newly received facts before dependent dispatch or briefing. A spawn result or wait timeout is not completion. No new facts means no save.

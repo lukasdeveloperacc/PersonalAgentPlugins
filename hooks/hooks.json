@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/skills/basic-team/scripts/progress-reminder.sh\" SessionStart",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" SessionStart",
             "timeout": 5
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/skills/basic-team/scripts/progress-reminder.sh\" PostToolUse",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" PostToolUse",
             "timeout": 5
           }
         ]

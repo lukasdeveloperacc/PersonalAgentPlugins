@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stateless guidance only: no transcript reads, state writes, or blocking decisions.
+# Stateless Basic Team guidance: no transcript reads, state writes, or blocking decisions.
 case "${1:-}" in
   SessionStart)
     reminder='Only if you are the coordinating main session of an already-active basic-team run: recover its exact existing progress page and pending reports from the handoff, check the saved receipt with progress.py status, and reconcile actual evidence before continuing. Do not create a replacement page or start a workflow because of this reminder. Otherwise ignore.'

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SCRIPT="$ROOT/skills/basic-team/scripts/progress-reminder.sh"
+SCRIPT="$ROOT/hooks/basic-team-progress.sh"
 SANDBOX="$(mktemp -d)"
 trap 'rm -rf "$SANDBOX"' EXIT
 cd "$SANDBOX"
@@ -26,7 +26,7 @@ done
 # Execute the packaged commands with either host's root variable, including spaces.
 ln -s "$ROOT" "$SANDBOX/plugin root"
 for event in SessionStart PostToolUse; do
-  command="$(jq -r --arg event "$event" '.hooks[$event][] | .hooks[] | select(.command | contains("progress-reminder.sh")) | .command' "$ROOT/hooks/hooks.json")"
+  command="$(jq -r --arg event "$event" '.hooks[$event][] | .hooks[] | select(.command | contains("basic-team-progress.sh")) | .command' "$ROOT/hooks/hooks.json")"
   for host in codex claude; do
     if [[ "$host" == codex ]]; then
       output="$(env -u CLAUDE_PLUGIN_ROOT PLUGIN_ROOT="$SANDBOX/plugin root" bash -c "$command")"
