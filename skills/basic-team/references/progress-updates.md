@@ -14,6 +14,17 @@ uv run "<basic-team-base>/scripts/progress.py" update "<same-page>" --input "<pa
 uv run "<basic-team-base>/scripts/progress.py" status "<same-page>"
 ```
 
+Gate and helper commands (the runbook in SKILL.md says when to use each):
+
+```sh
+uv run "<bt>/scripts/progress.py" gate "<page>" --stage implementation|review|complete   # exit 1 + problems list until satisfied
+uv run "<bt>/scripts/progress.py" compliance "<page>"                                    # final table; rows without evidence print 안 함
+uv run "<bt>/scripts/progress.py" spawn-args --host claude|codex --role planner|executor|reviewer
+uv run "<bt>/scripts/progress.py" brief --role planner|executor|reviewer --input "<fields.json>"
+```
+
+`gates` is saved with `update` like any field: `planApproved`, `requiredReviewers`, `reviewTarget`, `verdicts` (`{name: {revision, verdict}}`, only a complete set matching `requiredReviewers`; `{}` clears it for a new round), `models` (`{agent-id: {requested, invocation, observed}}`), `exceptions` (strings naming the agent), and `evidence` (`{hook|eli5|planning|tasks|validation|shutdown|cleanup: {status, evidence}}`). `models` and `evidence` merge per key. The page, model, and review rows of the compliance table are derived and cannot be supplied. Every receipt includes a `briefing` line to paste into user briefings.
+
 Always launch these scripts with `uv run`; never call `python3` or `python` directly. Both scripts declare inline Python metadata with no external dependencies, so `uv run` ignores the executing project's dependencies. If `uv` is not installed, report BLOCKED instead of falling back to another interpreter. To run the focused CLI tests from any directory:
 
 ```sh

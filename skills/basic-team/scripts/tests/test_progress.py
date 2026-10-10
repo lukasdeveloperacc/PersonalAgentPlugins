@@ -13,7 +13,7 @@ SCRIPT = Path(__file__).parents[1] / "progress.py"
 TEMPLATE = Path(__file__).parents[2] / "assets" / "progress-template.html"
 
 
-class ProgressCliTests(unittest.TestCase):
+class CliCase(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
@@ -57,6 +57,8 @@ class ProgressCliTests(unittest.TestCase):
         fields.update(updates)
         return fields
 
+
+class ProgressCliTests(CliCase):
     def test_partial_agent_update_preserves_existing_fields_and_other_agents(self):
         self.init({"agents": [self.agent("a", model="model-a", dependsOn=["b"]), self.agent("b", name="Bee")]})
         self.invoke("update", self.page, "--checkpoint", "agent-a", "--input", self.input_file({"agents": [{"id": "a", "status": "done", "result": "finished"}]}))
@@ -182,6 +184,86 @@ class ProgressCliTests(unittest.TestCase):
         receipt = self.init({"agents": [legacy, staged]})
         self.assertEqual(len(receipt["graph_warnings"]), 1)
         self.assertIn("x: missing stage", receipt["graph_warnings"][0])
+
+    def test_receipts_carry_the_briefing_line(self):
+        receipt = self.init({"goal": "로그인 고치기"})
+        self.assertEqual(receipt["briefing"], f"진행판: [로그인 고치기]({receipt['path']}) — {receipt['path']} · 마지막 저장: {receipt['saved_at']}")
+        self.assertEqual(self.invoke("status", self.page)["briefing"], receipt["briefing"])
+
+
+class GateAndBriefTests(CliCase):
+    MODEL_OK = {"requested": "claude-haiku-5-5", "invocation": "model=haiku, effort=max", "observed": "claude-haiku-5-5"}
+
+    def gate(self, stage):
+        result = self.run_cli("gate", self.page, "--stage", stage)
+        return result.returncode, json.loads(result.stdout)
+
+    def patch(self, gates):
+        return self.run_cli("update", self.page, "--checkpoint", "gates", "--input", self.input_file({"gates": gates}))
+
+    def test_spawn_args_match_the_skill_model_table(self):
+        skill = (Path(__file__).parents[2] / "SKILL.md").read_text()
+        for role, row in (("planner", "Planner"), ("executor", "Executor"), ("reviewer", "Reviewer (each)")):
+            cells = [c.strip(" `") for c in next(l for l in skill.splitlines() if l.startswith(f"| {row} ")).split("|")[2:6]]
+            claude = self.invoke("spawn-args", "--host", "claude", "--role", role)
+            codex = self.invoke("spawn-args", "--host", "codex", "--role", role)
+            self.assertEqual([codex["arguments"]["model"], codex["arguments"]["reasoning_effort"], claude["requested"]["id"], claude["arguments"]["effort"]], cells)
+            self.assertNotIn("id", claude["arguments"])
+            self.assertIn(claude["arguments"]["model"], {"opus", "sonnet", "haiku", "fable"})
+
+    def test_implementation_gate_needs_approved_plan_and_proven_models(self):
+        self.init()
+        code, result = self.gate("implementation")
+        self.assertEqual(code, 1)
+        self.assertEqual(len(result["problems"]), 2)
+        self.assertEqual(self.patch({"planApproved": "plan-r2", "models": {"b1": dict(self.MODEL_OK, observed="claude-sonnet-5-5")}}).returncode, 0)
+        self.assertIn("BLOCKED", self.gate("implementation")[1]["problems"][0])
+        self.patch({"models": {"b1": dict(self.MODEL_OK, observed="미확인")}})
+        self.assertIn("exception", self.gate("implementation")[1]["problems"][0])
+        self.patch({"exceptions": ["b1: 사용자가 미확인 진행 승인"]})
+        self.assertEqual(self.gate("implementation"), (0, {"gate": "implementation", "ok": True, "problems": []}))
+
+    def test_partial_verdicts_are_rejected_and_complete_needs_all_pass_on_target(self):
+        self.init({"gates": {"planApproved": "p1", "models": {"b1": self.MODEL_OK}, "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2"}})
+        before = self.page.read_bytes()
+        self.assertNotEqual(self.patch({"verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}}}).returncode, 0)
+        self.assertEqual(self.page.read_bytes(), before)
+        self.patch({"verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}, "ponytail": {"revision": "r1", "verdict": "PASS"}}})
+        code, result = self.gate("complete")
+        self.assertEqual((code, len(result["problems"])), (1, 1))
+        self.assertIn("ponytail: reviewed r1", result["problems"][0])
+        self.patch({"verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}, "ponytail": {"revision": "r2", "verdict": "PASS"}}})
+        self.assertEqual(self.gate("complete")[0], 0)
+
+    def test_compliance_derives_rows_and_marks_missing_evidence(self):
+        self.init({"gates": {"planApproved": "p1", "models": {"b1": self.MODEL_OK}, "requiredReviewers": ["karpathy", "ponytail"], "reviewTarget": "r2",
+                             "verdicts": {"karpathy": {"revision": "r2", "verdict": "PASS"}, "ponytail": {"revision": "r2", "verdict": "CHANGES_REQUIRED"}},
+                             "evidence": {"hook": {"status": "함", "evidence": "run_id x | confirmed"}}}})
+        result = self.run_cli("compliance", self.page)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = {line.split("|")[1].strip(): line.split("|")[2].strip() for line in result.stdout.splitlines()[2:]}
+        self.assertEqual(len(rows), 10)
+        self.assertEqual(rows["HTML progress page, final save, link/absolute path/save time"], "함")
+        self.assertEqual(rows["Hook arm/disarm and actual confirmation or manual checkpoints"], "함")
+        self.assertEqual(rows["All required independent reviews on the final revision"], "부분")
+        self.assertEqual(rows["Teammate shutdown, unresponsive-agent recovery, inactive team-state verification"], "안 함")
+        self.assertNotEqual(self.patch({"evidence": {"reviews": {"status": "함", "evidence": "trust me"}}}).returncode, 0)
+
+    def test_brief_rejects_missing_fields_and_renders_without_expected_model_id(self):
+        fields = {key: f"{key} value" for key in ("task_id", "request", "project_instructions", "workdir", "area", "owned", "inputs", "deliverable", "validation", "contacts")}
+        fields["skills"] = ["/skills/ralplan/SKILL.md"]
+        result = self.run_cli("brief", "--role", "reviewer", "--input", self.input_file(fields))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("revision, reviewer", result.stderr)
+        brief = self.run_cli("brief", "--role", "reviewer", "--input", self.input_file(dict(fields, revision="r2", reviewer="Karpathy Agent"))).stdout
+        self.assertTrue(brief.startswith("ROLE: Karpathy Agent (task_id value)"))
+        self.assertIn("MODEL: <the exact model ID", brief)
+        self.assertIn("Reviewed revision: r2", brief)
+        self.assertNotIn("claude-", brief)
+        self.assertNotIn("$", brief)
+        for role in ("planner", "executor"):
+            out = self.run_cli("brief", "--role", role, "--input", self.input_file(fields))
+            self.assertEqual(out.returncode, 0, out.stderr)
 
 
 if __name__ == "__main__":

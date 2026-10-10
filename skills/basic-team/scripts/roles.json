@@ -1,0 +1,14 @@
+{
+  "planner": {
+    "claude": {"model": "opus", "effort": "medium", "id": "claude-opus-5-5"},
+    "codex": {"model": "gpt-6.1-sol", "reasoning_effort": "high"}
+  },
+  "executor": {
+    "claude": {"model": "haiku", "effort": "max", "id": "claude-haiku-5-5"},
+    "codex": {"model": "gpt-6-luna", "reasoning_effort": "max"}
+  },
+  "reviewer": {
+    "claude": {"model": "sonnet", "effort": "high", "id": "claude-sonnet-5-5"},
+    "codex": {"model": "gpt-6.1-sol", "reasoning_effort": "medium"}
+  }
+}

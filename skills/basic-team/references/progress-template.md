@@ -16,7 +16,7 @@ Unless the user requests another language, write all user-facing data in ELI5-st
 
 Allowed `tone` values are `neutral`, `active`, `good`, `warn`, `bad`. Only nodes with reported `tone: "active"` show the activity animation; only their incoming recorded dependency edges animate. This indicates the saved report status, not live execution or traffic. Completed, waiting, blocked, and unknown states remain static. Respect `prefers-reduced-motion` with static active indicators. Color supplements visible status text; it never implies a percentage. Empty arrays display explanatory empty states, not demo achievements. Optional `meta` is plain text, not executable HTML.
 
-Serialize JSON with a real JSON serializer and replace every literal `<` with `\u003c` before embedding so report text cannot close the script element. Rendered report values use `textContent`; preserve that boundary. Keep the remaining template unchanged and save the complete page atomically when practical. Do not insert source HTML, secrets, private reasoning, or unverified claims. Translate fixed UI labels and `lang` when needed without changing tab IDs.
+`progress.py` serializes the JSON and escapes `<` itself; never edit the embedded JSON by hand. Rendered report values use `textContent`; preserve that boundary. Keep the remaining template unchanged and save the complete page atomically when practical. Do not insert source HTML, secrets, private reasoning, or unverified claims. Translate fixed UI labels and `lang` when needed without changing tab IDs.
 
 The template is a saved view. It does not start agents, poll, fetch external resources, automatically reload, or replace basic-team's reviewer and final-revision gates.
 
