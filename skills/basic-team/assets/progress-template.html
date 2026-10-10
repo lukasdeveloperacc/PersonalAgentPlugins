@@ -10,21 +10,25 @@
 @media(max-width:760px){.shell{padding:0 18px 28px}.overview{grid-template-columns:1fr;gap:20px;padding:24px 0}h1{font-size:1.5rem}.stagebox{border-left:0;border-top:1px solid var(--line);padding:16px 0 0}.stagebox strong{display:inline;margin:0 10px}.tabs{gap:22px}.snapshot{max-width:22ch;text-align:right}.location{flex-wrap:wrap}.location code{flex-basis:70%}.panelhead{display:block}.panelhead p{margin-top:5px}.details{grid-template-columns:1fr;padding:20px}.wide{grid-column:auto}.foot{flex-direction:column;gap:5px}}
 @media print{body{background:white}.shell{padding:0}.tabs,.quiet{display:none}.panel[hidden]{display:block}.panel{break-inside:avoid}.flow{flex-wrap:wrap}.foot{border-top:1px solid var(--line)}}
 
-.agentgraph{position:relative;padding:24px;isolation:isolate;background:var(--canvas);border-radius:12px}
-.graphlanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:48px;position:relative}
+.agentgraph{position:relative;padding:24px 24px 48px;isolation:isolate;background:var(--canvas);border-radius:12px}
+.graphlanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:72px;position:relative}
 .graphlane{min-width:0}.graphlane h3{margin:0 0 18px;color:var(--muted);font-size:.85rem;font-weight:600}
-.graphnodes{display:grid;gap:22px}.agentnode{position:relative;display:block;width:100%;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.graphnodes{display:grid;gap:32px}.agentnode{position:relative;display:block;width:100%;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
 .agentnode[data-tone=active]{border-color:var(--accent)}.agentnode[data-tone=active] .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:active-signal 2s ease-in-out infinite}
 .agentnode:hover{border-color:var(--accent);background:#f8faff}.agentnode strong{display:block;margin:12px 0 3px;overflow-wrap:anywhere;font-size:1rem}.agentnode small{display:block;overflow-wrap:anywhere}
 .nodemodel{margin:10px 0;padding-top:10px;border-top:1px solid var(--line)}.nodereport{font-variant-numeric:tabular-nums}
-.graphedges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}.graphedges path{fill:none;stroke:#8795a8;stroke-width:1.5}.graphedges marker path{fill:#8795a8;stroke:none}.graphedges > path[data-active=true]{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;animation:active-edge 1.2s linear infinite}.graphedges #edge-arrow-active path{fill:var(--accent)}
+.graphedges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}.graphedges path{fill:none;stroke:#8795a8;stroke-width:1.5}.graphedges marker path{fill:#8795a8;stroke:none}.graphedge path[data-active=true]{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;animation:active-edge 1.2s linear infinite}.graphedges #edge-arrow-active path{fill:var(--accent)}
+.graphedge circle{stroke:#8795a8;stroke-width:1.5;fill:var(--paper)}.graphedge circle[data-end=true]{fill:#8795a8}.graphedge[data-active=true] circle{stroke:var(--accent)}.graphedge[data-active=true] circle[data-end=true]{fill:var(--accent)}
+.graphedge[data-highlight=false]{opacity:.2}.graphedge[data-highlight=true] path{stroke:var(--accent);stroke-width:3}.graphedge[data-highlight=true] circle{stroke:var(--accent)}.graphedge[data-highlight=true] circle[data-end=true]{fill:var(--accent)}
+.agentnode[data-relation=selected],.agentnode[data-relation=related]{border-color:var(--accent);background:var(--soft)}.agentnode[data-relation=unrelated]{background:var(--canvas)}
+.relationlist{margin:12px 0 0;padding:12px 18px 12px 36px;background:var(--soft);border-radius:8px;font-size:.85rem;color:var(--ink)}.relationlist li{overflow-wrap:anywhere}
 @keyframes active-signal{0%,100%{opacity:1}50%{opacity:.3}}@keyframes active-edge{to{stroke-dashoffset:-24}}
-@media(prefers-reduced-motion:reduce){.agentnode[data-tone=active] .badge::before,.graphedges > path[data-active=true]{animation:none}}
+@media(prefers-reduced-motion:reduce){.agentnode[data-tone=active] .badge::before,.graphedge path[data-active=true]{animation:none}}
 .graphnote{margin-top:16px;font-size:.8rem;color:var(--muted)}
 .agenttooltip{position:fixed;z-index:5;max-width:min(340px,calc(100vw - 24px));background:var(--ink);color:white;padding:12px 16px;border-radius:8px;font-size:.85rem;white-space:pre-line;overflow-wrap:anywhere;box-shadow:0 8px 24px #202b3926}.agenttooltip[hidden]{display:none}
 .agentdialog{padding:0;border:0;border-radius:16px;width:min(720px,calc(100% - 32px));max-height:calc(100dvh - 48px);color:var(--ink);background:var(--paper);box-shadow:0 18px 60px #202b3933;overflow:auto}.agentdialog::backdrop{background:#202b3980}.dialoghead{position:sticky;top:0;z-index:1;background:var(--paper);display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px;border-bottom:1px solid var(--line)}.dialoghead h2{overflow-wrap:anywhere}.dialoghead p{font-size:.85rem;color:var(--muted);margin:6px 0 12px}.dialoghead .quiet{flex-shrink:0}
-@media(max-width:1000px){.graphlanes{gap:28px}.agentgraph{padding:18px}.agentnode{padding:14px}}
-@media(max-width:760px){.graphlanes{grid-template-columns:1fr;gap:36px}.graphnodes{gap:24px}.graphlane h3{margin-bottom:12px}.agentdialog{max-height:calc(100dvh - 24px)}.dialoghead{padding:20px}}
+@media(max-width:1000px){.graphlanes{gap:48px}.agentgraph{padding:18px 18px 44px}.agentnode{padding:14px}}
+@media(max-width:760px){.graphlanes{grid-template-columns:1fr;gap:36px}.graphnodes{gap:32px}.graphlane h3{margin-bottom:12px}.agentdialog{max-height:calc(100dvh - 24px)}.dialoghead{padding:20px}}
 @media print{.agenttooltip,.agentdialog{display:none}.agentgraph{background:white}.agentnode{break-inside:avoid}}
 </style>
 </head>
@@ -70,7 +74,7 @@ function list(id,items,empty){const root=byId(id);if(!items.length){root.append(
 
 const tooltip=byId('agent-tooltip'),dialog=byId('agent-dialog');
 let graphLinks=[],graphButtons=new Map(),modalTrigger=null,tooltipAnchor=null,tooltipTimer;
-function hideTooltip(){clearTimeout(tooltipTimer);tooltip.hidden=true;tooltipAnchor?.removeAttribute('aria-describedby');tooltipAnchor=null}
+function hideTooltip(){clearTimeout(tooltipTimer);tooltip.hidden=true;tooltipAnchor?.removeAttribute('aria-describedby');tooltipAnchor=null;clearRelations()}
 function positionTooltip(button){
   const rect=button.getBoundingClientRect();const width=tooltip.offsetWidth,height=tooltip.offsetHeight;
   tooltip.style.left=Math.max(12,Math.min(rect.left,innerWidth-width-12))+'px';
@@ -78,9 +82,12 @@ function positionTooltip(button){
 }
 function showTooltip(button,agent){
   const summary=value=>{const text=value.replace(/\s+/g,' ').trim();return text.length>120?text.slice(0,120)+'…':text};
-  hideTooltip();tooltipAnchor=button;tooltip.textContent=summary(agent.result||'최근 보고 없음')+'\n다음: '+summary(agent.next||'아직 보고 없음');tooltip.hidden=false;button.setAttribute('aria-describedby','agent-tooltip');positionTooltip(button);
+  hideTooltip();tooltipAnchor=button;tooltip.textContent=summary(agent.result||'최근 보고 없음')+'\n다음: '+summary(agent.next||'아직 보고 없음');tooltip.hidden=false;button.setAttribute('aria-describedby','agent-tooltip');
+  const names=ids=>{const text=ids.map(id=>graphButtons.get(id).querySelector('strong').textContent).join(', ');return text.length>80?text.slice(0,80)+'…':text||'기록 없음'};
+  const predecessors=graphLinks.filter(([,to])=>graphButtons.get(to)===button).map(([from])=>from),successors=graphLinks.filter(([from])=>graphButtons.get(from)===button).map(([,to])=>to);
+  tooltip.textContent+='\n선행: '+names(predecessors)+'\n후속: '+names(successors);positionTooltip(button);highlightRelations(button);
 }
-function delayTooltipHide(){tooltipTimer=setTimeout(hideTooltip,120)}
+function delayTooltipHide(){tooltipTimer=setTimeout(()=>{if(document.activeElement!==tooltipAnchor)hideTooltip()},120)}
 tooltip.addEventListener('mouseenter',()=>clearTimeout(tooltipTimer));tooltip.addEventListener('mouseleave',delayTooltipHide);
 function openAgent(button,agent,agents){
   hideTooltip();modalTrigger=button;byId('agent-title').textContent=agent.name;byId('agent-subtitle').textContent=agent.role+' · '+agent.area;
@@ -114,22 +121,68 @@ function renderAgents(agents){
     });lane.append(nodes);lanes.append(lane);
   });graph.append(lanes);byId('agents').append(graph);
   agents.forEach(agent=>{if(graphButtons.has(agent.id)&&Array.isArray(agent.dependsOn))new Set(agent.dependsOn).forEach(id=>{if(id!==agent.id&&graphButtons.has(id))graphLinks.push([id,agent.id])})});
-  byId('agents').append(node('p','연결선은 기록된 선행 관계입니다. 파란 점과 흐르는 선은 최근 보고가 진행 중인 노드와 그 선행 관계를 표시합니다. 같은 단계의 배치는 실행 순서를 뜻하지 않습니다.','graphnote'));
+  byId('agents').append(node('p','빈 연결점에서 채워진 연결점 방향으로 이어집니다. 노드에 마우스를 올리거나 포커스하면 직접 연결된 관계를 강조합니다. 흐르는 선은 최근 보고가 진행 중인 노드의 선행 관계입니다.','graphnote'));
+  const relations=node('div');relations.id='graph-relations';relations.setAttribute('role','status');byId('agents').append(relations);
   new ResizeObserver(drawEdges).observe(graph);requestAnimationFrame(drawEdges);
+}
+function clearRelations(){
+  graphButtons.forEach(button=>delete button.dataset.relation);
+  byId('agent-graph')?.querySelectorAll('.graphedge').forEach(edge=>{delete edge.dataset.highlight;edge.querySelector('path').setAttribute('marker-end',edge.dataset.active==='true'?'url(#edge-arrow-active)':'url(#edge-arrow)')});
+  byId('graph-relations')?.replaceChildren();
+}
+function highlightRelations(button){
+  const selected=[...graphButtons].find(([,value])=>value===button)?.[0];if(!selected)return;
+  const links=graphLinks.filter(([from,to])=>from===selected||to===selected),related=new Set(links.flat());
+  graphButtons.forEach((node,id)=>node.dataset.relation=id===selected?'selected':related.has(id)?'related':'unrelated');
+  byId('agent-graph').querySelectorAll('.graphedge').forEach(edge=>{
+    const highlighted=edge.dataset.from===selected||edge.dataset.to===selected;edge.dataset.highlight=String(highlighted);
+    edge.querySelector('path').setAttribute('marker-end',highlighted||edge.dataset.active==='true'?'url(#edge-arrow-active)':'url(#edge-arrow)');
+  });
+  const list=node('ul',undefined,'relationlist');
+  links.forEach(([from,to])=>list.append(node('li',graphButtons.get(from).querySelector('strong').textContent+' → '+graphButtons.get(to).querySelector('strong').textContent)));
+  if(!links.length)list.append(node('li','기록된 연결 관계가 없습니다.'));
+  byId('graph-relations').replaceChildren(list);
 }
 function drawEdges(){
   const graph=byId('agent-graph');if(!graph||graph.offsetWidth===0)return;
-  const svg=graph.querySelector('svg');svg.querySelectorAll(':scope > path').forEach(path=>path.remove());const bounds=graph.getBoundingClientRect();
-  const vertical=matchMedia('(max-width:760px)').matches;
-  graphLinks.forEach(([from,to])=>{
-    const a=graphButtons.get(from).getBoundingClientRect(),b=graphButtons.get(to).getBoundingClientRect();
-    const sameLane=graphButtons.get(from).closest('.graphlane')===graphButtons.get(to).closest('.graphlane');
-    let d;
-    if(sameLane){const x1=a.right-bounds.left,y1=a.top+a.height/2-bounds.top,x2=b.right-bounds.left,y2=b.top+b.height/2-bounds.top;d=`M ${x1} ${y1} C ${x1+12} ${y1}, ${x2+12} ${y2}, ${x2} ${y2}`}
-    else if(vertical){const x1=a.left+a.width/2-bounds.left,y1=a.bottom-bounds.top,x2=b.left+b.width/2-bounds.left,y2=b.top-bounds.top;const bend=(y1+y2)/2;d=`M ${x1} ${y1} C ${x1} ${bend}, ${x2} ${bend}, ${x2} ${y2}`}
-    else{const x1=a.right-bounds.left,y1=a.top+a.height/2-bounds.top,x2=b.left-bounds.left,y2=b.top+b.height/2-bounds.top;const bend=(x1+x2)/2;d=`M ${x1} ${y1} C ${bend} ${y1}, ${bend} ${y2}, ${x2} ${y2}`}
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);const active=graphButtons.get(to).dataset.tone==='active';path.dataset.active=String(active);path.setAttribute('marker-end',active?'url(#edge-arrow-active)':'url(#edge-arrow)');svg.append(path);
+  const svg=graph.querySelector('svg');svg.querySelectorAll('.graphedge').forEach(edge=>edge.remove());const bounds=graph.getBoundingClientRect();
+  const vertical=matchMedia('(max-width:760px)').matches,buttons=[...graph.querySelectorAll('.agentnode')];
+  graphLinks.forEach(([from,to],index)=>{
+    const source=graphButtons.get(from),target=graphButtons.get(to),a=source.getBoundingClientRect(),b=target.getBoundingClientRect();
+    const sameLane=source.closest('.graphlane')===target.closest('.graphlane');
+    const outgoing=graphLinks.filter(([id])=>id===from),incoming=graphLinks.filter(([,id])=>id===to);
+    const offset=(links,predicate)=>{const i=links.findIndex(predicate);return (i-(links.length-1)/2)*Math.min(12,60/links.length)};
+    const outOffset=offset(outgoing,([,id])=>id===to),inOffset=offset(incoming,([id])=>id===from);
+    let start,end,points,arrival;
+    if(sameLane||vertical){
+      const forward=b.top>a.top;
+      arrival=[0,forward?1:-1];
+      start=[a.left+a.width/2-bounds.left+outOffset,(forward?a.bottom+4:a.top-4)-bounds.top];
+      end=[b.left+b.width/2-bounds.left+inOffset,(forward?b.top-4:b.bottom+4)-bounds.top];
+      const adjacent=buttons.indexOf(target)===buttons.indexOf(source)+1;
+      if(adjacent){const middle=(start[1]+end[1])/2;points=[start,[start[0],middle],[end[0],middle],end]}
+      else{const gutter=Math.max(a.right,b.right)-bounds.left+8+(index%4)*2;
+        const exit=start[1]+(forward?12:-12),entry=end[1]+(forward?-12:12);
+        points=[start,[start[0],exit],[gutter,exit],[gutter,entry],[end[0],entry],end]}
+    }else{
+      const forward=b.left>a.left;
+      arrival=[forward?1:-1,0];
+      start=[(forward?a.right+4:a.left-4)-bounds.left,a.top+a.height/2-bounds.top+outOffset];
+      end=[(forward?b.left-4:b.right+4)-bounds.left,b.top+b.height/2-bounds.top+inOffset];
+      const laneDistance=Math.abs([...graph.querySelectorAll('.graphlane')].indexOf(source.closest('.graphlane'))-[...graph.querySelectorAll('.graphlane')].indexOf(target.closest('.graphlane')));
+      if(laneDistance===1){const gutter=start[0]+(end[0]-start[0])*(.25+.5*(index%5)/4);points=[start,[gutter,start[1]],[gutter,end[1]],end]}
+      else{const direction=forward?1:-1,exit=start[0]+direction*12,entry=end[0]-direction*12;
+        const bottom=Math.max(...buttons.map(button=>button.getBoundingClientRect().bottom))-bounds.top+16+(index%4)*4;
+        points=[start,[exit,start[1]],[exit,bottom],[entry,bottom],[entry,end[1]],end]}
+    }
+    points[points.length-1]=[end[0]-arrival[0]*6,end[1]-arrival[1]*6];
+    const create=tag=>document.createElementNS('http://www.w3.org/2000/svg',tag),edge=create('g'),path=create('path');
+    edge.classList.add('graphedge');edge.dataset.from=from;edge.dataset.to=to;
+    path.setAttribute('d',points.map(([x,y],i)=>(i?'L':'M')+' '+x+' '+y).join(' '));path.setAttribute('stroke-linejoin','round');
+    const active=target.dataset.tone==='active';edge.dataset.active=String(active);path.dataset.active=String(active);path.setAttribute('marker-end',active?'url(#edge-arrow-active)':'url(#edge-arrow)');edge.append(path);
+    [start,end].forEach(([x,y],i)=>{const port=create('circle');port.setAttribute('cx',x);port.setAttribute('cy',y);port.setAttribute('r','3');port.dataset.end=String(i===1);edge.append(port)});svg.append(edge);
   });
+  if(tooltipAnchor)highlightRelations(tooltipAnchor);
 }
 
 try{
