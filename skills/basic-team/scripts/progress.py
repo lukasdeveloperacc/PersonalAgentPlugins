@@ -110,8 +110,9 @@ def graph_warnings(data):
         by_stage.setdefault(agent.get("stage", "other"), []).append(agent)
     notes = []
     for agent in agents:
-        if not agent.get("id") or agent.get("stage") not in STAGES - {"other"}:
-            notes.append(f"{agent.get('name')}: missing id or stage; renders under 단계 미분류 with no edges")
+        # Legacy agents without an id cannot be patched, so only id'd agents are worth a warning.
+        if agent.get("id") and "stage" not in agent:
+            notes.append(f"{agent['id']}: missing stage; renders under 단계 미분류")
     by_id = {a["id"]: a for a in agents if a.get("id")}
 
     def reaches(agent, stage, seen=()):

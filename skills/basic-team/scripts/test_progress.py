@@ -175,6 +175,14 @@ class ProgressCliTests(unittest.TestCase):
         self.assertNotIn("graph_warnings", self.data()["_progress"])
         self.assertIn("data._progress?.graph_warnings", self.page.read_text())
 
+    def test_legacy_agents_without_id_are_not_warned_about_but_missing_stage_is(self):
+        legacy = dict(name="old", role="r", area="a", status="done")
+        staged = self.agent("x")
+        del staged["stage"]
+        receipt = self.init({"agents": [legacy, staged]})
+        self.assertEqual(len(receipt["graph_warnings"]), 1)
+        self.assertIn("x: missing stage", receipt["graph_warnings"][0])
+
 
 if __name__ == "__main__":
     unittest.main()
