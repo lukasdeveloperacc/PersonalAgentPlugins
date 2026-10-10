@@ -116,6 +116,8 @@ def graph_warnings(data):
         if upstream in by_stage:
             notes += [f"{a.get('id')}: {stage} agent has no recorded predecessor; set dependsOn to the {upstream} agent(s) that actually gated it"
                       for a in by_stage.get(stage, []) if a.get("id") and not a.get("dependsOn")]
+    if "implementation" in by_stage and "review" not in by_stage:
+        notes.append("no review agents registered; add required reviewers as queued nodes (stage review, dependsOn the implementation agents)")
     return notes
 
 

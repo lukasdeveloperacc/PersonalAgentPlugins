@@ -149,9 +149,12 @@ class ProgressCliTests(unittest.TestCase):
     def test_unlinked_implementation_agents_are_reported_and_linked_ones_are_not(self):
         plan = self.agent("critic", stage="planning", status="done", tone="good")
         receipt = self.invoke("init", self.page, "--checkpoint", "k", "--input", self.input_file({"agents": [plan, self.agent("backend")]}))
-        self.assertEqual(len(receipt["graph_warnings"]), 1)
+        self.assertEqual(len(receipt["graph_warnings"]), 2)
         self.assertIn("backend", receipt["graph_warnings"][0])
         receipt = self.invoke("update", self.page, "--checkpoint", "linked", "--input", self.input_file({"agents": [{"id": "backend", "dependsOn": ["critic"]}]}))
+        self.assertIn("no review agents", receipt["graph_warnings"][0])
+        queued = self.agent("karpathy", stage="review", status="대기", tone="neutral", dependsOn=["backend"])
+        receipt = self.invoke("update", self.page, "--checkpoint", "reviewers", "--input", self.input_file({"agents": [queued]}))
         self.assertNotIn("graph_warnings", receipt)
 
 
