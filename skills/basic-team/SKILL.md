@@ -1,17 +1,17 @@
 ---
 name: basic-team
-description: Coordinate native Codex or Claude agents through planning, parallel implementation, mandatory Karpathy and Ponytail reviews, and an Impeccable design review when needed. Use for a requested basic-team development workflow.
+description: Coordinate native Codex or Claude agents through planning, parallel implementation, mandatory Karpathy and Ponytail reviews, and conditional design and E2E reviews. Use for a requested basic-team development workflow.
 ---
 
 # Basic Team
 
-The main session is the leader and the user's contact. Run one Planner, multiple Executors for independent work within and across implementation areas, and two mandatory independent reviewers: **Karpathy Agent** and **Ponytail Senior Agent**. Add **Impeccable reviewer** only when Frontend implementation needs design/UX evaluation, as defined below. Frontend and Backend are work classifications, not a limit of one Executor each; size the active Executor group to the ready work and host capacity. These are review personas, not claims that the named people reviewed the code.
+The main session is the leader and the user's contact. Run one Planner, multiple Executors for independent work within and across implementation areas, and two mandatory independent reviewers: **Karpathy Agent** and **Ponytail Senior Agent**. Add **Impeccable reviewer** when Frontend implementation needs design/UX evaluation and **E2E reviewer** when changed behavior spans connected parts, as defined below. Frontend and Backend are work classifications, not a limit of one Executor each; size the active Executor group to the ready work and host capacity. These are review personas, not claims that the named people reviewed the code.
 
 Use native agents in the current host: Codex native collaboration or the installed OMC `team` skill's Claude native-team path. Keep orchestration in the main session; do not launch OMX/OMC tmux teams or another leader. Follow the user's scope, permissions, and test policy. Invoking this skill does not authorize publishing, pushing, deployment, or unrelated changes.
 
 ## Models and launch
 
-Use the host column for every stage; all reviewers, including Impeccable reviewer when active, use the Reviewer settings.
+Use the host column for every stage; all reviewers, including activated Impeccable and E2E reviewers, use the Reviewer settings.
 
 | Role | Codex model | Reasoning | Claude model | Effort |
 | --- | --- | --- | --- | --- |
@@ -42,7 +42,7 @@ Organize the page into major-domain **tabs**: **Plan**, **Agent Progress**, **Re
 
 Include across these tabs:
 
-- Overall goal, current stage, last updated time, and a simple Planner -> Frontend/Backend Executors -> required Reviewers diagram. Show only the areas needed for this task; include Impeccable reviewer only when activated and record why design review is or is not needed.
+- Overall goal, current stage, last updated time, and a simple Planner -> Frontend/Backend Executors -> required Reviewers diagram. Show only the areas needed for this task and activated reviewers; record why design and E2E reviews are or are not needed.
 - The current plan: task allocation, dependencies, acceptance criteria, and short explanations of decisions. Show parallel task branches within Frontend/Backend and which tasks are ready or awaiting prerequisites. Mark a draft as draft and distinguish approved plan revisions.
 - One row/card for each assigned agent, including planning helpers: name, role, Frontend/Backend or other area, selected model/effort and observation status, owned task/files, latest reported status/time, completed work, next step, and blocker if any. Distinguish not launched, queued, working, waiting, blocked, and finished using actual reports; do not invent completion percentages or treat silence as failure.
 - Show the selected model ID and reasoning/effort in each collapsed agent summary, alongside the name and role; users must not need to expand a row to see them. Reuse the existing `agent.model` field and preserve requested-versus-observed labels. If unavailable, show “미확인”; never infer a model from the role. Keep the expanded observation details.
@@ -80,6 +80,12 @@ When planning Frontend work, the Planner loads `impeccable`, follows its context
 
 Propose whether Impeccable reviewer is needed and name the affected surfaces and evaluation criteria. Activate it for new/redesigned UI or changes to visible layout, typography, color, navigation, interactions, responsive behavior, or other user experience needing design judgment; also activate it when the user requests design evaluation. Frontend internal refactors with no design/UX impact do not automatically need it. The leader confirms this decision from the actual implementation scope and re-evaluates it if scope changes; never deactivate a required review to bypass an unresolved finding. Planning does not authorize UI edits, context-file repairs, or replacing a pinned design direction.
 
+### E2E review planning
+
+Activate an independent E2E reviewer when changed behavior connects multiple screens, client/server/persistence, authentication and protected actions, or services/jobs whose complete outcome requires runtime validation across boundaries; also activate it when the user requests E2E validation. File count alone is not a trigger. Isolated styling, copy, internal refactors, and documentation changes do not automatically need it. The Planner records the decision, affected flows, observable success/failure criteria, target environment, fixtures/accounts, prerequisites, and allowed validation; the leader re-evaluates on scope changes without dropping a required review to bypass findings. Use the Reviewer model/effort and a distinct task name such as `basic_team_e2e`.
+
+Load [references/e2e-review.md](references/e2e-review.md) only when E2E review is activated or another required reviewer needs browser interaction. It covers runtime evidence, browser selection, and MCP cleanup; apply its browser lifecycle to Impeccable too when applicable. Do not enable MCPs at kickoff or for source-only reviews.
+
 ### Parallel decomposition within each area
 
 The Planner explicitly looks for independent work **inside Frontend and inside Backend**, as well as across them. Split substantial independent features, components, endpoints, services, or jobs into deliverables with separate Executors when their files/resources and contracts permit concurrent implementation. Do not stop decomposition at one Frontend task and one Backend task.
@@ -104,6 +110,7 @@ Wait for all implementation/integration edits to finish. Identify the exact revi
 
 - **Karpathy Agent:** load `lukas-plugin:karpathy-guidelines`. Review assumptions, requirement coverage, simplicity, surgical scope, and observable success criteria.
 - **Ponytail Senior Agent:** load `ponytail:ponytail` at **full** level. Review the smallest complete solution, reuse, affected callers/configuration, edge cases, error handling, and missing evidence. End the review with unchecked areas and remaining risks as that skill requires.
+- **E2E reviewer (conditional):** follow [references/e2e-review.md](references/e2e-review.md). Independently validate the planned connected flows on the frozen implementation and report observed outcomes, failures, and unchecked boundaries. Receive the scenario plan, environment, fixtures, and browser readiness from the leader in addition to the common review inputs.
 - **Impeccable reviewer (conditional):** load `impeccable` and evaluate the Frontend Executors' delivered design against the user's brief and Planner's criteria. Follow its context setup once in this reviewer's session and the installed `reference/critique.md` evaluation procedure. Inspect the affected UI/source and available current visual evidence; assess hierarchy, layout, typography, color, consistency, cognitive load, interaction/state clarity, responsiveness, and accessibility. Preserve the intended design direction and distinguish required defects from optional taste/polish.
 
 For Impeccable critique's isolated design and detector/browser assessments, the leader dispatches bounded helpers with the Reviewer model/effort when required by the installed procedure; the reviewer synthesizes their independent reports. Queue helpers within host capacity, use reply-driven coordination, and do not let detector findings anchor the independent design assessment. Follow the installed context-launcher fallback, detector failure accounting, and cleanup procedure; missing visual evidence cannot become a claim of visual verification. Keep product/context files unchanged; any critique snapshots belong in permitted task artifacts. Return the critique evidence alongside the common verdict below. In this workflow, basic-team replaces standalone critique's follow-up question gate: the leader assigns already authorized fixes and asks only about consequential unresolved choices. Report this adapted interaction without claiming that standalone critique's issue-count-based question gate was satisfied; a separately requested standalone critique follows its own question rules. Respect Impeccable's bounded inspection/confirmation budget across helpers and fixes, reuse still-current evidence, and never reset the budget by respawning agents. If further required evidence cannot be obtained within the permitted budget, report the gap and ask through the leader rather than manufacturing PASS or running endless polish loops.
@@ -111,7 +118,7 @@ For Impeccable critique's isolated design and detector/browser assessments, the 
 The two mandatory reviewers also check correctness, regressions, completion of the assigned Frontend/Backend deliverables, and compatibility across their shared contract when both are involved. All reviewers remain read-only on product files and do not apply fixes. They inspect actual files and return:
 
 ```text
-Reviewer: Karpathy Agent | Ponytail Senior Agent | Impeccable reviewer
+Reviewer: Karpathy Agent | Ponytail Senior Agent | Impeccable reviewer | E2E reviewer
 Reviewed revision: <baseline and content/diff identity>
 Verdict: PASS | CHANGES_REQUIRED | BLOCKED
 Findings: <severity, file:line, impact, required fix; or none>
@@ -135,7 +142,7 @@ On Claude, these continuation and stop rules override OMC team's default `max_fi
 
 The leader collects all required independent reviews, reconciles conflicting findings against the request and evidence, and assigns required fixes to the owning Executors, including Frontend design fixes. Do not bypass an unresolved finding by overruling a reviewer and declaring PASS. Scope or contract changes go back through the Planner when necessary.
 
-After fixes and allowed validation, freeze the new revision and obtain fresh verdicts from **all required** reviewers. Any product edit invalidates earlier PASS verdicts. Continue implementation, review, and fixes until Karpathy Agent **and** Ponytail Senior Agent, plus **Impeccable reviewer when activated**, return `PASS` for the same final revision. One PASS, a self-review, elapsed time, or an iteration count cannot complete the task.
+After fixes and allowed validation, freeze the new revision and obtain fresh verdicts from **all required** reviewers. Any product edit invalidates earlier PASS verdicts. Continue implementation, review, and fixes until Karpathy Agent **and** Ponytail Senior Agent, plus **Impeccable and E2E reviewers when activated**, return `PASS` for the same final revision. One PASS, a self-review, elapsed time, or an iteration count cannot complete the task.
 
 If missing credentials/permissions, unsupported tooling, irreconcilable requirements, or other obstacles still prevent progress after supported investigation and recovery below, report **BLOCKED**, the unresolved findings, and the needed input. Ask the user when their answer can resolve the blocker. Never call a blocked task complete. Honor user cancellation and explicit budgets; they are not reviewer PASS.
 
@@ -168,7 +175,7 @@ On Codex's current collaboration surface, agents can directly `send_message` to 
 
 On Claude, use the installed team skill's actual native teammate messaging, incoming notifications, and idle/resume behavior for leader/peer coordination, with its required task lifecycle for assignments. Resolve teammate names/addresses from the real team surface; do not fabricate `TeamCreate`, `TeamDelete`, or `SendMessage` calls from older documentation. Do not add repeated task-list/mailbox reads around native message delivery. If required native messaging is unavailable, report the team capability blocker. During independent review, route review coordination through the leader on both hosts; share review feedback with Executors only after all required verdicts are collected.
 
-Complete only after all required final PASS verdicts, the leader's integration check, and no pending worker writes. Brief the user via eli5 with delivered behavior, decisions, model/effort selection and observation status, all required verdicts (or the reason Impeccable reviewer was not needed), validation evidence, and remaining gaps. On Claude, finish the team skill's native shutdown and acknowledgements; on Codex, terminate only this workflow's active agents using supported controls when needed. Leave unrelated agents and harness state alone.
+Complete only after all required final PASS verdicts, the leader's integration check, no pending worker writes, and applicable browser/MCP cleanup in [references/e2e-review.md](references/e2e-review.md). Brief the user via eli5 with delivered behavior, decisions, model/effort selection and observation status, all required verdicts (or the reasons conditional reviewers were not needed), validation evidence, cleanup status, and remaining gaps. On Claude, finish the team skill's native shutdown and acknowledgements; on Codex, terminate only this workflow's active agents using supported controls when needed. Leave unrelated agents and harness state alone.
 
 ## Host references
 

@@ -56,6 +56,9 @@ Codex는 `$basic-team <작업>`, Claude는 `/lukas-plugin:basic-team <작업>`�
 - Karpathy Agent와 Ponytail Senior Agent: 독립 리뷰 후 둘 다 같은 최종 구현에 `PASS`할 때까지 수정·재검토
   - Frontend·Backend에서 외부 라이브러리 API·버전 의존 동작·의존성 버전이 바뀌면 Context7으로 실제 사용 버전에 맞는 문서를 확인. MCP나 해당 버전 문서가 없으면 공식 문서·upstream 소스로 대체하고 확인 근거·남은 불확실성을 보고
 - Impeccable reviewer: Frontend 디자인·UX 평가가 필요할 때만 생성해 `impeccable`로 평가. 생성된 경우 이 리뷰어의 최종 `PASS`도 필요하며 기존 Reviewer 모델·추론 설정 사용
+- E2E reviewer: 여러 화면·Frontend/Backend/저장소·인증·서비스가 연결되는 동작을 변경하거나 E2E 검증을 요청하면 독립 에이전트로 전체 흐름·관련 실패 경로를 검증. 기존 Reviewer 모델·추론 설정을 사용하며 같은 최종 구현의 `PASS`가 필요
+  - 브라우저 검증은 Orca 환경에서 Orca browser 우선. Orca 환경이 없으면 `mcp-setup`으로 `chrome-devtools` 상태를 확인해 필요할 때만 켜고, 실제 도구 연결 후 검증. 브라우저 검증·재검토 종료 또는 취소·종료 blocker 시 원래 켜져 있었더라도 해당 MCP를 끄고 확인. 다른 MCP는 유지하며 Impeccable의 브라우저 검증에도 같은 정책 적용
+  - MCP 설정 변경은 현재 세션의 연결·토큰 사용에 즉시 반영되지 않을 수 있음. 도구가 없는 Codex 세션에서는 새 세션으로 같은 진행판·검토 대상을 이어가며, 연결 전에는 E2E 성공으로 표시하지 않음
 - Main Session: 실행 프로젝트의 `docs/inprogress/<작업명>-<시작시각>-progress.html`에 `eli5`로 하나의 HTML 진행판을 유지. 같은 작업의 추가 요청·세션 재개는 기존 파일을 갱신하고, 별도 작업은 새 파일 생성. 모든 브리핑에 진행판 링크와 절대 경로를 표시. 계획 / 에이전트별 진행 / 리뷰·검증 / 결정·막힌 일 탭으로 나누고, 회신 수신·단계 전환 시 갱신하여 파일 링크와 짧은 설명으로 브리핑
 - 진행판 디자인: [공통 HTML 템플릿](skills/basic-team/assets/progress-template.html)을 사용. 반응형 레이아웃·에이전트 상세 펼치기·진행 파일 절대 경로와 복사 버튼을 제공하고, 시작·완료 브리핑에도 파일 링크와 경로를 명시
 - 협업: 반복 상태 조회 대신 네이티브 회신·완료 알림으로 후속 작업을 진행. 할 일이 없으면 이벤트 대기하고, 필요한 변경 사항만 전달하여 토큰 낭비를 줄임
