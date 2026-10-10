@@ -45,6 +45,8 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
 
 Harness setup은 사용자 전역 설정을 갱신합니다. OMC는 `~/.claude/CLAUDE.md`의 사용자 내용을 병합하고, OMX는 사용자 범위의 `AGENTS.md`를 병합하며 프로젝트의 `AGENTS.md`는 변경하지 않습니다. `reload`는 harness를 npm의 `@latest`로 업데이트한 뒤 기존 사용자 범위의 setup 정책을 적용합니다.
 
+MCP 관리 스크립트는 `skills/mcp-setup/scripts/mcp.sh`에 있습니다. 이전 경로 `scripts/mcp.sh`도 새 스크립트로 전달하므로 기존 호출은 계속 동작합니다.
+
 ## Basic Team
 
 Codex는 `$basic-team <작업>`, Claude는 `/lukas-plugin:basic-team <작업>`으로 호출합니다. 플러그인 reload 후 새 세션에서 사용할 수 있습니다.

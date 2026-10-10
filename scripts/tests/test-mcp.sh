@@ -58,5 +58,28 @@ run claude list | grep -x "notion off" >/dev/null
 run codex list | grep -x "notion on" >/dev/null
 run codex list | grep -x "glitchtip off" >/dev/null
 
-! run claude enable nope 2>/dev/null
+if run claude enable nope 2>/dev/null; then
+  echo 'expected unknown server to fail' >&2
+  exit 1
+fi
+
+# The original entry point forwards arguments and preserves failures from any cwd.
+(
+  cd "$SANDBOX"
+  for tool in codex claude; do
+    : > "$CALL_LOG"
+    run "$tool" enable codegraph
+    expected="$(cat "$CALL_LOG")"
+    : > "$CALL_LOG"
+    SCRIPT="$ROOT_DIR/scripts/mcp.sh" run "$tool" enable codegraph
+    [[ "$(cat "$CALL_LOG")" == "$expected" ]]
+    [[ "$(SCRIPT="$ROOT_DIR/scripts/mcp.sh" run "$tool" list)" == "$(run "$tool" list)" ]]
+    : > "$CALL_LOG"
+    if SCRIPT="$ROOT_DIR/scripts/mcp.sh" run "$tool" enable nope 2>/dev/null; then
+      echo "expected unknown server to fail through the original entry point: $tool" >&2
+      exit 1
+    fi
+    [[ ! -s "$CALL_LOG" ]]
+  done
+)
 echo "ok"

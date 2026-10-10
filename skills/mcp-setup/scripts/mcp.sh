@@ -23,13 +23,15 @@ def() {
 }
 
 enable_claude() {
+  local d
+  d="$(def "$1")" || return
   # bearer_token_env_var is the Codex spelling of the same token; Claude uses headers.
-  claude mcp add-json -s user "$1" "$(def "$1" | jq -c 'del(.bearer_token_env_var)')"
+  claude mcp add-json -s user "$1" "$(jq -c 'del(.bearer_token_env_var)' <<<"$d")"
 }
 
 enable_codex() {
   local d args=()
-  d="$(def "$1")"
+  d="$(def "$1")" || return
   if jq -e '.url' <<<"$d" >/dev/null; then
     args+=(--url "$(jq -r '.url' <<<"$d")")
     jq -e '.bearer_token_env_var' <<<"$d" >/dev/null && args+=(--bearer-token-env-var "$(jq -r '.bearer_token_env_var' <<<"$d")")
