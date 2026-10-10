@@ -9,6 +9,12 @@ usage() {
 TOOL="${1:-}"
 ACTION="${2:-}"
 [ -n "$TOOL" ] && [ -n "$ACTION" ] || usage
+case "$TOOL" in codex|claude) ;; *) usage ;; esac
+case "$ACTION" in
+  install|reload) npm install -g @colbymchenry/codegraph@latest ;;
+  remove) ;;
+  *) usage ;;
+esac
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLUGIN_NAME="$(jq -r '.name' "$ROOT_DIR/.claude-plugin/plugin.json")"
@@ -210,3 +216,11 @@ case "$TOOL" in
     ;;
   *) usage ;;
 esac
+
+if [ "$ACTION" = remove ]; then
+  # Keep the shared CLI while the other tool still has its MCP enabled.
+  if [ "$TOOL" = codex ]; then other_tool=claude; else other_tool=codex; fi
+  if ! "$ROOT_DIR/scripts/mcp.sh" "$other_tool" list | grep -qx 'codegraph on'; then
+    npm uninstall -g @colbymchenry/codegraph
+  fi
+fi

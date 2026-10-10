@@ -34,6 +34,16 @@ expect_calls 'codex|mcp|add|glitchtip|--url|http://localhost:38088/mcp|--bearer-
 run codex enable aws-eks
 expect_calls 'codex|mcp|add|aws-eks|--env|FASTMCP_LOG_LEVEL=ERROR|--|uvx|awslabs.eks-mcp-server@latest|--allow-write|--allow-sensitive-data-access|'
 
+# CodeGraph is registered as a local stdio server for both tools.
+: > "$CALL_LOG"
+run codex enable codegraph
+expect_calls 'codex|mcp|add|codegraph|--|codegraph|serve|--mcp|'
+: > "$CALL_LOG"
+run claude enable codegraph
+expect_calls 'claude|mcp|add-json|-s|user|codegraph|{"command":"codegraph","args":["serve","--mcp"]}|'
+run codex list | grep -x 'codegraph off' >/dev/null
+run claude list | grep -x 'codegraph off' >/dev/null
+
 # disable with no names removes every catalog server.
 : > "$CALL_LOG"
 run claude disable

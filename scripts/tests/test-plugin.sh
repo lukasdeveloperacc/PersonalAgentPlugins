@@ -54,6 +54,11 @@ done
 cat > "$STUB_BIN/npm" <<STUB
 #!/usr/bin/env bash
 echo "npm \$*" >> "$CALL_LOG"
+if [[ "\$*" == "install -g @colbymchenry/codegraph@latest" ]]; then
+  [[ "\${CODEGRAPH_NPM_FAIL:-0}" == 1 ]] && exit 18
+  exit 0
+fi
+[[ "\$*" == "uninstall -g @colbymchenry/codegraph" ]] && exit 0
 [[ "\${HARNESS_NPM_FAIL:-0}" == 1 ]] && exit 17
 case "\${3:-}" in
   oh-my-codex@latest) harness=omx ;;
@@ -99,6 +104,7 @@ expect_usage_error bogus install
 : > "$CALL_LOG"
 run codex install >/dev/null
 expect_calls \
+  "npm install -g @colbymchenry/codegraph@latest" \
   "codex plugin marketplace add $ROOT_DIR --json" \
   "codex plugin add $PLUGIN_ID --json" \
   "codex plugin marketplace add $DEP_SRC --json" \
@@ -120,7 +126,8 @@ expect_calls \
   "codex plugin remove $PLUGIN_ID --json" \
   "codex plugin remove $DEP_ID --json" \
   "codex plugin remove $ELI5_ID --json" \
-  "${MCP_NAMES[@]/#/codex mcp remove }"
+  "${MCP_NAMES[@]/#/codex mcp remove }" \
+  "npm uninstall -g @colbymchenry/codegraph"
 [[ ! -e "$FAKE_HOME/.agents/skills/impeccable" ]]
 [[ -x "$STUB_BIN/omx" ]]
 
@@ -130,6 +137,7 @@ echo 'Keep my user guidance' > "$FAKE_HOME/.codex/AGENTS.md"
 mkdir -p "$CACHE_DIR" && touch "$CACHE_DIR/marker"
 run codex reload >/dev/null
 expect_calls \
+  "npm install -g @colbymchenry/codegraph@latest" \
   "codex update" \
   "npm install -g oh-my-codex@latest" \
   "codex plugin remove $PLUGIN_ID --json" \
@@ -163,6 +171,7 @@ denied_count() { jq '[.deniedMcpServers[]? | select(.serverName == "claude.ai No
 mkdir -p "$FAKE_HOME/.claude" && echo '{"model":"keep"}' > "$FAKE_HOME/.claude/settings.json"
 run claude install >/dev/null
 expect_calls \
+  "npm install -g @colbymchenry/codegraph@latest" \
   "claude plugin marketplace add $DEP_SRC" \
   "claude plugin marketplace add $ELI5_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
@@ -185,7 +194,8 @@ expect_calls \
   "claude plugin uninstall $ELI5_ID --keep-data --json" \
   "claude plugin uninstall $CLAUDE_DEP_ID --keep-data --json" \
   "claude plugin uninstall $OMC_ID --keep-data --json" \
-  "${MCP_NAMES[@]/#/claude mcp remove -s user }"
+  "${MCP_NAMES[@]/#/claude mcp remove -s user }" \
+  "npm uninstall -g @colbymchenry/codegraph"
 
 : > "$CALL_LOG"
 [[ "$(denied_count)" == 0 ]]
@@ -198,6 +208,7 @@ run claude reload >/dev/null
 : > "$CALL_LOG"
 run claude reload >/dev/null
 expect_calls \
+  "npm install -g @colbymchenry/codegraph@latest" \
   "claude update" \
   "npm install -g oh-my-claude-sisyphus@latest" \
   "claude plugin marketplace add $DEP_SRC" \
@@ -225,6 +236,31 @@ for id in "$DEP_ID" "$ELI5_ID" "$CLAUDE_DEP_ID" "$OMC_ID"; do
   jq -e --arg m "${id#*@}" '.allowCrossMarketplaceDependenciesOn | index($m)' \
     "$ROOT_DIR/.claude-plugin/marketplace.json" >/dev/null
 done
+
+# A failed CodeGraph install/update must stop before any plugin mutation.
+for tool in codex claude; do
+  for action in install reload; do
+    : > "$CALL_LOG"
+    if CODEGRAPH_NPM_FAIL=1 run "$tool" "$action" >/dev/null 2>&1; then
+      echo "expected CodeGraph installation failure for $tool $action" >&2
+      exit 1
+    fi
+    expect_calls "npm install -g @colbymchenry/codegraph@latest"
+  done
+done
+
+# Keep the shared CLI when the other tool's MCP is enabled, in either direction.
+echo '{"mcpServers":{"codegraph":{}}}' > "$FAKE_HOME/.claude.json"
+: > "$CALL_LOG"
+run codex remove >/dev/null
+! grep -q '^npm uninstall -g @colbymchenry/codegraph$' "$CALL_LOG"
+echo '{}' > "$FAKE_HOME/.claude.json"
+printf '\n[mcp_servers.codegraph]\ncommand = "codegraph"\n' >> "$FAKE_HOME/.codex/config.toml"
+: > "$CALL_LOG"
+run claude remove >/dev/null
+! grep -q '^npm uninstall -g @colbymchenry/codegraph$' "$CALL_LOG"
+sed '/^\[mcp_servers.codegraph\]/,$d' "$FAKE_HOME/.codex/config.toml" > "$SANDBOX/config.toml"
+mv "$SANDBOX/config.toml" "$FAKE_HOME/.codex/config.toml"
 
 # A failed package install must stop before setup or reporting installation success.
 for tool in codex claude; do
