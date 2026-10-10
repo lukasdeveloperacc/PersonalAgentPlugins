@@ -9,8 +9,8 @@ import sys
 import tempfile
 import unittest
 
-SCRIPT = Path(__file__).with_name("progress.py")
-TEMPLATE = Path(__file__).parents[1] / "assets" / "progress-template.html"
+SCRIPT = Path(__file__).parents[1] / "progress.py"
+TEMPLATE = Path(__file__).parents[2] / "assets" / "progress-template.html"
 
 
 class ProgressCliTests(unittest.TestCase):

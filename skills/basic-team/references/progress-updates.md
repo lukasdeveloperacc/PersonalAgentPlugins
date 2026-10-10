@@ -15,7 +15,7 @@ uv run "<basic-team-base>/scripts/progress.py" status "<same-page>"
 Always launch these scripts with `uv run`; never call `python3` or `python` directly. Both scripts declare inline Python metadata with no external dependencies, so `uv run` ignores the executing project's dependencies. If `uv` is not installed, report BLOCKED instead of falling back to another interpreter. To run the focused CLI tests from any directory:
 
 ```sh
-uv run "<basic-team-base>/scripts/test_progress.py" -v
+uv run "<basic-team-base>/scripts/tests/test_progress.py" -v
 ```
 
 `init` creates a page from the common template and refuses an existing file. `update` preserves its renderer and saves atomically. `status` reads without writing. Successful commands print a JSON receipt containing `path`, `saved_at`, `checkpoint`, and `revision`. Retain that receipt for the next briefing. `revision` counts page saves; it is not the implementation revision or review target.
