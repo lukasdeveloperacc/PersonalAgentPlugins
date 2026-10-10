@@ -54,6 +54,7 @@ Codex는 `$basic-team <작업>`, Claude는 `/lukas-plugin:basic-team <작업>`�
 - Planner: `ralplan` 기반 계획, 미설치 시 `plan` 사용. Frontend/Backend 각각의 병렬 작업을 찾아 작업·파일·담당자·의존성·연결 규약을 명시. Frontend 계획에는 `impeccable`의 UX·디자인 기준을 참고
 - Executor: Frontend/Backend 각각 여러 네이티브 에이전트가 독립 작업을 병렬 구현. 준비된 작업부터 가용 슬롯에 배정하고 공용 파일·통합 작업은 단일 담당자를 지정
 - Karpathy Agent와 Ponytail Senior Agent: 독립 리뷰 후 둘 다 같은 최종 구현에 `PASS`할 때까지 수정·재검토
+  - Frontend·Backend에서 외부 라이브러리 API·버전 의존 동작·의존성 버전이 바뀌면 Context7으로 실제 사용 버전에 맞는 문서를 확인. MCP나 해당 버전 문서가 없으면 공식 문서·upstream 소스로 대체하고 확인 근거·남은 불확실성을 보고
 - Impeccable reviewer: Frontend 디자인·UX 평가가 필요할 때만 생성해 `impeccable`로 평가. 생성된 경우 이 리뷰어의 최종 `PASS`도 필요하며 기존 Reviewer 모델·추론 설정 사용
 - Main Session: 실행 프로젝트의 `docs/inprogress/<작업명>-<시작시각>-progress.html`에 `eli5`로 하나의 HTML 진행판을 유지. 같은 작업의 추가 요청·세션 재개는 기존 파일을 갱신하고, 별도 작업은 새 파일 생성. 모든 브리핑에 진행판 링크와 절대 경로를 표시. 계획 / 에이전트별 진행 / 리뷰·검증 / 결정·막힌 일 탭으로 나누고, 회신 수신·단계 전환 시 갱신하여 파일 링크와 짧은 설명으로 브리핑
 - 진행판 디자인: [공통 HTML 템플릿](skills/basic-team/assets/progress-template.html)을 사용. 반응형 레이아웃·에이전트 상세 펼치기·진행 파일 절대 경로와 복사 버튼을 제공하고, 시작·완료 브리핑에도 파일 링크와 경로를 명시

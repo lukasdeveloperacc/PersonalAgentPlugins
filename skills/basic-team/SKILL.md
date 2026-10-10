@@ -120,6 +120,15 @@ Evidence and unchecked areas: <what was examined and what remains unknown>
 
 `PASS` means the request and acceptance criteria are met, required validation has evidence, and no required finding remains. A partial, missing, failed, or unverifiable review is not PASS. Advisory improvements outside the request do not expand scope; state them separately.
 
+### Conditional library documentation checks
+
+For both Frontend and Backend changes, Karpathy and Ponytail reviewers use Context7 MCP when the diff introduces or changes an external library/framework/ORM/SDK API, depends on version-specific behavior, changes a dependency version, or leaves a material uncertainty about supported options, deprecation, or documented error handling. Pure styling, copy, and project-internal logic do not require documentation lookup unless they depend on such behavior.
+
+- Establish the project's actual resolved dependency version from lockfiles or installed metadata, using manifests as declared-version evidence when resolution is unavailable. Query the relevant library's matching-version documentation through Context7; inspect the available tool schema rather than assuming tool names. Latest documentation alone does not prove compatibility with the project's version. Do not recommend an upgrade merely to match newer examples.
+- **Karpathy:** check API assumptions, documented constraints, and whether the implementation meets the request using the supported behavior. **Ponytail:** check compatible API usage, affected callers, edge cases, error handling, and whether existing platform/library features can simplify the change.
+- If a reviewer cannot access Context7, the leader can retrieve factual documentation for it; preserve independent verdicts. If the MCP is unavailable or lacks the matching version, use version-specific official documentation or upstream source instead. Record missing evidence; use `BLOCKED` when an unresolved compatibility question prevents a reliable verdict, rather than blocking solely because Context7 is unavailable.
+- Keep queries focused on changed APIs. In `Evidence and unchecked areas`, state why the check applied (or was unnecessary), the package and resolved/declared version, source links or library/version identifiers, compatibility findings, and any version mismatch or uncertainty. Documentation supplements code inspection and validation; it does not prove project-specific business rules or runtime correctness. The leader summarizes applicable evidence and gaps in the progress page after all required independent reviews arrive.
+
 ## 4. Continue until all required reviewers PASS
 
 On Claude, these continuation and stop rules override OMC team's default `max_fix_loops` retry ceiling for a new basic-team run. Do not invent or reset existing lifecycle counters to bypass a mandatory runtime cap; if such a cap prevents further work, report BLOCKED with the remaining findings.
