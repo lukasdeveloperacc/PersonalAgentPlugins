@@ -257,6 +257,8 @@ def hook(args) -> int:
                         if item and item.get("host") == host and item.get("session_id") == session:
                             pending.unlink(missing_ok=True)
             return 0
+        if name == "PreToolUse":
+            return _guard_spawn(args, event)
         if name != "PostToolUse" or event.get("tool_name") not in ("Bash", "exec_command", "write_stdin"):
             return _progress(args, event)
         active_session, turn = _main(host, event)
@@ -328,6 +330,32 @@ def _progress(args, event, session=None, turn=None) -> int:
     return 0
 
 
+def _guard_spawn(args, event) -> int:
+    """Deny a Claude main-session Agent spawn without model/effort while a basic-team run is armed.
+
+    The hook payload carries model, effort, name, and subagent_type (verified live); fork ignores both.
+    """
+    if args.host != "claude" or event.get("tool_name") != "Agent":
+        return 0
+    session, _ = _main(args.host, event)
+    if not session or not STATE_HOME.exists():
+        return 0
+    with _locked():
+        record = _read(STATE_HOME / (_key(args.host, session) + ".json"))
+    if not record or not record.get("runs"):
+        return 0
+    tool_input = event.get("tool_input") if isinstance(event.get("tool_input"), dict) else {}
+    problems = [f"missing {key}" for key in ("model", "effort") if not tool_input.get(key)]
+    if tool_input.get("subagent_type") == "fork":
+        problems.append("subagent_type fork ignores model and effort")
+    if not problems:
+        return 0
+    reason = ("basic-team: every teammate spawn must pass model and effort as call arguments (" + ", ".join(problems)
+              + "). Run progress.py spawn-args --host claude --role planner|executor|reviewer and pass its arguments.")
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}))
+    return 0
+
+
 def _log_spawn(run: dict, event: dict) -> None:
     """Record which spawn arguments the hook sees (never prompt text), to learn what a blocking check could rely on."""
     tool_input = event.get("tool_input")
@@ -362,7 +390,7 @@ def main() -> int:
     cmd.add_argument("--run-id", required=True)
     cmd.set_defaults(func=helper, action="disarm", page=None)
     cmd = subs.add_parser("hook")
-    cmd.add_argument("event", choices=("UserPromptSubmit", "SessionStart", "SessionEnd", "PostToolUse"))
+    cmd.add_argument("event", choices=("UserPromptSubmit", "SessionStart", "SessionEnd", "PostToolUse", "PreToolUse"))
     cmd.add_argument("--host", choices=("codex", "claude", "auto"), default="auto")
     cmd.set_defaults(func=hook)
     args = parser.parse_args()

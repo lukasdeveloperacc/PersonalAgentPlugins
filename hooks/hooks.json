@@ -57,6 +57,16 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "^Agent$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" PreToolUse",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "apply_patch|Edit|Write",
         "hooks": [
           {

@@ -85,6 +85,19 @@ class HookTest(unittest.TestCase):
         self.assertIn("prompt", entry["keys"])
         self.assertNotIn("SECRET", log)
 
+    def pre(self, **tool_input):
+        event = {"session_id": "session-1", "tool_name": "Agent", "tool_input": tool_input}
+        return self.run_json(["hook", "PreToolUse", "--host", "claude"], event, "claude")
+
+    def test_spawn_without_model_or_effort_is_denied_only_while_armed(self):
+        self.assertEqual("", self.pre(prompt="x"))
+        self.post("claude", "Bash", self.arm("claude"))
+        denied = json.loads(self.pre(prompt="x", model="haiku"))["hookSpecificOutput"]
+        self.assertEqual(denied["permissionDecision"], "deny")
+        self.assertIn("missing effort", denied["permissionDecisionReason"])
+        self.assertIn("fork", self.pre(model="haiku", effort="max", subagent_type="fork"))
+        self.assertEqual("", self.pre(model="haiku", effort="max", subagent_type="general-purpose"))
+
     def test_identity_failure_does_not_create_state(self):
         env = self.env(CODEX_THREAD_ID="one", CODEX_SESSION_ID="two")
         proc = subprocess.run(["uv", "run", "--script", str(ENGINE), "arm", str(self.page), "--host", "codex"],
