@@ -1,0 +1,4 @@
+interface:
+  display_name: "Basic Team"
+  short_description: "Plan, implement, and pass two independent senior reviews"
+  default_prompt: "Use $basic-team to plan and implement this task, brief me with eli5, and continue until Karpathy and Ponytail both pass."
