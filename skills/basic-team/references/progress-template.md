@@ -4,6 +4,8 @@ Use `scripts/progress.py` from the resolved basic-team skill directory to initia
 
 ## Data
 
+Unless the user requests another language, write all user-facing data in ELI5-style plain Korean, including summaries, agent reports/tooltips/details, reviews, and decisions/blockers. Lead with what happened, explain what was verified or remains unresolved, then state the next action. Summarize English reports instead of pasting them. Use Korean verdict labels such as “통과 / 수정 필요 / 확인 보류” without changing their meaning; preserve superseded results and validation gaps. Keep tool/model names, identifiers, commands, paths, hashes, numbers, and internal graph values unchanged, placing detailed evidence in `meta` or agent details. Use the existing flow diagram for the big picture; never simplify away a material fact.
+
 - `goal`, `summary`, `stage`: concise goal, plain-language next step, and observed stage. The script owns `updated` (last saved timestamp with timezone), `path`, and `_progress` checkpoint metadata. Do not advance the report timestamp of a silent agent.
 - `path`: the progress file's actual absolute path, set by the script. Include a clickable link, this absolute path, and the confirmed saved time in every main-session briefing: kickoff, plan, progress, review, blocker/question, resume, and completion. Keep the same path throughout the run and label the link with the task name. The page falls back to its own local URL path when omitted; clipboard refusal has a manual-copy message.
 - `blockers`: `{ "text": "<observed blocker summary>", "tone": "neutral" }`. Never infer no blockers from silence.

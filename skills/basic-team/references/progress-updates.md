@@ -2,6 +2,8 @@
 
 The Main session owns the meaning of each report. `scripts/progress.py` only validates and saves the page; a successful receipt does not prove that implementation, review, or user-facing briefing occurred. Use the same page for the same run across added requests, compaction, and session resume.
 
+Before each save, apply the skill's ELI5-style plain-Korean rule to every changed user-facing field unless the user requested another language. Explain the result, what was verified or remains unresolved, and the next action; do not paste English reviewer reports into `reviewNotice`, `reviews`, `decisions`, or agent reports. Preserve verdict meaning, evidence, technical identifiers, and reported times. The script stores supplied text and does not translate or summarize it.
+
 ## Commands
 
 Run from the executing project's root, not the plugin installation directory. Resolve the script from the installed basic-team skill directory. PAGE must be an absolute path beneath that project's `docs/inprogress`.
