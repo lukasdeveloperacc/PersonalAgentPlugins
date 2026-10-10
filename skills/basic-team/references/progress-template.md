@@ -1,6 +1,6 @@
 # Populate the progress template
 
-Copy `assets/progress-template.html` from the resolved basic-team skill directory to the run's stable artifact path. It opens via `file://` with no network, build, server, or periodic refresh. Preserve its styles and interaction code; update the embedded `script#progress-data` JSON on incoming reports and stage transitions. Read the asset when first creating the page, not on every report.
+Copy `assets/progress-template.html` from the resolved basic-team skill directory to `<executing-project-root>/docs/inprogress/<task-slug>-<YYYYMMDD-HHmmss>-progress.html`. Create the directory when absent; derive the root from the target project/worktree, not the skill installation. Reuse the same file when the task continues or resumes, preserve completed runs, and never overwrite another run’s file. It opens via `file://` with no network, build, server, or periodic refresh. Preserve its styles and interaction code; update the embedded `script#progress-data` JSON on incoming reports and stage transitions. Read the asset when first creating the page, not on every report.
 
 ## Data
 
