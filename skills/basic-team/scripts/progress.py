@@ -102,6 +102,23 @@ def validate(data, strict_dependency_ids=()):
             fail("invalid _progress metadata")
 
 
+def graph_warnings(data):
+    """Non-blocking hints for graphs that would render without the intended edges."""
+    agents = [a for a in data.get("agents", []) if isinstance(a, dict)]
+    by_stage = {}
+    for agent in agents:
+        by_stage.setdefault(agent.get("stage", "other"), []).append(agent)
+    notes = []
+    for agent in agents:
+        if not agent.get("id") or agent.get("stage") not in STAGES - {"other"}:
+            notes.append(f"{agent.get('name')}: missing id or stage; renders under 단계 미분류 with no edges")
+    for stage, upstream in (("implementation", "planning"), ("review", "implementation")):
+        if upstream in by_stage:
+            notes += [f"{a.get('id')}: {stage} agent has no recorded predecessor; set dependsOn to the {upstream} agent(s) that actually gated it"
+                      for a in by_stage.get(stage, []) if a.get("id") and not a.get("dependsOn")]
+    return notes
+
+
 def embedded(match, data):
     encoded = json.dumps(data, ensure_ascii=False, indent=2).replace("<", "\\u003c")
     return match.group(1) + "\n" + encoded + "\n" + match.group(3)
@@ -151,6 +168,8 @@ def main():
             if not meta:
                 fail("progress page has no resume metadata")
             receipt = {"path": str(path), "saved_at": meta["saved_at"], "checkpoint": meta["checkpoint"], "revision": meta["revision"]}
+            if graph_warnings(data):
+                receipt["graph_warnings"] = graph_warnings(data)
         else:
             if not args.checkpoint or not args.checkpoint.strip():
                 fail("init and update require a nonempty --checkpoint")
@@ -217,6 +236,8 @@ def main():
             else:
                 write_atomic(path, contents)
             receipt = {"path": str(path), "saved_at": now, "checkpoint": args.checkpoint, "revision": revision}
+            if graph_warnings(data):
+                receipt["graph_warnings"] = graph_warnings(data)
         print(json.dumps(receipt, ensure_ascii=False))
         return 0
     except (OSError, ValueError, json.JSONDecodeError) as error:

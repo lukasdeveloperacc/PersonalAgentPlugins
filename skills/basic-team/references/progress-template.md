@@ -17,3 +17,16 @@ Allowed `tone` values are `neutral`, `active`, `good`, `warn`, `bad`. Only nodes
 Serialize JSON with a real JSON serializer and replace every literal `<` with `\u003c` before embedding so report text cannot close the script element. Rendered report values use `textContent`; preserve that boundary. Keep the remaining template unchanged and save the complete page atomically when practical. Do not insert source HTML, secrets, private reasoning, or unverified claims. Translate fixed UI labels and `lang` when needed without changing tab IDs.
 
 The template is a saved view. It does not start agents, poll, fetch external resources, automatically reload, or replace basic-team's reviewer and final-revision gates.
+
+## Agent graph recipe
+
+Edges exist only where `dependsOn` records them, so every dispatch save must write the edge in the same patch as the agent. A receipt with `graph_warnings` means a stage would render as a disconnected column; fix it in the next patch if the dependency is real. The standard shape:
+
+| id | stage | dependsOn |
+|---|---|---|
+| `planner` | `planning` | `[]` |
+| `architect`, `critic` | `planning` | previous planning reviewer (`planner` → `architect` → `critic`) |
+| `backend-*`, `frontend-*` | `implementation` | the planning agent whose approval released dispatch (normally the last reviewer) |
+| `karpathy`, `ponytail`, activated `impeccable`/`e2e` | `review` | every implementation agent in the reviewed revision |
+
+Add required reviewers at kickoff as queued nodes (`status: "대기"`, `tone: "neutral"`, empty `result`) so the page shows the whole path before they run. Main is not a node; keep it in `flow`. Reuse the same IDs for fix rounds.
