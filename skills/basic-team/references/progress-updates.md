@@ -12,7 +12,7 @@ uv run "<basic-team-base>/scripts/progress.py" update "<same-page>" --input "<pa
 uv run "<basic-team-base>/scripts/progress.py" status "<same-page>"
 ```
 
-Both scripts declare inline Python metadata with no external dependencies, so `uv run` ignores the executing project's dependencies. Plain `python3` (3.10+) also works. To run the focused CLI tests from any directory:
+Always launch these scripts with `uv run`; never call `python3` or `python` directly. Both scripts declare inline Python metadata with no external dependencies, so `uv run` ignores the executing project's dependencies. If `uv` is not installed, report BLOCKED instead of falling back to another interpreter. To run the focused CLI tests from any directory:
 
 ```sh
 uv run "<basic-team-base>/scripts/test_progress.py" -v
