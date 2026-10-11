@@ -24,8 +24,8 @@ class CliCase(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def run_cli(self, *args):
-        return subprocess.run([sys.executable, str(SCRIPT), *map(str, args)], cwd=self.root, text=True, capture_output=True)
+    def run_cli(self, *args, stdin=None):
+        return subprocess.run([sys.executable, str(SCRIPT), *map(str, args)], cwd=self.root, text=True, capture_output=True, input=stdin)
 
     def invoke(self, *args):
         result = self.run_cli(*args)
@@ -43,6 +43,14 @@ class CliCase(unittest.TestCase):
         path = self.root / "input.json"
         path.write_text(json.dumps(payload))
         return path
+
+    def set_schema(self, version):
+        html = self.page.read_text()
+        data = self.data()
+        data["_progress"]["schemaVersion"] = version
+        start = html.index('>', html.index('<script type="application/json" id="progress-data">')) + 1
+        end = html.index('</script>', start)
+        self.page.write_text(html[:start] + "\n" + json.dumps(data).replace("<", "\\u003c") + "\n" + html[end:])
 
     def init(self, payload=None):
         args = ["init", self.page, "--checkpoint", "kickoff", "--observation-policy", "strict-observation-v1"]
@@ -390,7 +398,9 @@ class InvocationPolicyTests(CliCase):
                 "requiredReviewers": ["karpathy", "ponytail"]}
 
     def init_v2(self, gates):
-        return self.invoke("init", self.page, "--checkpoint", "kickoff", "--input", self.input_file({"gates": gates}))
+        receipt = self.invoke("init", self.page, "--checkpoint", "kickoff", "--input", self.input_file({"gates": gates}))
+        self.set_schema(2)  # Recovery fixture: schema 2 retains its original gates.
+        return receipt
 
     def test_new_run_policy_default_and_immutable(self):
         self.init_v2(self.v2_gates())
@@ -457,6 +467,7 @@ class InvocationPolicyTests(CliCase):
     def test_stale_artifact_and_new_strict_run_require_current_evidence(self):
         gates = self.v2_gates()
         self.invoke("init", self.page, "--checkpoint", "strict", "--observation-policy", "strict-observation-v1", "--input", self.input_file({"gates": gates}))
+        self.set_schema(2)
         self.assertEqual(self.gate("implementation")[0], 1)
         self.patch({"models": {name: dict(record, observed=self.PLANNER["observed"], observedEffort="medium", observationEvidence="host /status") for name, record in gates["models"].items()}})
         self.assertEqual(self.gate("implementation")[0], 0)
@@ -474,6 +485,163 @@ class InvocationPolicyTests(CliCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn(f"ROLE: {role.title()}", result.stdout)
             self.assertNotIn("ask the leader to dispatch", result.stdout)
+
+
+class HandoffTests(CliCase):
+    def setUp(self):
+        super().setUp()
+        for name in ("plan", "architect", "critic"):
+            path = self.root / f"{name}.md"
+            path.write_text(f"{name} evidence")
+            setattr(self, name, path)
+    PLANNER = InvocationPolicyTests.PLANNER
+    EXECUTOR = InvocationPolicyTests.EXECUTOR
+    REVIEWER = InvocationPolicyTests.REVIEWER
+    all_models = InvocationPolicyTests.all_models
+    v2_gates = InvocationPolicyTests.v2_gates
+    gate = InvocationPolicyTests.gate
+    patch = InvocationPolicyTests.patch
+
+    @staticmethod
+    def record(record_id="plan-1", transition="planning-to-implementation", revision="p1", **changes):
+        return dict(dict(id=record_id, transition=transition, round=1, revision=revision, outcome="ready",
+                         summary="다음 단계 인수", evidence=["tool call 1 completed"], next=["dispatch owner"], pending=[]), **changes)
+
+    def init_current(self, handoffs=None):
+        self.invoke("init", self.page, "--checkpoint", "kickoff", "--input", self.input_file({
+            "gates": self.v2_gates(), "handoffs": handoffs or []}))
+
+    def append(self, records):
+        return self.run_cli("update", self.page, "--checkpoint", "handoff", "--input", "-", stdin=json.dumps({"handoffs": records}))
+
+    def test_append_retry_conflict_and_unrelated_update_preserve_history(self):
+        first = self.record()
+        self.init_current([first])
+        self.assertEqual(self.data()["_progress"]["schemaVersion"], 3)
+        second = dict(first, id="plan-2", round=2, summary="새 계획 회차")
+        self.assertEqual(self.append([first, second]).returncode, 0)
+        self.assertEqual(self.append([second]).returncode, 0)
+        self.assertEqual(self.append([]).returncode, 0)
+        self.assertEqual(self.data()["handoffs"], [first, second])
+        self.invoke("update", self.page, "--checkpoint", "summary", "--input", self.input_file({"summary": "new"}))
+        self.assertEqual(self.data()["handoffs"], [first, second])
+        before = self.page.read_bytes()
+        conflict = self.append([dict(first, summary="replace history")])
+        self.assertEqual(conflict.returncode, 2)
+        self.assertIn("immutable", conflict.stderr)
+        self.assertEqual(self.page.read_bytes(), before)
+
+    def test_malformed_handoffs_rejected_without_mutation(self):
+        self.init_current()
+        first = self.record()
+        malformed = [None, {}, [dict(first, transition=[])], [dict(first, outcome={})], [dict(first, round=True)],
+                     [dict(first, revision=" ")], [dict(first, evidence=[])], [dict(first, next=[3])],
+                     [dict(first, pending="none")], [dict(first, extra="x")], [first, first]]
+        before = self.page.read_bytes()
+        for records in malformed:
+            with self.subTest(records=records):
+                self.assertEqual(self.append(records).returncode, 2)
+                self.assertEqual(self.page.read_bytes(), before)
+
+    def test_read_only_selection_has_receipt_and_missing_id_error(self):
+        first = self.record(summary="인수 </script> 기록")
+        self.init_current([first])
+        before = self.page.read_bytes()
+        all_records = self.invoke("handoffs", self.page)
+        self.assertEqual(all_records["handoffs"], [first])
+        self.assertEqual(all_records["revision"], 1)
+        self.assertEqual(all_records["saved_at"], self.data()["_progress"]["saved_at"])
+        self.assertTrue(Path(all_records["path"]).samefile(self.page))
+        self.assertEqual(self.invoke("handoffs", self.page, "--id", "plan-1"), all_records)
+        self.assertEqual(self.run_cli("handoffs", self.page, "--id", "missing").returncode, 2)
+        self.assertEqual(self.run_cli("handoffs", self.page, "--input", "-").returncode, 2)
+        self.assertEqual(self.page.read_bytes(), before)
+        self.assertNotIn("인수 </script>", self.page.read_text())
+
+    def test_stdin_init_update_and_brief_need_no_input_file(self):
+        result = self.run_cli("init", self.page, "--checkpoint", "start", "--input", "-", stdin=json.dumps({"summary": "stdin"}))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.data()["summary"], "stdin")
+        self.assertEqual(self.append([self.record()]).returncode, 0)
+        fields = {key: key for key in ("task_id", "request", "project_instructions", "workdir", "area", "owned", "inputs", "deliverable", "validation", "contacts")}
+        fields["skills"] = []
+        brief = self.run_cli("brief", "--role", "executor", "--input", "-", stdin=json.dumps(fields))
+        self.assertEqual(brief.returncode, 0, brief.stderr)
+        self.assertIn("ROLE: Executor", brief.stdout)
+        self.assertFalse((self.root / "input.json").exists())
+
+    def test_latest_applicable_handoff_blocks_missing_stale_or_blocked(self):
+        self.init_current()
+        self.assertTrue(any("HANDOFF_MISSING" in p for p in self.gate("implementation")[1]["problems"]))
+        self.assertEqual(self.append([self.record()]).returncode, 0)
+        self.assertEqual(self.gate("implementation")[0], 0)
+        self.append([dict(self.record(), id="plan-stale", revision="p0")])
+        self.assertTrue(any("HANDOFF_STALE" in p for p in self.gate("implementation")[1]["problems"]))
+        self.append([dict(self.record(), id="plan-blocked", outcome="BLOCKED")])
+        self.assertTrue(any("HANDOFF_OUTCOME" in p for p in self.gate("implementation")[1]["problems"]))
+        self.append([dict(self.record(), id="plan-cancelled", outcome="cancelled")])
+        self.assertTrue(any("HANDOFF_OUTCOME" in p for p in self.gate("implementation")[1]["problems"]))
+        self.append([dict(self.record(), id="plan-ready", round=2)])
+        self.assertEqual(self.gate("implementation")[0], 0)
+
+    def prepare_review(self):
+        self.init_current([self.record()])
+        models = {}
+        for name, record in self.all_models().items():
+            settings = self.invoke("spawn-args", "--host", "claude", "--role", record["role"])
+            models[name] = dict(record, invocationArguments=settings["arguments"], invocationAccepted=True, invocationEvidence="accepted")
+        self.patch({"models": models, "reviewTarget": "r1", "verdicts": {name: {"revision": "r1", "verdict": "PASS"} for name in ("karpathy", "ponytail")},
+                    "validation": {"revision": "r1", "status": "PASS", "evidence": "no executable changes", "checks": [], "notApplicable": "documentation only"},
+                    "evidence": {"tasks": {"status": "함", "evidence": "terminal tasks"}, "shutdown": {"status": "함", "evidence": "all stopped"}, "cleanup": {"status": "안 함", "evidence": "해당 없음: no browser"}}})
+
+    def test_review_and_completion_handoffs_ready_order_and_pending(self):
+        self.prepare_review()
+        self.assertTrue(any("HANDOFF_TRANSITION" in p for p in self.gate("review")[1]["problems"]))
+        self.assertTrue(any("HANDOFF_TRANSITION" in p for p in self.gate("ready")[1]["problems"]))
+        self.append([self.record("build-1", "implementation-to-verification", "r1")])
+        self.assertEqual(self.gate("review")[0], 0)
+        self.append([dict(self.record("fix-1", "fixes-to-verification", "r1"), outcome="BLOCKED")])
+        self.assertTrue(any("HANDOFF_OUTCOME" in p for p in self.gate("review")[1]["problems"]))
+        self.append([dict(self.record("fix-2", "fixes-to-verification", "r1"), round=2)])
+        self.assertEqual(self.gate("review")[0], 0)
+        self.assertEqual(self.gate("ready")[0], 0)
+        self.assertTrue(any("HANDOFF_TRANSITION" in p for p in self.gate("complete")[1]["problems"]))
+        self.append([dict(self.record("done-pending", "completion", "r1"), pending=["unresolved task"])])
+        self.assertTrue(any("HANDOFF_PENDING" in p for p in self.gate("complete")[1]["problems"]))
+        self.append([dict(self.record("done", "completion", "r1"), next=[])])
+        self.assertEqual(self.gate("complete")[0], 0)
+        self.append([dict(self.record("done-stale", "completion", "r0"), next=[])])
+        self.assertTrue(any("HANDOFF_STALE" in p for p in self.gate("complete")[1]["problems"]))
+        self.append([dict(self.record("done-blocked", "completion", "r1"), outcome="BLOCKED")])
+        self.assertTrue(any("HANDOFF_OUTCOME" in p for p in self.gate("complete")[1]["problems"]))
+
+    def test_later_recovery_supersedes_review_entry_and_completion_on_same_revision(self):
+        self.prepare_review()
+        self.append([self.record("build", "implementation-to-verification", "r1"),
+                     self.record("done", "completion", "r1")])
+        self.assertEqual(self.gate("ready")[0], 0)
+        self.assertEqual(self.gate("complete")[0], 0)
+        self.append([self.record("recover", "verification-to-fixes", "r1", outcome="BLOCKED", pending=["await recovery"])])
+        for stage in ("review", "ready", "complete"):
+            self.assertTrue(any("HANDOFF_TRANSITION" in p for p in self.gate(stage)[1]["problems"]), stage)
+        self.append([self.record("fix", "fixes-to-verification", "r1")])
+        self.assertEqual(self.gate("ready")[0], 0)
+        self.assertTrue(any("HANDOFF_TRANSITION" in p for p in self.gate("complete")[1]["problems"]))
+        self.append([self.record("done-again", "completion", "r1")])
+        self.assertEqual(self.gate("complete")[0], 0)
+        self.append([self.record("replan", revision="p1")])
+        self.assertEqual(self.gate("implementation")[0], 0)
+        self.assertTrue(any("HANDOFF_TRANSITION" in p for p in self.gate("ready")[1]["problems"]))
+
+    def test_old_schema_resume_preserves_version_without_new_gate(self):
+        for version in (1, 2):
+            with self.subTest(version=version):
+                self.page.unlink(missing_ok=True)
+                self.init_current()
+                self.set_schema(version)
+                self.assertEqual(self.gate("implementation")[0], 0)
+                self.assertEqual(self.append([self.record()]).returncode, 0)
+                self.assertEqual(self.data()["_progress"]["schemaVersion"], version)
 
 
 if __name__ == "__main__":

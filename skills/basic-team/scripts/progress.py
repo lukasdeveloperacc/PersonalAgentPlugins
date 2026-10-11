@@ -20,7 +20,9 @@ TEMPLATE = SKILL_DIR / "assets" / "progress-template.html"
 BRIEFS = SKILL_DIR / "assets" / "briefs"
 ROLES = Path(__file__).resolve().parent / "roles.json"
 DATA_TAG = re.compile(r'(<script type="application/json" id="progress-data">)(.*?)(</script>)', re.S)
-TOP_FIELDS = {"goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates"}
+TOP_FIELDS = {"goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates", "handoffs"}
+HANDOFF_TRANSITIONS = {"planning-to-implementation", "implementation-to-verification", "verification-to-fixes", "fixes-to-verification", "completion"}
+HANDOFF_FIELDS = {"id", "transition", "round", "revision", "outcome", "summary", "evidence", "next", "pending"}
 GATE_FIELDS = {"planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
 VERDICTS = {"PASS", "CHANGES_REQUIRED", "BLOCKED"}
 MANDATORY_REVIEWERS = {"karpathy", "ponytail"}
@@ -34,7 +36,7 @@ COMPLIANCE_ROWS = (
     ("eli5", "eli5 kickoff, plan, progress/review/blocker, completion briefings"),
     ("models", "Per-call model/effort arguments, alias resolution evidence, requested/invocation/observed report"),
     ("planning", "Planner skill paths, ralplan Architect/Critic evidence or permitted fallback"),
-    ("tasks", "Native task list/allocation record and stage handoff documents"),
+    ("tasks", "Native task list/allocation record and HTML stage handoff records"),
     ("reviews", "All required independent reviews on the final revision"),
     ("validation", "Required validation/test outcomes and unmet criteria"),
     ("shutdown", "Teammate shutdown, unresponsive-agent recovery, inactive team-state verification"),
@@ -126,12 +128,84 @@ def validate(data, strict_dependency_ids=()):
                 fail(f"agent {agent['id']} has a dangling dependency")
     if "gates" in data:
         validate_gates(data["gates"])
+    if "handoffs" in data:
+        validate_handoffs(data["handoffs"])
     if "_progress" in data:
         meta = data["_progress"]
         if not isinstance(meta, dict) or not isinstance(meta.get("checkpoint"), str) or not isinstance(meta.get("revision"), int) or not isinstance(meta.get("saved_at"), str):
             fail("invalid _progress metadata")
-        if "schemaVersion" in meta and (type(meta["schemaVersion"]) is not int or meta["schemaVersion"] not in (1, 2)):
+        if "schemaVersion" in meta and (type(meta["schemaVersion"]) is not int or meta["schemaVersion"] not in (1, 2, 3)):
             fail("invalid _progress.schemaVersion")
+
+
+def validate_handoffs(records):
+    if not isinstance(records, list):
+        fail("handoffs must be an array")
+    ids = set()
+    for record in records:
+        if not isinstance(record, dict) or record.keys() != HANDOFF_FIELDS:
+            fail("handoffs entries must contain exactly: " + ", ".join(sorted(HANDOFF_FIELDS)))
+        if any(not isinstance(record[key], str) or not record[key].strip() for key in ("id", "revision", "summary")):
+            fail("handoff id, revision, and summary must be nonempty strings")
+        if not isinstance(record["transition"], str) or record["transition"] not in HANDOFF_TRANSITIONS:
+            fail("invalid handoff transition")
+        if not isinstance(record["outcome"], str) or record["outcome"] not in ("ready", "BLOCKED", "cancelled"):
+            fail("invalid handoff outcome")
+        if type(record["round"]) is not int or record["round"] < 1:
+            fail("handoff round must be a positive integer")
+        for key in ("evidence", "next", "pending"):
+            if not isinstance(record[key], list) or any(not isinstance(item, str) or not item.strip() for item in record[key]) or (key == "evidence" and not record[key]):
+                fail(f"handoff {key} must be an array of nonempty strings; evidence cannot be empty")
+        if record["id"] in ids:
+            fail(f"duplicate handoff id: {record['id']}")
+        ids.add(record["id"])
+
+
+def append_handoffs(existing, incoming):
+    validate_handoffs(incoming)
+    by_id = {record["id"]: record for record in existing}
+    appended = list(existing)
+    for record in incoming:
+        if record["id"] in by_id:
+            if by_id[record["id"]] != record:
+                fail(f"handoff {record['id']} is immutable; append a new id")
+        else:
+            appended.append(record)
+            by_id[record["id"]] = record
+    return appended
+
+
+def handoff_problems(data, stage):
+    if stage in ("ready", "complete"):
+        review = handoff_problems(data, "review")
+        if stage == "ready":
+            return review
+    else:
+        review = []
+    transitions = {
+        "implementation": {"planning-to-implementation"},
+        "review": {"implementation-to-verification", "fixes-to-verification"},
+        "complete": {"completion"},
+    }.get(stage)
+    if not transitions:
+        return []
+    records = data.get("handoffs", [])
+    if stage == "review":
+        records = [record for record in records if record["transition"] != "completion"]
+    if not records:
+        return review + [f"HANDOFF_MISSING: append a {', '.join(sorted(transitions))} handoff"]
+    record = records[-1]
+    target = data.get("gates", {}).get("planApproved" if stage == "implementation" else "reviewTarget")
+    problems = review
+    if record["transition"] not in transitions:
+        problems.append(f"HANDOFF_TRANSITION: latest record {record['id']} is {record['transition']}; append a {', '.join(sorted(transitions))} handoff")
+    if record["revision"] != target:
+        problems.append(f"HANDOFF_STALE: {record['id']} revision must match {target}")
+    if record["outcome"] != "ready":
+        problems.append(f"HANDOFF_OUTCOME: {record['id']} is {record['outcome']}")
+    if stage == "complete" and record["pending"]:
+        problems.append(f"HANDOFF_PENDING: {record['id']} has unresolved pending items")
+    return problems
 
 
 def is_text_list(value):
@@ -313,7 +387,7 @@ def gate_problems(data, stage):
     problems = [] if gates.get("planApproved") else ["plan not approved: set gates.planApproved to the approved plan revision"]
     need = ("planner",) if stage == "implementation" else ("planner", "executor")
     final = stage in ("ready", "complete")
-    current_schema = data.get("_progress", {}).get("schemaVersion", 1) == 2
+    current_schema = data.get("_progress", {}).get("schemaVersion", 1) >= 2
     if current_schema and isinstance(gates.get("planReview"), dict) and gates["planReview"].get("method") == "ralplan":
         need += ("architect", "critic")
     problems += model_problems(gates, need, gates.get("requiredReviewers", []) if final else (), current_schema)
@@ -321,6 +395,8 @@ def gate_problems(data, stage):
         problems += review_problems(gates, "complete" if final else stage)
     if current_schema or gates.get("observationPolicy", POLICIES[0]) == POLICIES[1]:
         problems += saved_evidence_problems(gates, stage)
+    if data.get("_progress", {}).get("schemaVersion", 1) >= 3:
+        problems += handoff_problems(data, stage)
     return problems
 
 
@@ -329,7 +405,7 @@ def compliance_table(data):
     meta = data.get("_progress")
     derived = {"page": ("함", f"{data.get('path')} · 마지막 저장 {meta['saved_at']} · checkpoint {meta['checkpoint']}") if meta else ("안 함", "저장 기록 없음")}
     models = gates.get("models", {})
-    problems = model_problems(gates, ("planner", "executor"), gates.get("requiredReviewers", []), data.get("_progress", {}).get("schemaVersion", 1) == 2)
+    problems = model_problems(gates, ("planner", "executor"), gates.get("requiredReviewers", []), data.get("_progress", {}).get("schemaVersion", 1) >= 2)
     excepted = [a for a, r in models.items() if observation_gaps(r) and a in gates.get("exceptions", {})]
     summary = "; ".join(f"{a}: requested {r['requested']} / effort {requested_effort(r)} / invocation {r['invocation']} / observed {r['observed']} / effort {r.get('observedEffort', UNOBSERVED)} / host/pane evidence {r.get('observationEvidence', UNOBSERVED)}" for a, r in models.items())
     if gates.get("observationPolicy", POLICIES[0]) == POLICIES[1] and any(observation_gaps(r) for r in models.values()):
@@ -441,11 +517,16 @@ def write_atomic(path, contents):
         Path(name).unlink(missing_ok=True)
 
 
+def read_input(path):
+    return json.loads(sys.stdin.read() if str(path) == "-" else path.read_text(encoding="utf-8"))
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "update", "status", "gate", "compliance", "spawn-args", "brief"))
+    parser.add_argument("command", choices=("init", "update", "status", "handoffs", "gate", "compliance", "spawn-args", "brief"))
     parser.add_argument("PAGE", nargs="?", help="absolute progress page; required except for spawn-args and brief")
     parser.add_argument("--input", type=Path)
+    parser.add_argument("--id", help="handoffs only: select one saved record")
     parser.add_argument("--checkpoint")
     parser.add_argument("--stage", choices=("implementation", "review", "ready", "complete"), help="gate to check")
     parser.add_argument("--host", choices=("claude", "codex"))
@@ -453,6 +534,8 @@ def main():
     parser.add_argument("--observation-policy", choices=POLICIES, help="init only; defaults to invocation-evidence-v2")
     args = parser.parse_args()
     try:
+        if args.id is not None and args.command != "handoffs":
+            fail("--id is handoffs-only")
         if args.observation_policy and args.command != "init":
             fail("--observation-policy is init-only; run policy is immutable")
         if args.command == "spawn-args":
@@ -463,15 +546,27 @@ def main():
         if args.command == "brief":
             if not args.role or not args.input:
                 fail("brief requires --role and --input")
-            fields = json.loads(args.input.read_text(encoding="utf-8"))
+            fields = read_input(args.input)
             print(render_brief(args.role, fields if isinstance(fields, dict) else {}))
             return 0
         if not args.PAGE:
             fail(f"{args.command} requires PAGE")
         path = page_path(args.PAGE)
-        if args.command in ("gate", "compliance"):
+        if args.command in ("gate", "compliance", "handoffs"):
+            if args.command == "handoffs" and (args.input or args.checkpoint):
+                fail("handoffs does not accept --input or --checkpoint")
             _, data = read_data(path.read_text(encoding="utf-8"))
             validate(data)
+            if args.command == "handoffs":
+                records = data.get("handoffs", [])
+                if args.id is not None:
+                    records = [record for record in records if record["id"] == args.id]
+                    if not records:
+                        fail(f"handoff not found: {args.id}")
+                meta = data.get("_progress", {})
+                print(json.dumps({"path": str(path), "saved_at": meta.get("saved_at"), "checkpoint": meta.get("checkpoint"),
+                                  "revision": meta.get("revision"), "handoffs": records}, ensure_ascii=False))
+                return 0
             if args.command == "compliance":
                 print(compliance_table(data))
                 return 0
@@ -479,7 +574,7 @@ def main():
                 fail("gate requires --stage")
             problems = gate_problems(data, args.stage)
             result = {"gate": args.stage, "ok": not problems, "problems": problems}
-            if data.get("_progress", {}).get("schemaVersion", 1) == 2 or data.get("gates", {}).get("observationPolicy", POLICIES[0]) == POLICIES[1]:
+            if data.get("_progress", {}).get("schemaVersion", 1) >= 2 or data.get("gates", {}).get("observationPolicy", POLICIES[0]) == POLICIES[1]:
                 result["path"] = str(path)
                 result["reviewTarget"] = data.get("gates", {}).get("reviewTarget")
                 result["progressRevision"] = data.get("_progress", {}).get("revision")
@@ -502,7 +597,7 @@ def main():
         else:
             if not args.checkpoint or not args.checkpoint.strip():
                 fail("init and update require a nonempty --checkpoint")
-            incoming = json.loads(args.input.read_text(encoding="utf-8")) if args.input else {}
+            incoming = read_input(args.input) if args.input else {}
             if not isinstance(incoming, dict):
                 fail("input JSON must be an object")
             managed = incoming.keys() & {"updated", "path", "_progress"}
@@ -514,6 +609,7 @@ def main():
                 html = TEMPLATE.read_text(encoding="utf-8")
                 match, data = read_data(html)
                 data.update(incoming)
+                data.setdefault("handoffs", [])
                 gates = data.setdefault("gates", {})
                 if not isinstance(gates, dict):
                     fail("gates must be an object")
@@ -528,6 +624,8 @@ def main():
                 html = path.read_text(encoding="utf-8")
                 match, data = read_data(html)
                 validate(data)
+                if "handoffs" in incoming:
+                    incoming["handoffs"] = append_handoffs(data.get("handoffs", []), incoming["handoffs"])
                 if "agents" in incoming:
                     if not isinstance(incoming["agents"], list):
                         fail("agents must be an array")
@@ -577,7 +675,7 @@ def main():
             now = datetime.now().astimezone().isoformat(timespec="seconds")
             data["updated"] = now
             data["path"] = str(path)
-            schema_version = 2 if args.command == "init" else data.get("_progress", {}).get("schemaVersion", 1)
+            schema_version = 3 if args.command == "init" else data.get("_progress", {}).get("schemaVersion", 1)
             data["_progress"] = {"checkpoint": args.checkpoint, "revision": revision, "saved_at": now, "schemaVersion": schema_version}
             warnings = graph_warnings(data)
             if warnings:

@@ -9,8 +9,12 @@ Before each save, apply the skill's ELI5-style plain-Korean rule to every change
 Run from the executing project's root, not the plugin installation directory. Resolve the script from the installed basic-team skill directory. PAGE must be an absolute path beneath that project's `docs/inprogress`.
 
 ```sh
-uv run "<basic-team-base>/scripts/progress.py" init "<project-root>/docs/inprogress/<task>-<start>-progress.html" --input "<initial-data.json>" --checkpoint kickoff
-uv run "<basic-team-base>/scripts/progress.py" update "<same-page>" --input "<patch.json>" --checkpoint implementation-b1-report
+uv run "<basic-team-base>/scripts/progress.py" init "<project-root>/docs/inprogress/<task>-<start>-progress.html" --input - --checkpoint kickoff <<'JSON'
+{"goal":"목록 API 개선","summary":"계획을 준비합니다","stage":"계획"}
+JSON
+uv run "<basic-team-base>/scripts/progress.py" update "<same-page>" --input - --checkpoint implementation-b1-report <<'JSON'
+{"summary":"목록 API 구현을 확인했습니다","stage":"검증 준비"}
+JSON
 uv run "<basic-team-base>/scripts/progress.py" status "<same-page>"
 ```
 
@@ -18,6 +22,7 @@ Gate and helper commands (the runbook in SKILL.md says when to use each):
 
 ```sh
 uv run "<bt>/scripts/progress.py" gate "<page>" --stage implementation|review|ready|complete   # exit 1 + problems list until satisfied
+uv run "<bt>/scripts/progress.py" handoffs "<page>" --id "<handoff-id>"                # omit --id to read all records
 uv run "<bt>/scripts/progress.py" compliance "<page>"                                    # final table; rows without evidence print 안 함
 uv run "<bt>/scripts/progress.py" spawn-args --host claude|codex --role planner|architect|critic|executor|reviewer
 uv run "<bt>/scripts/progress.py" brief --role planner|architect|critic|executor|reviewer --input "<fields.json>"
@@ -25,7 +30,7 @@ uv run "<bt>/scripts/progress.py" brief --role planner|architect|critic|executor
 
 ## Evidence fields and observation policy
 
-New `init` defaults `gates.observationPolicy` to `invocation-evidence-v2`; use `init ... --observation-policy strict-observation-v1` when the user requires actual-setting proof. New pages also store script-owned `_progress.schemaVersion:2`; schema2 requires accepted invocation and the stronger plan/conditional/validation/terminal evidence under BOTH policies. Legacy pages keep schema1 checks (missing policy means strict v1), remain readable, and are not silently upgraded by update. Preserve the policy at resume; `update` cannot change/relax it. Policy is a check criterion, not host authority.
+New `init` defaults `gates.observationPolicy` to `invocation-evidence-v2`; use `init ... --observation-policy strict-observation-v1` when the user requires actual-setting proof. New pages also store script-owned `_progress.schemaVersion:3`; schema3 retains schema2’s accepted invocation and plan/conditional/validation/terminal checks under BOTH policies, and checks embedded stage handoffs. Legacy schema1/2 pages retain their existing checks, remain readable, and are not silently upgraded by update (missing policy means strict v1). Preserve the policy at resume; `update` cannot change/relax it. Policy is a check criterion, not host authority.
 
 Save these `gates` fields with `update`:
 
@@ -37,7 +42,9 @@ Save these `gates` fields with `update`:
 - `models`: `{agent-id:{role,requested,invocation,observed,observedEffort,observationEvidence,invocationArguments,invocationAccepted,invocationEvidence}}`. `requested` is the exact spawn-args ID; Architect/Critic have their own `role:"architect"|"critic"` records but use Planner tier; ralplan requires both role records. `invocation` is a human-readable call description, while `invocationArguments` is the ACTUAL call object (Codex `model`/`reasoning_effort`, Claude `model`/`effort`), `invocationAccepted:true` requires a successful host call, and `invocationEvidence` identifies that source/child ID. Accepted correct invocation permits v2 work when actual observations remain `미확인`. Host-observed values go in `observed`/`observedEffort` with `observationEvidence` (source/identity/time/output/path). Never copy arguments or child's self-report into these fields. Self-report stays in `agents[].observation`. Strict policy requires actual observations or a specific permitted missing-observation exception. Known mismatch, missing arguments or rejected call blocks under either policy.
 - `exceptions`: `{agent-id:<specific user's approval for missing observation>}` for strict cases only. Clear stale exceptions on replacement with `null`; never use one for known mismatches.
 - `validation`: `{revision:<reviewTarget>,status:"PASS"|"CHANGES_REQUIRED"|"BLOCKED",evidence,checks:[{command,revision,exitCode:0,evidence}]}`. Commands/checks identify final product revision and actual results. Only genuinely inapplicable validation uses `checks:[]` and `notApplicable:<reason>`; a missing/forbidden required test is a gap, not inapplicability or PASS.
-- `evidence`: `{hook|eli5|planning|tasks|validation|shutdown|cleanup:{status,evidence}}`. Schema2 complete requires `tasks` with `status:"함"` and nonempty evidence identifying the reconciled task record and applicable saved stage/completion handoffs; `부분`, missing/null records or unsaved handoffs cannot clear it. It also requires shutdown `status:"함"` with real host lifecycle evidence; cleanup is `함`, or `안 함` with a concrete `해당 없음` reason. Hook absence uses the documented manual fallback and remains partial confirmation, never fabricated success.
+- `evidence`: `{hook|eli5|planning|tasks|validation|shutdown|cleanup:{status,evidence}}`. Schema2/3 complete requires `tasks` with `status:"함"` and nonempty evidence identifying the reconciled task record and applicable saved stage/completion handoffs; `부분`, missing/null records or unsaved handoffs cannot clear it. It also requires shutdown `status:"함"` with real host lifecycle evidence; cleanup is `함`, or `안 함` with a concrete `해당 없음` reason. Hook absence uses the documented manual fallback and remains partial confirmation, never fabricated success.
+
+`handoffs` is a top-level append-only array, not a gate field. Each record uses the shape in [../assets/stage-handoff-template.md](../assets/stage-handoff-template.md). IDs are unique across the run; an identical same-ID retry is a no-op for the record, while changed content needs a new ID. Read records with `handoffs PAGE [--id ID]`, which also returns confirmed page receipt metadata without writing. Save the handoff with the associated stage facts in one `update` patch and verify its receipt before release. Schema3 implementation requires a ready `planning-to-implementation` record for `planApproved`; review requires a ready `implementation-to-verification` or `fixes-to-verification` record for `reviewTarget`; ready requires that review-entry record, and complete also requires a ready `completion` record for `reviewTarget` with `pending:[]`. Gate checks use record append order: implementation requires the latest overall record to be `planning-to-implementation`; review/ready require the latest non-completion record to be `implementation-to-verification` or `fixes-to-verification`; complete additionally requires the latest overall record to be `completion`. Later recovery or replanning supersedes earlier review-entry evidence, even for the same revision: save a fresh review-entry record and a fresh completion after recovery. These checks do not prove host work occurred.
 
 `models`, `evidence`, and `exceptions` merge per key; `null` removes a record, and other gate fields replace. Page/model/review compliance rows are derived, not supplied. All fields are leader-reported evidence; verify source artifacts and host facts before dependent dispatch.
 
@@ -46,10 +53,10 @@ Save these `gates` fields with `update`:
 After readiness and actual cleanup/handoff saves, a final evidence patch can contain:
 
 ```json
-{"gates":{"evidence":{"tasks":{"status":"함","evidence":"docs/inprogress/run-tasks.md: 모든 배정 작업 결과 대조 완료; docs/inprogress/run-completion-handoff.md: 최종 revision r2와 종료 근거 저장 확인"},"shutdown":{"status":"함","evidence":"현재 run의 모든 agent 종료를 host lifecycle 결과에서 확인"},"cleanup":{"status":"안 함","evidence":"해당 없음: browser/MCP를 사용하지 않은 실행"}}}}
+{"gates":{"evidence":{"tasks":{"status":"함","evidence":"native task IDs t1/t2: 모든 배정 작업 결과 대조 완료; <absolute-page-path>#handoff-completion-r1: 최종 revision r2와 종료 근거 저장 확인"},"shutdown":{"status":"함","evidence":"현재 run의 모든 agent 종료를 host lifecycle 결과에서 확인"},"cleanup":{"status":"안 함","evidence":"해당 없음: browser/MCP를 사용하지 않은 실행"}}}}
 ```
 
-These are example fields, not substitute facts: supply the actual saved paths, revision and host evidence. A completion gate cannot prove those actions occurred merely from the text.
+These are example fields, not substitute facts: supply the actual task references, saved HTML handoff ID, revision and host evidence. Save the matching `completion` record in `handoffs` in the same patch. A completion gate cannot prove those actions occurred merely from the text.
 
 Every successful save receipt includes a `briefing` line for user briefings. The helper checks saved values/artifact identities; it cannot prove host execution or task authorization.
 
@@ -77,7 +84,7 @@ Pass only changed fields in the input JSON. Agent patches merge by stable `id`, 
 }
 ```
 
-Other arrays (`plan`, `reviews`, `decisions`, `flow`) replace their entire array when supplied; include the intended full snapshot. `agents: []` makes no agent changes. Omitted fields remain unchanged. Do not pass script-owned `path`, `updated`, or `_progress`. The script embeds checkpoint/save metadata under `_progress`, escapes report text, and rejects malformed or unknown fields without replacing the existing page. Keep input files temporary and free of secrets or private reasoning.
+Other arrays (`plan`, `reviews`, `decisions`, `flow`) replace their entire array when supplied; include the intended full snapshot. `agents: []` makes no agent changes. Omitted fields remain unchanged. Do not pass script-owned `path`, `updated`, or `_progress`. The script embeds checkpoint/save metadata under `_progress`, escapes report text, and rejects malformed or unknown fields without replacing the existing page. Prefer `--input -` with stdin for `init`, `update`, and `brief` so routine checkpoints do not create patch JSON files. File input remains available when needed; keep it temporary and free of secrets or private reasoning.
 
 ## Save before continuing
 
@@ -113,7 +120,7 @@ If the page has not been saved successfully, report that gap and omit a nonexist
 
 Before compaction or handoff, preserve the exact page path, last confirmed checkpoint/revision/save time, unsaved patches, outstanding agent/task IDs, and actual implementation/review target. Put this in the existing handoff or context summary; do not write hook-owned OMX runtime state.
 
-On resume, run `status` on that exact page and reconcile it with real host messages and current repository evidence. Restore pending updates before dependent dispatch or briefing. The saved stage and IDs are diagnostic information, never execution authority. Do not find a run by selecting the newest file or create a replacement page automatically. For an older page without checkpoint metadata, inspect its saved JSON and use the first verified `update` to adopt it; do not fabricate a previous receipt.
+On resume, run `status` and read the relevant `handoffs` records on that exact page; reconcile them with real host messages and current repository evidence. Existing external handoff paths from older runs remain valid read-only recovery evidence; do not recreate or migrate them merely to resume. Restore pending updates before dependent dispatch or briefing. The saved stage and IDs are diagnostic information, never execution authority. Do not find a run by selecting the newest file or create a replacement page automatically. For an older page without checkpoint metadata, inspect its saved JSON and use the first verified `update` to adopt it; do not fabricate a previous receipt.
 
 ## Scoped nonblocking host reminders
 

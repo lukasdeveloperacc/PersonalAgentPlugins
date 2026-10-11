@@ -11,6 +11,7 @@
 @media print{:root{color-scheme:light;--ink:#202b39;--muted:#536277;--line:#dae0e7;--canvas:#fff;--paper:#fff;--accent:#244dba;--soft:#edf2ff;--good:#176447;--warn:#805315;--bad:#a32937;--good-bg:#e8f4ec;--warn-bg:#fff2df;--bad-bg:#fcebee}body{background:var(--canvas)}.shell{padding:0}.tabs,.quiet{display:none}.panel[hidden]{display:block}.panel{break-inside:avoid}.flow{flex-wrap:wrap}.foot{border-top:1px solid var(--line)}}
 
 .agentgraph{position:relative;padding:24px 24px 48px;isolation:isolate}
+.handoff{padding:18px 22px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.handoff:last-child{border-bottom:0}.handoff summary{cursor:pointer;font-weight:600}.handoff summary:hover{color:var(--accent)}.handoff summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}.handoff p{white-space:pre-line;margin-top:12px}.handoff .details{padding:16px 0 0}.handoff small{display:block;margin-top:8px}
 .graphlanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:72px;position:relative}
 .graphlane{min-width:0}.graphlane h3{margin:0 0 18px;color:var(--muted);font-size:.85rem;font-weight:600}
 .graphnodes{display:grid;gap:32px}.agentnode{position:relative;display:block;width:100%;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
@@ -37,11 +38,12 @@
 <header class="masthead"><div class="brand"><span class="mark" aria-hidden="true">BT</span>Basic Team</div><span class="snapshot" id="updated">아직 보고 없음</span></header>
 <div class="overview"><div><h1 id="goal">작업 진행판</h1><p id="summary">계획과 에이전트의 최근 보고를 한곳에서 확인합니다.</p></div><aside class="stagebox" aria-label="현재 상태"><small>현재 단계</small><strong id="stage">시작 전</strong><span class="badge" id="blockers">아직 확인되지 않음</span></aside></div>
 <div class="location"><span>진행판 경로</span><code id="path"></code><button class="quiet" id="copy" type="button">경로 복사</button><span id="copy-status" role="status"></span></div>
-<nav class="tabs" role="tablist" aria-label="진행판 영역"><button type="button" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true">계획</button><button type="button" role="tab" id="tab-agents" aria-controls="panel-agents" aria-selected="false" tabindex="-1">에이전트 진행</button><button type="button" role="tab" id="tab-reviews" aria-controls="panel-reviews" aria-selected="false" tabindex="-1">리뷰와 검증</button><button type="button" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">결정과 막힌 일</button></nav>
+<nav class="tabs" role="tablist" aria-label="진행판 영역"><button type="button" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true">계획</button><button type="button" role="tab" id="tab-agents" aria-controls="panel-agents" aria-selected="false" tabindex="-1">에이전트 진행</button><button type="button" role="tab" id="tab-reviews" aria-controls="panel-reviews" aria-selected="false" tabindex="-1">리뷰와 검증</button><button type="button" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">결정과 막힌 일</button><button type="button" role="tab" id="tab-handoffs" aria-controls="panel-handoffs" aria-selected="false" tabindex="-1">인수인계</button></nav>
 <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" tabindex="0"><div class="panelhead"><h2>작업 계획</h2><p>담당 영역과 다음 작업을 확인합니다.</p></div><div class="flow" id="flow" aria-label="작업 흐름"></div><div class="surface" id="plan"></div></section>
 <section class="panel" id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" tabindex="0" hidden><div class="panelhead"><h2>에이전트 진행</h2><p>연결선을 따라 진행 흐름을 확인합니다. 노드에 마우스를 올리면 요약, 누르면 상세 보고가 열립니다.</p></div><div id="agents"></div></section>
 <section class="panel" id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" tabindex="0" hidden><div class="panelhead"><h2>리뷰와 검증</h2><p>같은 구현을 검토한 근거와 남은 확인 사항입니다.</p></div><div class="notice" id="review-notice"></div><div class="surface" id="reviews"></div></section>
 <section class="panel" id="panel-decisions" role="tabpanel" aria-labelledby="tab-decisions" tabindex="0" hidden><div class="panelhead"><h2>결정과 막힌 일</h2><p>선택한 이유와 사용자 입력이 필요한 일을 기록합니다.</p></div><div class="surface" id="decisions"></div></section>
+<section class="panel" id="panel-handoffs" role="tabpanel" aria-labelledby="tab-handoffs" tabindex="0" hidden><div class="panelhead"><h2>단계별 인수인계</h2><p>최근 기록부터 표시합니다. 펼치면 근거와 다음 작업을 확인할 수 있습니다.</p></div><div class="surface" id="handoffs"></div></section>
 <footer class="foot"><span>마지막 회신을 기준으로 저장한 진행판입니다. 새 보고는 파일을 다시 열거나 새로고침해 확인하세요.</span><span>Basic Team</span></footer>
 <noscript><p class="error">탭과 보고를 표시하려면 이 파일의 JavaScript 실행을 허용하세요.</p></noscript>
 </main>
@@ -61,7 +63,8 @@
   "agents": [],
   "reviewNotice": "필요한 독립 리뷰가 모두 수집되면 판정을 함께 공개합니다.",
   "reviews": [],
-  "decisions": []
+  "decisions": [],
+  "handoffs": []
 }
 </script>
 <script>
@@ -71,6 +74,19 @@ const node=(tag,text,className)=>{const el=document.createElement(tag);if(text!=
 const tones=new Set(['neutral','active','good','warn','bad']);
 function badge(text,tone){const el=node('span',text,'badge');el.dataset.tone=tones.has(tone)?tone:'neutral';return el}
 function list(id,items,empty){const root=byId(id);if(!items.length){root.append(node('p',empty,'empty'));return}const ul=node('ul',undefined,'stack');items.forEach(item=>{const li=node('li');li.append(node('h3',item.title),node('p',item.body));if(item.meta)li.append(node('small',item.meta));ul.append(li)});root.append(ul)}
+function renderHandoffs(records){
+  const root=byId('handoffs');
+  if(!records.length){root.append(node('p','단계를 넘길 때 완료 결과와 다음 작업을 이곳에 기록합니다. 아직 저장된 인수인계가 없습니다.','empty'));return}
+  const transitions={'planning-to-implementation':'계획 → 구현','implementation-to-verification':'구현 → 검증','verification-to-fixes':'검증 → 수정·복구','fixes-to-verification':'수정 → 재검증','completion':'최종 마무리'};
+  const outcomes={ready:'인계 준비됨',BLOCKED:'진행 보류',cancelled:'취소됨'};
+  [...records].reverse().forEach(record=>{
+    const details=node('details',undefined,'handoff');details.id='handoff-'+record.id;
+    details.append(node('summary',(transitions[record.transition]||record.transition)+' · '+record.round+'회차 · '+(outcomes[record.outcome]||record.outcome)),node('p',record.summary),node('small','기록: '+record.id+' · 대상 버전: '+record.revision));
+    const fields=node('dl',undefined,'details');
+    [['확인 근거',record.evidence],['다음 작업',record.next],['미해결·재개할 일',record.pending]].forEach(([label,items])=>{const group=node('div');group.append(node('dt',label),node('dd',items.length?items.join('\n'):'없음'));fields.append(group)});
+    details.append(fields);root.append(details);
+  });
+}
 
 const tooltip=byId('agent-tooltip'),dialog=byId('agent-dialog');
 let graphLinks=[],graphButtons=new Map(),modalTrigger=null,tooltipAnchor=null,tooltipTimer;
@@ -195,6 +211,7 @@ data.flow.forEach((step,i)=>{if(i){const arrow=node('span',undefined,'connector'
 list('plan',data.plan,'Planner의 계획이 도착하면 작업 배정·의존성·완료 기준을 여기에 표시합니다.');
 list('reviews',data.reviews,'아직 리뷰 보고가 없습니다. 미실행 검증은 통과로 표시하지 않습니다.');
 list('decisions',data.decisions,'결정이나 막힌 일이 보고되면 선택한 이유와 다음 행동을 여기에 기록합니다.');
+renderHandoffs(data.handoffs||[]);
 const warnings=data._progress?.graph_warnings;
 if(Array.isArray(warnings)&&warnings.length){const box=node('div',undefined,'notice');box.append(node('strong','그래프 연결 점검: 선이 빠졌을 수 있습니다.'));const ul=node('ul');warnings.forEach(text=>ul.append(node('li',String(text))));box.append(ul);byId('agents').append(box)}
 if(!data.agents.length)byId('agents').append(node('p','아직 배정된 에이전트가 없습니다. 배정 후 최근 회신이 여기에 표시됩니다.','empty'));
@@ -206,6 +223,12 @@ const storageKey='basic-team-progress:'+location.pathname;
 function selectTab(index){hideTooltip();tabs.forEach((tab,i)=>{tab.setAttribute('aria-selected',String(i===index));tab.tabIndex=i===index?0:-1;byId(tab.getAttribute('aria-controls')).hidden=i!==index});try{localStorage.setItem(storageKey,String(index))}catch{}requestAnimationFrame(drawEdges)}
 tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>selectTab(i));tab.addEventListener('keydown',event=>{let index;if(event.key==='ArrowRight')index=(i+1)%tabs.length;if(event.key==='ArrowLeft')index=(i+tabs.length-1)%tabs.length;if(event.key==='Home')index=0;if(event.key==='End')index=tabs.length-1;if(index!==undefined){event.preventDefault();selectTab(index);tabs[index].focus()}})});
 try{const saved=localStorage.getItem(storageKey);const index=saved===null?0:Number(saved);if(Number.isInteger(index)&&index>=0&&index<tabs.length)selectTab(index)}catch{}
+function showLinkedHandoff(){
+  let id;try{id=decodeURIComponent(location.hash.slice(1))}catch{return}
+  const record=byId(id);if(!record?.classList.contains('handoff'))return;
+  selectTab(tabs.findIndex(tab=>tab.id==='tab-handoffs'));record.open=true;record.scrollIntoView();
+}
+addEventListener('hashchange',showLinkedHandoff);showLinkedHandoff();
 </script>
 </body>
 </html>

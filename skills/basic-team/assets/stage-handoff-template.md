@@ -1,48 +1,38 @@
-# Stage handoff
+# HTML stage handoff record
 
-- Run / round / observation policy:
-- Source -> target stage:
-- Outcome: ready | BLOCKED | cancelled
-- Approved plan path / revision:
-- Implementation baseline / final content or diff identity:
-- Progress page absolute path / confirmed saved_at / checkpoint:
+This is a record shape and checklist, not an instruction to create a new Markdown file. Append records through `progress.py update PAGE --input -`; read the saved record with `progress.py handoffs PAGE --id ID`. One run keeps all rounds in its HTML’s `handoffs` array.
 
-## Required artifacts
+```json
+{
+  "handoffs": [{
+    "id": "planning-to-implementation-r1",
+    "transition": "planning-to-implementation",
+    "round": 1,
+    "revision": "approved-plan-r1",
+    "outcome": "ready",
+    "summary": "계획 검토를 마쳤고 구현 작업을 배정했습니다",
+    "evidence": ["approved plan path + hash; gates.planReview", "native task IDs + ownership/criteria; gates.models"],
+    "next": ["준비된 배정 작업을 실행"],
+    "pending": []
+  }]
+}
+```
 
-Use the transition row in references/workflow-contracts.md. List every required artifact with its saved path and revision; the HTML page cannot replace another artifact.
+Every field is required. `id` is a unique nonempty string; `round` is a positive integer. `transition` is `planning-to-implementation`, `implementation-to-verification`, `verification-to-fixes`, `fixes-to-verification`, or `completion`. `revision` identifies the approved plan for implementation release, or the frozen product revision for later transitions. `outcome` is `ready`, `BLOCKED`, or `cancelled`. `summary` is concise plain-language text; `evidence` is a nonempty string list of concrete references/results; `next` and `pending` are string lists and may be empty.
 
-| Artifact | Saved path / revision | Verified result or gap |
-| --- | --- | --- |
+Saved records are immutable: an identical same-ID retry is allowed, but corrected content requires a new ID. Include task/question IDs and unsaved patches in `pending` when relevant; a ready completion must have `pending:[]`. Reference the saved record as `<absolute-page-path>#handoff-<id>` and retain its successful page receipt. Do not predict that receipt inside the record before the save succeeds.
 
-## Tasks and settings
+Use the transition row in [../references/workflow-contracts.md](../references/workflow-contracts.md). Reference existing page fields, native task records, approved plan/review artifacts, and original validation results; do not repeat every report or model-settings table. Only the user or an explicit host requirement calls for an external handoff artifact; reference an existing artifact instead of generating duplicate MD exports. Older external handoffs remain readable on resume.
 
-| Task / agent | Owner / owned files | Prerequisites / observed status | Requested model + effort | Invocation | Host/pane observed model + effort / evidence | Specific user exception, if any |
-| --- | --- | --- | --- | --- | --- | --- |
+Before dependent dispatch, check the saved record against the actual evidence:
 
-## Changes, reviews, and validation
+- Required source artifacts exist and identify the correct plan/product revision.
+- Tasks have owners, prerequisites, acceptance criteria, and observed outcomes.
+- Settings satisfy the run’s policy; accepted calls and actual observations stay distinct.
+- Validation covers the latest relevant edit and states gaps.
+- Reviews cover the same frozen revision; early independent findings stay out of all page JSON until the required set arrives.
+- Tool failures remain BLOCKED without inferring a product defect.
+- The page receipt is confirmed; briefing includes its path, saved time, and actual hook request/confirmation state.
+- Completion additionally requires all PASS verdicts, validation, actual shutdown/cleanup, reconciled tasks, and no pending writes/updates.
 
-- Changed files / delivered behavior:
-- Required reviewers / round / reviewed revision / verdicts:
-
-| Check / scenario | Command or verified action | Checked revision / environment | Exit code / expected vs observed | Result / evidence / unchecked scope |
-| --- | --- | --- | --- | --- |
-
-- Superseded results after later edits:
-- Hook: arm request accepted / registration confirmed / disarm requested / disarm confirmed; run_id and evidence, or unavailable/manual fallback:
-- Shutdown / inactive state / browser-MCP cleanup evidence (completion):
-- Blockers / missing input / recovery / owner:
-- Next actions and tasks to release:
-- Pending progress patches / outstanding task or question IDs (resume):
-
-## Transition completion checklist
-
-Check only with evidence above. Mark inapplicable items with a reason; record any explicit user exception. A required unchecked item means BLOCKED for this transition.
-
-- [ ] Every artifact in this transition's row exists and was read.
-- [ ] Task ownership, prerequisites, and acceptance criteria are recorded.
-- [ ] Settings satisfy the recorded observation policy; accepted invocation is distinguished from actual observation, and no known mismatch remains.
-- [ ] Validation covers the latest relevant edit and states unchecked scope.
-- [ ] Required reviews are complete for the same frozen revision, or this earlier transition records their pending status.
-- [ ] Tool failures are recorded as BLOCKED without inferring a product defect.
-- [ ] Progress save receipt is confirmed; ELI5 briefing includes its link, absolute path, saved time, and separate hook request/confirmation states.
-- [ ] Completion only: all required PASS verdicts, validation, shutdown/state, cleanup, and final save succeeded; no pending writes/updates remain.
+An unmet required check blocks the transition. Mark genuine inapplicability with its reason and omissions with the specific user exception; a JSON record alone cannot prove host actions or grant permission.
