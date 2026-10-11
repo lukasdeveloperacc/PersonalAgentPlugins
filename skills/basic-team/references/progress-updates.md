@@ -23,7 +23,7 @@ uv run "<bt>/scripts/progress.py" spawn-args --host claude|codex --role planner|
 uv run "<bt>/scripts/progress.py" brief --role planner|executor|reviewer --input "<fields.json>"
 ```
 
-`gates` is saved with `update` like any field: `planApproved`, `requiredReviewers`, `reviewTarget`, `verdicts` (`{name: {revision, verdict}}`, only a complete set matching `requiredReviewers`; `{}` clears it for a new round), `models` (`{agent-id: {role, requested, invocation, observed}}`; `null` deletes a record; `requested` must be the `spawn-args` ID for the role), `exceptions` (`{agent-id: the user's approval}`), and `evidence` (`{hook|eli5|planning|tasks|validation|shutdown|cleanup: {status, evidence}}`). `models`, `evidence`, and `exceptions` merge per key; other gate fields replace. The page, model, and review rows of the compliance table are derived and cannot be supplied. Every receipt includes a `briefing` line to paste into user briefings.
+`gates` is saved with `update` like any field: `planApproved`, `requiredReviewers`, `reviewTarget`, `verdicts` (`{name: {revision, verdict}}`, only a complete set matching `requiredReviewers`; `{}` clears it for a new round), `models` (`{agent-id: {role, requested, invocation, observed, observedEffort, observationEvidence}}`; `null` deletes a record; `requested` must be the `spawn-args` ID for the role), `exceptions` (`{agent-id: the user's specific approval}`), and `evidence` (`{hook|eli5|planning|tasks|validation|shutdown|cleanup: {status, evidence}}`). Older model records remain readable, but missing effort or actual host evidence blocks work without that agent's explicit exception. `observed` and `observedEffort` are host/pane observations, never copied from spawn arguments or child self-reports; `observationEvidence` names the source, identity, time, and output/path. The helper checks saved values; the leader verifies their source and the handoff artifacts. `models`, `evidence`, and `exceptions` merge per key; other gate fields replace. Clear stale exceptions with `null` on respawn. The page, model, and review rows of the compliance table are derived and cannot be supplied. Every receipt includes a `briefing` line to paste into user briefings.
 
 Always launch these scripts with `uv run`; never call `python3` or `python` directly. Both scripts declare inline Python metadata with no external dependencies, so `uv run` ignores the executing project's dependencies. If `uv` is not installed, report BLOCKED instead of falling back to another interpreter. To run the focused CLI tests from any directory:
 
@@ -66,6 +66,21 @@ Mark a report handled only after its required save succeeds. Deduplicate already
 
 Every briefing includes `진행판: [<작업명>](<절대 경로>) — <절대 경로> · 마지막 저장: <확인된 시각>`. Use the receipt's actual timestamp. When no facts changed, reuse the last confirmed receipt without another write.
 
+## Required briefing template
+
+Use this for kickoff, plan, progress, review, blocker, resume, and completion. Fill every line in plain Korean unless the user requests another language; keep technical identifiers intact. Use known facts, not expected outcomes.
+
+```text
+쉬운 요약: <무엇을 했는지 → 확인한 결과 또는 남은 일 → 다음 행동>
+진행판: [<작업명>](<절대 경로>) — <절대 경로> · 마지막 저장: <successful receipt.saved_at>
+단계 / revision: <현재 단계와 확인 대상>
+산출물: <이번 단계 handoff/계획/검증 자료 링크와 경로, 또는 아직 없음과 이유>
+확인 / 빈틈: <명령·exit code·확인한 revision·결과, 또는 미실행/막힘과 이유>
+Hook: arm 요청 <미요청/접수/실패> · 등록 <확인/미확인/사용 불가> · disarm 요청 <미요청/접수/실패> · 해제 <확인/미확인/사용 불가> · <run_id와 근거, 또는 없음> · <필요하면 수동 체크포인트>
+```
+
+If the page has not been saved successfully, report that gap and omit a nonexistent link or fabricated timestamp. When it exists, reuse the same confirmed receipt. The hook line records request acceptance and actual confirmation separately even when no new facts arrived; do not write again just to repeat it. A missing hook confirmation uses manual checkpoints and never removes the ELI5, link/path/time, or handoff requirements.
+
 ## Resume
 
 Before compaction or handoff, preserve the exact page path, last confirmed checkpoint/revision/save time, unsaved patches, outstanding agent/task IDs, and actual implementation/review target. Put this in the existing handoff or context summary; do not write hook-owned OMX runtime state.
@@ -77,6 +92,8 @@ On resume, run `status` on that exact page and reconcile it with real host messa
 The plugin's shared `hooks/hooks.json` invokes `hooks/basic-team-progress.sh`, backed by this skill's `scripts/basic-team-progress.py`. The handlers are silent by default, including outside basic-team. The progress-page command lives beside it in `scripts/`; reminder state never edits the HTML.
 
 Only the coordinating Main actually executing basic-team requests `arm` after initializing or verifying the exact progress page. Use the host-specific commands in SKILL.md; Claude substitutes `${CLAUDE_SESSION_ID}` in that skill body. A helper receipt is an activation request, not proof of activation. Retain its `basic_team_hook.run_id`. The corresponding successful shell-tool `PostToolUse` must verify the one-time request against actual host identity and confirm registration before reminders are available. Missing identity, unsupported payloads, errors, and absent hooks leave reminders off; apply the existing save/receipt rule and continue without treating that as a workflow blocker.
+
+Report `요청 접수 / 등록 미확인` after a successful helper request until a matching host confirmation for that run is observed. Only that confirmation permits `등록 확인`. A successful command exit or lack of an error is not registration evidence. Apply the same distinction to disarm (`해제 요청 접수 / 실제 해제 미확인` until confirmed). Store the request receipt and actual confirmation source separately in Decisions & Blockers and `gates.evidence.hook`; absent host confirmation remains `부분` with the manual fallback, rather than `함`. Consume event evidence as it arrives; do not poll registration files to improve the status.
 
 At completion, explicit cancellation, failure exit, or a switch to unrelated work, request disarm for that exact `run_id`:
 

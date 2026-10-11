@@ -159,8 +159,9 @@ def validate_gates(gates):
     if not isinstance(models, dict):
         fail("gates.models must be an object")
     for agent_id, record in models.items():
-        if not isinstance(record, dict) or record.keys() != {"role", "requested", "invocation", "observed"} or any(not isinstance(v, str) or not v.strip() for v in record.values()):
-            fail(f"gates.models.{agent_id} needs nonempty role, requested, invocation, and observed strings")
+        required = {"role", "requested", "invocation", "observed"}
+        if not isinstance(record, dict) or required - record.keys() or record.keys() - required - {"observedEffort", "observationEvidence"} or any(not isinstance(v, str) or not v.strip() for v in record.values()):
+            fail(f"gates.models.{agent_id} needs nonempty role, requested, invocation, and observed strings; optional observedEffort and observationEvidence must be nonempty strings")
         if record["role"] not in ROLE_NAMES:
             fail(f"gates.models.{agent_id}.role must be one of {', '.join(ROLE_NAMES)}")
         if record["requested"] not in requested_ids(record["role"]):
@@ -180,6 +181,16 @@ def requested_ids(role):
     return {entry["claude"]["id"], entry["codex"]["model"]} if entry else set()
 
 
+def requested_effort(record):
+    entry = json.loads(ROLES.read_text(encoding="utf-8"))[record["role"]]
+    return entry["claude"]["effort"] if record["requested"] == entry["claude"]["id"] else entry["codex"]["reasoning_effort"]
+
+
+def observation_gaps(record):
+    return [field for field in ("observed", "observedEffort", "observationEvidence")
+            if record.get(field, UNOBSERVED).strip().lower() in UNOBSERVED_FORMS]
+
+
 def model_problems(gates, need=("planner",), reviewers=()):
     models = gates.get("models", {})
     problems = [f"no {role} model record: save gates.models.<agent-id> with role {role}" for role in need
@@ -187,13 +198,13 @@ def model_problems(gates, need=("planner",), reviewers=()):
     problems += [f"no model record for reviewer {name}: use the reviewer name as the agent id" for name in reviewers if name not in models]
     exceptions = gates.get("exceptions", {})
     for agent_id, record in models.items():
-        if record["observed"] == record["requested"]:
-            continue
-        if record["observed"].strip().lower() in UNOBSERVED_FORMS:
-            if agent_id not in exceptions:
-                problems.append(f"{agent_id}: observed {UNOBSERVED}; ask the user and add gates.exceptions.{agent_id} with the approval, or stop as BLOCKED")
-        else:
-            problems.append(f"{agent_id}: observed {record['observed']} != requested {record['requested']}; BLOCKED, respawn with spawn-args and overwrite this record using the same agent id")
+        for field, expected in (("observed", record["requested"]), ("observedEffort", requested_effort(record))):
+            actual = record.get(field, UNOBSERVED)
+            if actual.strip().lower() not in UNOBSERVED_FORMS and actual != expected:
+                problems.append(f"{agent_id}: {field} {actual} != requested {expected}; BLOCKED, respawn with spawn-args and overwrite this record using the same agent id")
+        gaps = observation_gaps(record)
+        if gaps and agent_id not in exceptions:
+            problems.append(f"{agent_id}: {', '.join(gaps)} {UNOBSERVED}; obtain actual host/pane model and effort evidence, or ask the user and add gates.exceptions.{agent_id} with the approval, or stop as BLOCKED")
     return problems
 
 
@@ -232,10 +243,12 @@ def compliance_table(data):
     derived = {"page": ("함", f"{data.get('path')} · 마지막 저장 {meta['saved_at']} · checkpoint {meta['checkpoint']}") if meta else ("안 함", "저장 기록 없음")}
     models = gates.get("models", {})
     problems = model_problems(gates, ("planner", "executor"), gates.get("requiredReviewers", []))
-    excepted = [a for a, r in models.items() if r["observed"] != r["requested"] and a in gates.get("exceptions", {})]
-    summary = "; ".join(f"{a}: requested {r['requested']} / invocation {r['invocation']} / observed {r['observed']}" for a, r in models.items())
-    derived["models"] = ("안 함", "기록 없음") if not models else ("부분", "; ".join(problems)) if problems else (
-        "부분" if excepted else "함", summary + ("; 사용자 승인 예외: " + ", ".join(f"{a} ({gates['exceptions'][a]})" for a in excepted) if excepted else "") + "; effort는 호스트가 노출하지 않아 관측 미확인")
+    excepted = [a for a, r in models.items() if observation_gaps(r) and a in gates.get("exceptions", {})]
+    summary = "; ".join(f"{a}: requested {r['requested']} / effort {requested_effort(r)} / invocation {r['invocation']} / observed {r['observed']} / effort {r.get('observedEffort', UNOBSERVED)} / host/pane evidence {r.get('observationEvidence', UNOBSERVED)}" for a, r in models.items())
+    if excepted:
+        summary += "; 사용자 승인 예외: " + ", ".join(f"{a} ({gates['exceptions'][a]})" for a in excepted)
+    derived["models"] = ("안 함", "기록 없음") if not models else (
+        "부분" if problems or excepted else "함", summary + ("; " + "; ".join(problems) if problems else ""))
     verdicts = gates.get("verdicts")
     open_reviews = review_problems(gates, "complete")
     derived["reviews"] = ("안 함", "판정 기록 없음") if not verdicts else ("부분", "; ".join(open_reviews)) if open_reviews else (

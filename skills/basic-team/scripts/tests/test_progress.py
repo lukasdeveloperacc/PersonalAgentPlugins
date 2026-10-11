@@ -192,9 +192,9 @@ class ProgressCliTests(CliCase):
 
 
 class GateAndBriefTests(CliCase):
-    PLANNER = {"role": "planner", "requested": "claude-opus-5-5", "invocation": "model=opus, effort=medium", "observed": "claude-opus-5-5"}
-    EXECUTOR = {"role": "executor", "requested": "claude-haiku-5-5", "invocation": "model=haiku, effort=max", "observed": "claude-haiku-5-5"}
-    REVIEWER = {"role": "reviewer", "requested": "claude-sonnet-5-5", "invocation": "model=sonnet, effort=high", "observed": "claude-sonnet-5-5"}
+    PLANNER = {"role": "planner", "requested": "claude-opus-5-5", "invocation": "model=opus, effort=medium", "observed": "claude-opus-5-5", "observedEffort": "medium", "observationEvidence": "host pane planner: model and effort settings"}
+    EXECUTOR = {"role": "executor", "requested": "claude-haiku-5-5", "invocation": "model=haiku, effort=max", "observed": "claude-haiku-5-5", "observedEffort": "max", "observationEvidence": "host pane executor: model and effort settings"}
+    REVIEWER = {"role": "reviewer", "requested": "claude-sonnet-5-5", "invocation": "model=sonnet, effort=high", "observed": "claude-sonnet-5-5", "observedEffort": "high", "observationEvidence": "host pane reviewer: model and effort settings"}
     MODEL_OK = EXECUTOR
 
     def all_models(self):
@@ -238,6 +238,55 @@ class GateAndBriefTests(CliCase):
         self.assertNotEqual(self.patch({"models": {"y": {k: v for k, v in self.EXECUTOR.items() if k != "role"}}}).returncode, 0)
         self.assertEqual(self.patch({"models": {"x": None}}).returncode, 0)
         self.assertEqual(self.data()["gates"]["models"], {})
+
+    def test_missing_effort_or_host_evidence_blocks_but_legacy_records_still_load(self):
+        self.init({"gates": {"planApproved": "p1"}})
+        for fields in (("observedEffort",), ("observationEvidence",), ("observedEffort", "observationEvidence")):
+            with self.subTest(fields=fields):
+                record = {k: v for k, v in self.PLANNER.items() if k not in fields}
+                self.patch({"models": {"planner": None}})
+                self.assertEqual(self.patch({"models": {"planner": record}}).returncode, 0)
+                code, result = self.gate("implementation")
+                self.assertEqual(code, 1)
+                for field in fields:
+                    self.assertIn(field, result["problems"][0])
+        for field in ("observedEffort", "observationEvidence"):
+            self.assertNotEqual(self.patch({"models": {"planner": dict(self.PLANNER, **{field: " "})}}).returncode, 0)
+
+    def test_unknown_effort_requires_same_agent_exception_and_compliance_stays_partial(self):
+        models = self.all_models()
+        models["planner"] = dict(self.PLANNER, observedEffort="미확인", observationEvidence="unknown")
+        self.init({"gates": {"planApproved": "p1", "models": models}})
+        self.assertEqual(self.gate("implementation")[0], 1)
+        self.patch({"exceptions": {"other": "사용자 예외 승인"}})
+        self.assertEqual(self.gate("implementation")[0], 1)
+        self.patch({"exceptions": {"planner": "사용자가 추론 및 호스트 관찰 미확인 진행 승인"}})
+        self.assertEqual(self.gate("implementation")[0], 0)
+        output = self.run_cli("compliance", self.page).stdout
+        row = next(line for line in output.splitlines() if "Per-call model/effort" in line)
+        self.assertIn("| 부분 |", row)
+        self.assertIn("effort 미확인", row)
+        self.assertIn("사용자 승인 예외", row)
+
+    def test_known_model_or_effort_mismatch_blocks_despite_exception(self):
+        self.init({"gates": {"planApproved": "p1", "exceptions": {"planner": "미확인 진행 승인"}}})
+        for field, actual, expected in (("observed", "claude-sonnet-5-5", "claude-opus-5-5"), ("observedEffort", "high", "medium")):
+            with self.subTest(field=field):
+                self.patch({"models": {"planner": dict(self.PLANNER, **{field: actual})}})
+                code, result = self.gate("implementation")
+                self.assertEqual(code, 1)
+                self.assertIn(f"{field} {actual} != requested {expected}; BLOCKED", result["problems"][0])
+
+    def test_confirmed_codex_model_and_effort_pass_and_report_host_evidence(self):
+        settings = self.invoke("spawn-args", "--host", "codex", "--role", "planner")
+        record = {"role": "planner", "requested": settings["requested"]["id"], "invocation": str(settings["arguments"]), "observed": settings["requested"]["id"], "observedEffort": settings["requested"]["effort"], "observationEvidence": "Codex pane /status settings capture"}
+        self.init({"gates": {"planApproved": "p1", "models": dict(self.all_models(), planner=record)}})
+        self.assertEqual(self.gate("implementation")[0], 0)
+        row = next(line for line in self.run_cli("compliance", self.page).stdout.splitlines() if "Per-call model/effort" in line)
+        self.assertIn("| 함 |", row)
+        self.assertIn("Codex pane /status settings capture", row)
+        self.assertIn(f"effort {settings['requested']['effort']}", row)
+        self.assertNotIn("호스트가 노출하지 않아", row)
 
     def test_review_and_complete_gates_need_executor_and_reviewer_records(self):
         models = self.all_models()

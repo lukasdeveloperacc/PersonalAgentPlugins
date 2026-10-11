@@ -9,7 +9,7 @@
    - shared contracts (inputs, outputs, errors, auth) for work crossing areas;
    - which tasks can start now and which wait;
    - whether the Impeccable and E2E reviewers are needed, with the reason;
-   - risks, alternatives, and allowed validation.
+   - risks, alternatives, and the smallest allowed validation commands proving acceptance criteria and affected boundaries; keep required project checks.
 4. Split independent work inside an area into separate tasks when files do not overlap. Do not split tiny edits.
 5. A single unreviewed draft is not an approved plan.
 6. State whether Frontend, Backend, both, or neither is needed; mark an unaffected area "not needed". For Frontend, load `impeccable` if listed above and return a design brief with observable design acceptance criteria.

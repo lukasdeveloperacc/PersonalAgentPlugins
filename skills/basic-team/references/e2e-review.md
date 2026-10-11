@@ -6,6 +6,14 @@ Tie evidence to the frozen revision and verify that the running build/services r
 
 Remain read-only on product files. Use the approved validation environment and fixtures; coordinate mutable test accounts/data and browser targets through the leader so concurrent reviewers do not invalidate each other's observations. Clean up only test state created by this run. Do not perform live payments, send external messages, or modify production/user data without authorization. Send required fixes to the leader for the owning Executor, then review the new frozen revision.
 
+## Interaction failures and product verdicts
+
+For each scenario, first establish that the supported tool actually delivered the intended action to the application. A successful Orca command, changed DOM property, or screenshot alone does not prove that React/application state changed. Observe the application-controlled value, event outcome, or request/state transition required for that step. Do not replace real interaction with DOM mutation and call the scenario verified.
+
+If a required action cannot be delivered or verified, immediately report **E2E BLOCKED — tool interaction unverified** to the leader. Stop the affected scenario; record browser/target, frozen build, command/action, expected step, observed state, error/evidence, and unchecked remaining steps. This tooling blocker may be reported before other independent verdicts, without disclosing early product findings. Do not infer a product defect, return CHANGES_REQUIRED for it, or ask an Executor to change product code to compensate for automation. An unchanged React UI after an unverified Orca action is insufficient evidence of a product bug.
+
+Use bounded recovery only when a supported alternative or new evidence can verify the action; do not retry the same unverified operation repeatedly or switch to Chrome merely because Orca failed in a known Orca environment. Resume the scenario only after interaction readiness is demonstrated on the frozen revision. A product CHANGES_REQUIRED verdict needs a verified user-equivalent action plus observed failure of an acceptance criterion. Keep independently demonstrated product findings separate from the tooling blocker; a required blocked scenario prevents overall E2E PASS.
+
 ## Browser selection and MCP lifecycle
 
 The leader owns setup and cleanup; reviewers request browser access through the leader instead of racing to change shared MCP configuration. Enable only the server required for the current browser validation, not the whole MCP catalog. Read only relevant skills/tool schemas and keep observations small to limit context use.
