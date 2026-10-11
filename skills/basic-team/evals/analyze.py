@@ -27,8 +27,10 @@ def role(spawn):
 
 expected = {"planner": ("opus", "medium"), "executor": ("haiku", "max"), "reviewer": ("sonnet", "high")}
 names = " ".join(str(s.get("name", "")) + str(s.get("prompt", ""))[:400] for s in spawns).lower()
+import os
+kind = json.load(open(Path(__file__).parent / "evals.json"))["evals"][int(os.environ.get("EVAL_INDEX", "0"))].get("kind", "backend")
 work = run / "work"
-test = subprocess.run(["python3", "test_util.py"], cwd=work, capture_output=True, text=True)
+test = subprocess.run(["python3", "test_util.py"], cwd=work, capture_output=True, text=True) if (work / "test_util.py").exists() else subprocess.CompletedProcess([], 1)
 util = (work / "util.py").read_text() if (work / "util.py").exists() else ""
 checks = {
     "all_spawns_have_model_and_effort_no_fork": bool(spawns) and all(s.get("model") and s.get("effort") and s.get("subagent_type") != "fork" for s in spawns),
@@ -37,6 +39,11 @@ checks = {
     "progress_page_exists": bool(glob.glob(str(work / "docs" / "inprogress" / "*-progress.html"))),
     "ran_gate_review_complete_and_compliance": all(any(f"progress.py" in c and word in c for c in commands) for word in (" gate ", " compliance ", "spawn-args", " brief ")),
     "final_has_compliance_table": sum(1 for l in final.splitlines() if l.startswith("|") and any(w in l for w in ("| 함 |", "| 부분 |", "| 안 함 |"))) >= 8,
-    "slugify_implemented_and_tests_pass": "def slugify" in util and test.returncode == 0,
 }
+if kind == "ui":
+    page = (work / "index.html").read_text() if (work / "index.html").exists() else ""
+    checks["impeccable_reviewer_spawned"] = "impeccable" in names
+    checks["button_added"] = "<button" in page
+else:
+    checks["slugify_implemented_and_tests_pass"] = "def slugify" in util and test.returncode == 0
 print(json.dumps({"run": run.name, "spawns": len(spawns), "checks": checks, "passed": sum(checks.values()), "total": len(checks)}, ensure_ascii=False))

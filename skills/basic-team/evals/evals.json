@@ -14,6 +14,17 @@
         "the final answer contains the compliance table",
         "util.py defines slugify and python3 test_util.py passes"
       ]
+    },
+    {
+      "id": 2,
+      "name": "ui-small-change-needs-design-review",
+      "fixture": "fixture-ui/",
+      "kind": "ui",
+      "prompt": "/lukas-plugin:basic-team index.html 헤더 오른쪽에 다크 모드 토글 버튼을 추가해줘. 접근성 라벨과 키보드 포커스 스타일을 챙기고, 눈에 보이는 UI 변경이니 디자인 리뷰도 필요해. 커밋/푸시는 하지 마. 사용자 승인: 자식이 모델 ID를 보고하지 않아 관측값이 미확인이면 예외로 승인하니 그대로 진행해. 비대화형 실행이라 질문하지 말고 끝까지 진행해. 브라우저 MCP는 쓰지 말고 소스 검토만 해.",
+      "assertions": [
+        "impeccable reviewer spawned in addition to karpathy and ponytail",
+        "index.html contains a button"
+      ]
     }
   ]
 }
