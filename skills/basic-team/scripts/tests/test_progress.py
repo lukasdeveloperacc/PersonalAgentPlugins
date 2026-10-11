@@ -3,6 +3,7 @@
 # dependencies = []
 # ///
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import sys
@@ -44,10 +45,19 @@ class CliCase(unittest.TestCase):
         return path
 
     def init(self, payload=None):
-        args = ["init", self.page, "--checkpoint", "kickoff"]
+        args = ["init", self.page, "--checkpoint", "kickoff", "--observation-policy", "strict-observation-v1"]
         if payload is not None:
             args += ["--input", self.input_file(payload)]
-        return self.invoke(*args)
+        receipt = self.invoke(*args)
+        # Existing tests are recovery fixtures for pages written before policy/schema metadata existed.
+        html = self.page.read_text()
+        data = self.data()
+        data["gates"].pop("observationPolicy", None)
+        data["_progress"].pop("schemaVersion", None)
+        start = html.index('>', html.index('<script type="application/json" id="progress-data">')) + 1
+        end = html.index('</script>', start)
+        self.page.write_text(html[:start] + "\n" + json.dumps(data).replace("<", "\\u003c") + "\n" + html[end:])
+        return receipt
 
     @staticmethod
     def agent(agent_id, **updates):
@@ -339,7 +349,8 @@ class GateAndBriefTests(CliCase):
         self.assertIn("revision, reviewer", result.stderr)
         brief = self.run_cli("brief", "--role", "reviewer", "--input", self.input_file(dict(fields, revision="r2", reviewer="Karpathy Agent"))).stdout
         self.assertTrue(brief.startswith("ROLE: Karpathy Agent (task_id value)"))
-        self.assertIn("MODEL: <the exact model ID", brief)
+        self.assertIn("without a separate identity-release handshake", brief)
+        self.assertNotIn("MODEL: <the exact model ID", brief)
         self.assertIn("Reviewed revision: r2", brief)
         self.assertNotIn("claude-", brief)
         self.assertNotIn("$role", brief)
@@ -349,6 +360,120 @@ class GateAndBriefTests(CliCase):
         for role in ("planner", "executor"):
             out = self.run_cli("brief", "--role", role, "--input", self.input_file(fields))
             self.assertEqual(out.returncode, 0, out.stderr)
+
+
+class InvocationPolicyTests(CliCase):
+    PLANNER = GateAndBriefTests.PLANNER
+    all_models = GateAndBriefTests.all_models
+    EXECUTOR = GateAndBriefTests.EXECUTOR
+    REVIEWER = GateAndBriefTests.REVIEWER
+    gate = GateAndBriefTests.gate
+    patch = GateAndBriefTests.patch
+    def setUp(self):
+        super().setUp()
+        self.plan = self.root / "plan.md"
+        self.plan.write_text("approved plan")
+        self.architect = self.root / "architect.md"
+        self.architect.write_text("architect review")
+        self.critic = self.root / "critic.md"
+        self.critic.write_text("critic review with architect input")
+
+    def v2_gates(self):
+        settings = self.invoke("spawn-args", "--host", "claude", "--role", "planner")
+        record = dict(self.PLANNER, observed="미확인", observedEffort="미확인", observationEvidence="미확인",
+                      invocationArguments=settings["arguments"], invocationAccepted=True, invocationEvidence="Agent call 1 accepted")
+        return {"planApproved": "p1", "models": {name: dict(record, role=name) for name in ("planner", "architect", "critic")},
+                "planReview": {"method": "ralplan", "revision": "p1", "artifact": str(self.plan), "sha256": hashlib.sha256(self.plan.read_bytes()).hexdigest(), "reviews": [
+                    {"role": "architect", "revision": "p1", "artifact": str(self.architect), "sha256": hashlib.sha256(self.architect.read_bytes()).hexdigest(), "verdict": "APPROVE"},
+                    {"role": "critic", "revision": "p1", "artifact": str(self.critic), "sha256": hashlib.sha256(self.critic.read_bytes()).hexdigest(), "verdict": "APPROVE"}]},
+                "conditionalReviews": {"impeccable": {"required": False, "reason": "no UI"}, "e2e": {"required": False, "reason": "isolated helper"}},
+                "requiredReviewers": ["karpathy", "ponytail"]}
+
+    def init_v2(self, gates):
+        return self.invoke("init", self.page, "--checkpoint", "kickoff", "--input", self.input_file({"gates": gates}))
+
+    def test_new_run_policy_default_and_immutable(self):
+        self.init_v2(self.v2_gates())
+        self.assertEqual(self.data()["gates"]["observationPolicy"], "invocation-evidence-v2")
+        before = self.page.read_bytes()
+        self.assertNotEqual(self.patch({"observationPolicy": "strict-observation-v1"}).returncode, 0)
+        self.assertEqual(self.page.read_bytes(), before)
+        self.assertNotEqual(self.run_cli("status", self.page, "--observation-policy", "strict-observation-v1").returncode, 0)
+        self.assertEqual(self.gate("implementation")[0], 0)
+        self.assertIn("invocation-only", self.run_cli("compliance", self.page).stdout)
+
+    def test_invocation_missing_rejected_wrong_and_known_mismatch_block(self):
+        gates = self.v2_gates()
+        self.init_v2(gates)
+        for changes in ({"invocationArguments": {}}, {"invocationAccepted": False}, {"invocationEvidence": "unknown"},
+                        {"invocationArguments": {"model": "opus", "effort": "high"}}, {"observed": "claude-sonnet-5-5"}):
+            record = dict(gates["models"]["planner"], **changes)
+            self.assertEqual(self.patch({"models": {"planner": record}, "exceptions": {"planner": "approved missing observation"}}).returncode, 0)
+            self.assertEqual(self.gate("implementation")[0], 1, changes)
+
+    def test_plan_revision_sequence_missing_artifacts_and_conditional_decisions_block(self):
+        gates = self.v2_gates()
+        self.init_v2(gates)
+        for change in ({"revision": "p0"}, {"artifact": str(self.root / "missing")},
+                       {"reviews": list(reversed(gates["planReview"]["reviews"]))}):
+            self.patch({"planReview": dict(gates["planReview"], **change)})
+            self.assertEqual(self.gate("implementation")[0], 1)
+        self.patch({"planReview": gates["planReview"], "conditionalReviews": {}})
+        self.assertEqual(self.gate("implementation")[0], 1)
+        self.patch({"conditionalReviews": dict(gates["conditionalReviews"], impeccable={"required": True, "reason": "new UI"})})
+        self.assertEqual(self.gate("implementation")[0], 1)
+
+    def test_ready_does_not_require_shutdown_but_complete_does(self):
+        gates = self.v2_gates()
+        for name, record in self.all_models().items():
+            settings = self.invoke("spawn-args", "--host", "claude", "--role", record["role"])
+            gates["models"][name] = dict(record, invocationArguments=settings["arguments"], invocationAccepted=True, invocationEvidence=f"Agent {name} accepted")
+        gates.update(reviewTarget="r1", verdicts={name: {"revision": "r1", "verdict": "PASS"} for name in ("karpathy", "ponytail")},
+                     validation={"revision": "r1", "status": "PASS", "evidence": "uv run tests exit 0", "checks": [{"command": "uv run tests", "revision": "r1", "exitCode": 0, "evidence": "exit 0"}]})
+        self.init_v2(gates)
+        code, receipt = self.gate("ready")
+        self.assertEqual(code, 0)
+        self.assertTrue(Path(receipt["path"]).samefile(self.page))
+        self.assertEqual(receipt["reviewTarget"], "r1")
+        self.assertEqual(receipt["progressRevision"], self.data()["_progress"]["revision"])
+        self.assertEqual(self.gate("complete")[0], 1)
+        self.patch({"evidence": {"shutdown": {"status": "함", "evidence": "host confirms all run agents ended"},
+                                 "cleanup": {"status": "안 함", "evidence": "해당 없음: no browser or hook identity"},
+                                 "tasks": {"status": "함", "evidence": "task allocation reconciled; final handoff saved"}}})
+        self.assertEqual(self.gate("complete")[0], 0)
+        for row in (None, {"status": "부분", "evidence": "final handoff missing"}):
+            self.patch({"evidence": {"tasks": row}})
+            self.assertEqual(self.gate("ready")[0], 0)
+            self.assertTrue(any("evidence.tasks" in p for p in self.gate("complete")[1]["problems"]))
+        self.patch({"evidence": {"tasks": {"status": "함", "evidence": "allocation reconciled and final handoff saved"}}})
+        self.patch({"validation": dict(gates["validation"], checks=[{"command": "uv run tests", "revision": "r1", "exitCode": 1, "evidence": "failed"}])})
+        self.assertEqual(self.gate("ready")[0], 1)
+        self.patch({"validation": gates["validation"], "models": {"karpathy": gates["models"]["b1"]}})
+        self.assertTrue(any("INVOCATION_ROLE" in p for p in self.gate("ready")[1]["problems"]))
+        self.patch({"models": {"karpathy": gates["models"]["karpathy"]}})
+        self.patch({"validation": dict(gates["validation"], revision="r0")})
+        self.assertEqual(self.gate("ready")[0], 1)
+
+    def test_stale_artifact_and_new_strict_run_require_current_evidence(self):
+        gates = self.v2_gates()
+        self.invoke("init", self.page, "--checkpoint", "strict", "--observation-policy", "strict-observation-v1", "--input", self.input_file({"gates": gates}))
+        self.assertEqual(self.gate("implementation")[0], 1)
+        self.patch({"models": {name: dict(record, observed=self.PLANNER["observed"], observedEffort="medium", observationEvidence="host /status") for name, record in gates["models"].items()}})
+        self.assertEqual(self.gate("implementation")[0], 0)
+        self.architect.write_text("modified after review")
+        problems = self.gate("implementation")[1]["problems"]
+        self.assertTrue(any("ARTIFACT_STALE" in p for p in problems))
+
+    def test_helper_roles_share_planner_settings_and_use_own_briefs(self):
+        fields = {key: f"{key} value" for key in ("task_id", "request", "project_instructions", "workdir", "area", "owned", "inputs", "deliverable", "validation", "contacts")}
+        fields["skills"] = ["/skills/ralplan/SKILL.md"]
+        for role in ("architect", "critic"):
+            self.assertEqual(self.invoke("spawn-args", "--host", "codex", "--role", role)["arguments"],
+                             self.invoke("spawn-args", "--host", "codex", "--role", "planner")["arguments"])
+            result = self.run_cli("brief", "--role", role, "--input", self.input_file(fields))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f"ROLE: {role.title()}", result.stdout)
+            self.assertNotIn("ask the leader to dispatch", result.stdout)
 
 
 if __name__ == "__main__":

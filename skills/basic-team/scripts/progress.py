@@ -5,6 +5,7 @@
 # ///
 """Create and update a Basic Team progress page without changing its renderer."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -20,12 +21,13 @@ BRIEFS = SKILL_DIR / "assets" / "briefs"
 ROLES = Path(__file__).resolve().parent / "roles.json"
 DATA_TAG = re.compile(r'(<script type="application/json" id="progress-data">)(.*?)(</script>)', re.S)
 TOP_FIELDS = {"goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates"}
-GATE_FIELDS = {"planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence"}
+GATE_FIELDS = {"planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
 VERDICTS = {"PASS", "CHANGES_REQUIRED", "BLOCKED"}
 MANDATORY_REVIEWERS = {"karpathy", "ponytail"}
 UNOBSERVED = "미확인"
 UNOBSERVED_FORMS = {UNOBSERVED, "unknown"}
-ROLE_NAMES = ("planner", "executor", "reviewer")
+ROLE_NAMES = ("planner", "architect", "critic", "executor", "reviewer")
+POLICIES = ("strict-observation-v1", "invocation-evidence-v2")
 COMPLIANCE_ROWS = (
     ("page", "HTML progress page, final save, link/absolute path/save time"),
     ("hook", "Hook arm/disarm and actual confirmation or manual checkpoints"),
@@ -41,7 +43,7 @@ COMPLIANCE_ROWS = (
 DERIVED_ROWS = {"page", "models", "reviews"}
 COMPLIANCE_STATUS = {"함", "부분", "안 함"}
 BRIEF_FIELDS = ("task_id", "request", "project_instructions", "workdir", "area", "owned", "inputs", "deliverable", "validation", "contacts")
-ROLE_TITLES = {"planner": "Planner", "executor": "Executor"}
+ROLE_TITLES = {"planner": "Planner", "architect": "Architect", "critic": "Critic", "executor": "Executor"}
 TEXT_FIELDS = ("name", "role", "area", "status", "tone", "reported", "owned", "result", "next", "blocker", "model", "observation")
 REQUIRED_AGENT_FIELDS = {"name", "role", "area", "status"}
 AGENT_FIELDS = set(TEXT_FIELDS) | {"id", "stage", "dependsOn"}
@@ -128,6 +130,8 @@ def validate(data, strict_dependency_ids=()):
         meta = data["_progress"]
         if not isinstance(meta, dict) or not isinstance(meta.get("checkpoint"), str) or not isinstance(meta.get("revision"), int) or not isinstance(meta.get("saved_at"), str):
             fail("invalid _progress metadata")
+        if "schemaVersion" in meta and (type(meta["schemaVersion"]) is not int or meta["schemaVersion"] not in (1, 2)):
+            fail("invalid _progress.schemaVersion")
 
 
 def is_text_list(value):
@@ -137,6 +141,8 @@ def is_text_list(value):
 def validate_gates(gates):
     if not isinstance(gates, dict) or gates.keys() - GATE_FIELDS:
         fail(f"gates must be an object with only: {', '.join(sorted(GATE_FIELDS))}")
+    if gates.get("observationPolicy", POLICIES[0]) not in POLICIES:
+        fail("gates.observationPolicy must be a supported policy")
     for key in ("planApproved", "reviewTarget"):
         if key in gates and (not isinstance(gates[key], str) or not gates[key].strip()):
             fail(f"gates.{key} must be a nonempty string")
@@ -160,8 +166,12 @@ def validate_gates(gates):
         fail("gates.models must be an object")
     for agent_id, record in models.items():
         required = {"role", "requested", "invocation", "observed"}
-        if not isinstance(record, dict) or required - record.keys() or record.keys() - required - {"observedEffort", "observationEvidence"} or any(not isinstance(v, str) or not v.strip() for v in record.values()):
+        if not isinstance(record, dict) or required - record.keys() or record.keys() - required - {"observedEffort", "observationEvidence", "invocationArguments", "invocationAccepted", "invocationEvidence"} or any(not isinstance(v, str) or not v.strip() for k, v in record.items() if k not in ("invocationArguments", "invocationAccepted")):
             fail(f"gates.models.{agent_id} needs nonempty role, requested, invocation, and observed strings; optional observedEffort and observationEvidence must be nonempty strings")
+        if "invocationArguments" in record and not isinstance(record["invocationArguments"], dict):
+            fail(f"gates.models.{agent_id}.invocationArguments must be an object")
+        if "invocationAccepted" in record and not isinstance(record["invocationAccepted"], bool):
+            fail(f"gates.models.{agent_id}.invocationAccepted must be a boolean")
         if record["role"] not in ROLE_NAMES:
             fail(f"gates.models.{agent_id}.role must be one of {', '.join(ROLE_NAMES)}")
         if record["requested"] not in requested_ids(record["role"]):
@@ -176,13 +186,18 @@ def validate_gates(gates):
             fail(f"gates.evidence.{key} needs status (함 | 부분 | 안 함) and nonempty evidence")
 
 
+def model_role(role):
+    return "planner" if role in ("architect", "critic") else role
+
+
 def requested_ids(role):
+    role = model_role(role)
     entry = json.loads(ROLES.read_text(encoding="utf-8")).get(role)
     return {entry["claude"]["id"], entry["codex"]["model"]} if entry else set()
 
 
 def requested_effort(record):
-    entry = json.loads(ROLES.read_text(encoding="utf-8"))[record["role"]]
+    entry = json.loads(ROLES.read_text(encoding="utf-8"))[model_role(record["role"])]
     return entry["claude"]["effort"] if record["requested"] == entry["claude"]["id"] else entry["codex"]["reasoning_effort"]
 
 
@@ -191,11 +206,13 @@ def observation_gaps(record):
             if record.get(field, UNOBSERVED).strip().lower() in UNOBSERVED_FORMS]
 
 
-def model_problems(gates, need=("planner",), reviewers=()):
+def model_problems(gates, need=("planner",), reviewers=(), require_invocation=False):
     models = gates.get("models", {})
     problems = [f"no {role} model record: save gates.models.<agent-id> with role {role}" for role in need
                 if not any(record["role"] == role for record in models.values())]
     problems += [f"no model record for reviewer {name}: use the reviewer name as the agent id" for name in reviewers if name not in models]
+    if require_invocation:
+        problems += [f"INVOCATION_ROLE: {name}: reviewer model record must have role reviewer" for name in reviewers if name in models and models[name]["role"] != "reviewer"]
     exceptions = gates.get("exceptions", {})
     for agent_id, record in models.items():
         for field, expected in (("observed", record["requested"]), ("observedEffort", requested_effort(record))):
@@ -203,7 +220,15 @@ def model_problems(gates, need=("planner",), reviewers=()):
             if actual.strip().lower() not in UNOBSERVED_FORMS and actual != expected:
                 problems.append(f"{agent_id}: {field} {actual} != requested {expected}; BLOCKED, respawn with spawn-args and overwrite this record using the same agent id")
         gaps = observation_gaps(record)
-        if gaps and agent_id not in exceptions:
+        if require_invocation or gates.get("observationPolicy", POLICIES[0]) == POLICIES[1]:
+            host = "claude" if record["requested"].startswith("claude-") else "codex"
+            expected = spawn_args(host, record["role"])["arguments"]
+            arguments = record.get("invocationArguments", {})
+            if any(arguments.get(k) != v for k, v in expected.items()) or arguments.get("subagent_type") == "fork":
+                problems.append(f"INVOCATION_ARGUMENTS: {agent_id}: set invocationArguments to the actual accepted spawn arguments matching {expected}")
+            if record.get("invocationAccepted") is not True or record.get("invocationEvidence", UNOBSERVED).strip().lower() in UNOBSERVED_FORMS:
+                problems.append(f"INVOCATION_ACCEPTANCE: {agent_id}: record invocationAccepted=true and invocationEvidence from the successful host call; rejected or missing calls cannot proceed")
+        if gates.get("observationPolicy", POLICIES[0]) == POLICIES[0] and gaps and agent_id not in exceptions:
             problems.append(f"{agent_id}: {', '.join(gaps)} {UNOBSERVED}; obtain actual host/pane model and effort evidence, or ask the user and add gates.exceptions.{agent_id} with the approval, or stop as BLOCKED")
     return problems
 
@@ -227,13 +252,75 @@ def review_problems(gates, stage):
     return problems
 
 
+def artifact_problems(record, label):
+    path = record.get("artifact")
+    digest = record.get("sha256")
+    if not isinstance(path, str) or not isinstance(digest, str):
+        return [f"ARTIFACT_MISSING: {label}: save artifact path and sha256"]
+    try:
+        actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return [f"ARTIFACT_MISSING: {label}: artifact is unreadable: {path}"]
+    return [] if actual == digest else [f"ARTIFACT_STALE: {label}: sha256 does not match {path}; review the current artifact and save its digest"]
+
+
+def saved_evidence_problems(gates, stage):
+    problems = []
+    plan = gates.get("planReview", {})
+    if not isinstance(plan, dict):
+        return ["PLAN_EVIDENCE: set gates.planReview to a plan review record"]
+    if plan.get("revision") != gates.get("planApproved"):
+        problems.append("PLAN_REVISION: planReview.revision must equal planApproved")
+    problems += artifact_problems(plan, "planReview")
+    if plan.get("method") == "ralplan":
+        reviews = plan.get("reviews", [])
+        if not isinstance(reviews, list) or len(reviews) != 2 or any(not isinstance(r, dict) for r in reviews) or [r.get("role") for r in reviews] != ["architect", "critic"]:
+            problems.append("PLAN_SEQUENCE: save planReview.reviews in Architect then Critic order")
+        else:
+            for review in reviews:
+                if review.get("revision") != gates.get("planApproved") or review.get("verdict") != "APPROVE":
+                    problems.append(f"PLAN_REVIEW: {review['role']}: APPROVE must reference planApproved")
+                problems += artifact_problems(review, review["role"])
+    elif plan.get("method") != "plan" or not isinstance(plan.get("fallbackEvidence"), str) or not plan["fallbackEvidence"].strip():
+        problems.append("PLAN_METHOD: use ralplan reviews or record plan fallbackEvidence identifying the unavailable ralplan skill")
+    conditional = gates.get("conditionalReviews", {})
+    for name in ("impeccable", "e2e"):
+        decision = conditional.get(name, {}) if isinstance(conditional, dict) else {}
+        if not isinstance(decision, dict) or not isinstance(decision.get("required"), bool) or not isinstance(decision.get("reason"), str) or not decision["reason"].strip():
+            problems.append(f"CONDITIONAL_DECISION: save conditionalReviews.{name} with required boolean and reason")
+        elif decision["required"] != (name in gates.get("requiredReviewers", [])):
+            problems.append(f"CONDITIONAL_REVIEWER: requiredReviewers must agree with conditionalReviews.{name}.required")
+    if stage in ("ready", "complete"):
+        validation = gates.get("validation", {})
+        if not isinstance(validation, dict) or validation.get("revision") != gates.get("reviewTarget") or validation.get("status") != "PASS" or not isinstance(validation.get("evidence"), str) or not validation["evidence"].strip():
+            problems.append("VALIDATION_REVISION: save gates.validation PASS with evidence on reviewTarget")
+        else:
+            checks = validation.get("checks")
+            if not isinstance(checks, list) or (not checks and not isinstance(validation.get("notApplicable"), str)) or (not checks and not validation.get("notApplicable", "").strip()):
+                problems.append("VALIDATION_CHECKS: save validation.checks or an explicit notApplicable reason")
+            elif any(not isinstance(c, dict) or c.get("revision") != gates.get("reviewTarget") or type(c.get("exitCode")) is not int or c["exitCode"] != 0 or any(not isinstance(c.get(k), str) or not c[k].strip() for k in ("command", "evidence")) for c in checks):
+                problems.append("VALIDATION_CHECKS: every check needs command, matching revision, exitCode=0, and evidence")
+    if stage == "complete":
+        for name in ("tasks", "shutdown", "cleanup"):
+            row = gates.get("evidence", {}).get(name, {})
+            if row.get("status") != "함" and not (name == "cleanup" and row.get("status") == "안 함" and "해당 없음" in row.get("evidence", "")):
+                problems.append(f"TERMINAL_EVIDENCE: save evidence.{name} after verified host cleanup; missing or partial evidence blocks completion")
+    return problems
+
+
 def gate_problems(data, stage):
     gates = data.get("gates", {})
     problems = [] if gates.get("planApproved") else ["plan not approved: set gates.planApproved to the approved plan revision"]
-    need = {"implementation": ("planner",), "review": ("planner", "executor"), "complete": ("planner", "executor")}[stage]
-    problems += model_problems(gates, need, gates.get("requiredReviewers", []) if stage == "complete" else ())
+    need = ("planner",) if stage == "implementation" else ("planner", "executor")
+    final = stage in ("ready", "complete")
+    current_schema = data.get("_progress", {}).get("schemaVersion", 1) == 2
+    if current_schema and isinstance(gates.get("planReview"), dict) and gates["planReview"].get("method") == "ralplan":
+        need += ("architect", "critic")
+    problems += model_problems(gates, need, gates.get("requiredReviewers", []) if final else (), current_schema)
     if stage != "implementation":
-        problems += review_problems(gates, stage)
+        problems += review_problems(gates, "complete" if final else stage)
+    if current_schema or gates.get("observationPolicy", POLICIES[0]) == POLICIES[1]:
+        problems += saved_evidence_problems(gates, stage)
     return problems
 
 
@@ -242,13 +329,15 @@ def compliance_table(data):
     meta = data.get("_progress")
     derived = {"page": ("함", f"{data.get('path')} · 마지막 저장 {meta['saved_at']} · checkpoint {meta['checkpoint']}") if meta else ("안 함", "저장 기록 없음")}
     models = gates.get("models", {})
-    problems = model_problems(gates, ("planner", "executor"), gates.get("requiredReviewers", []))
+    problems = model_problems(gates, ("planner", "executor"), gates.get("requiredReviewers", []), data.get("_progress", {}).get("schemaVersion", 1) == 2)
     excepted = [a for a, r in models.items() if observation_gaps(r) and a in gates.get("exceptions", {})]
     summary = "; ".join(f"{a}: requested {r['requested']} / effort {requested_effort(r)} / invocation {r['invocation']} / observed {r['observed']} / effort {r.get('observedEffort', UNOBSERVED)} / host/pane evidence {r.get('observationEvidence', UNOBSERVED)}" for a, r in models.items())
+    if gates.get("observationPolicy", POLICIES[0]) == POLICIES[1] and any(observation_gaps(r) for r in models.values()):
+        summary += "; invocation-only: actual host settings remain 미확인"
     if excepted:
         summary += "; 사용자 승인 예외: " + ", ".join(f"{a} ({gates['exceptions'][a]})" for a in excepted)
     derived["models"] = ("안 함", "기록 없음") if not models else (
-        "부분" if problems or excepted else "함", summary + ("; " + "; ".join(problems) if problems else ""))
+        "부분" if problems or excepted or any(observation_gaps(r) for r in models.values()) else "함", summary + ("; " + "; ".join(problems) if problems else ""))
     verdicts = gates.get("verdicts")
     open_reviews = review_problems(gates, "complete")
     derived["reviews"] = ("안 함", "판정 기록 없음") if not verdicts else ("부분", "; ".join(open_reviews)) if open_reviews else (
@@ -263,9 +352,10 @@ def compliance_table(data):
 
 def spawn_args(host, role):
     roles = json.loads(ROLES.read_text(encoding="utf-8"))
-    if role not in roles or host not in roles[role]:
+    settings_role = model_role(role)
+    if settings_role not in roles or host not in roles[settings_role]:
         fail(f"unknown role/host: {role}/{host}; roles are {', '.join(roles)}")
-    settings = dict(roles[role][host])
+    settings = dict(roles[settings_role][host])
     if host == "claude":
         requested = {"id": settings.pop("id"), "effort": settings["effort"]}
     else:
@@ -274,8 +364,8 @@ def spawn_args(host, role):
 
 
 def render_brief(role, fields):
-    if role not in ("planner", "executor", "reviewer"):
-        fail("brief --role must be planner, executor, or reviewer")
+    if role not in ROLE_NAMES:
+        fail("brief --role must be " + ", ".join(ROLE_NAMES))
     required = BRIEF_FIELDS + (("revision", "reviewer") if role == "reviewer" else ())
     missing = [key for key in required if not isinstance(fields.get(key), str) or not fields[key].strip()]
     if not is_text_list(fields.get("skills")):
@@ -357,11 +447,14 @@ def main():
     parser.add_argument("PAGE", nargs="?", help="absolute progress page; required except for spawn-args and brief")
     parser.add_argument("--input", type=Path)
     parser.add_argument("--checkpoint")
-    parser.add_argument("--stage", choices=("implementation", "review", "complete"), help="gate to check")
+    parser.add_argument("--stage", choices=("implementation", "review", "ready", "complete"), help="gate to check")
     parser.add_argument("--host", choices=("claude", "codex"))
     parser.add_argument("--role")
+    parser.add_argument("--observation-policy", choices=POLICIES, help="init only; defaults to invocation-evidence-v2")
     args = parser.parse_args()
     try:
+        if args.observation_policy and args.command != "init":
+            fail("--observation-policy is init-only; run policy is immutable")
         if args.command == "spawn-args":
             if not args.host or not args.role:
                 fail("spawn-args requires --host and --role")
@@ -385,7 +478,13 @@ def main():
             if not args.stage:
                 fail("gate requires --stage")
             problems = gate_problems(data, args.stage)
-            print(json.dumps({"gate": args.stage, "ok": not problems, "problems": problems}, ensure_ascii=False))
+            result = {"gate": args.stage, "ok": not problems, "problems": problems}
+            if data.get("_progress", {}).get("schemaVersion", 1) == 2 or data.get("gates", {}).get("observationPolicy", POLICIES[0]) == POLICIES[1]:
+                result["path"] = str(path)
+                result["reviewTarget"] = data.get("gates", {}).get("reviewTarget")
+                result["progressRevision"] = data.get("_progress", {}).get("revision")
+                result["problemDetails"] = [{"code": p.split(":", 1)[0] if re.match(r"^[A-Z_]+:", p) else "MODEL_EVIDENCE" if "model" in p or "observed" in p or "requested" in p else "REVIEW_EVIDENCE", "message": p} for p in problems]
+            print(json.dumps(result, ensure_ascii=False))
             return 1 if problems else 0
         if args.command == "status":
             if args.input or args.checkpoint:
@@ -415,6 +514,13 @@ def main():
                 html = TEMPLATE.read_text(encoding="utf-8")
                 match, data = read_data(html)
                 data.update(incoming)
+                gates = data.setdefault("gates", {})
+                if not isinstance(gates, dict):
+                    fail("gates must be an object")
+                policy = args.observation_policy or gates.get("observationPolicy", POLICIES[1])
+                if args.observation_policy and gates.get("observationPolicy", policy) != policy:
+                    fail("init observation policy conflicts with input")
+                gates["observationPolicy"] = policy
                 validate(data)
                 revision = 1
                 strict_dependency_ids = {agent["id"] for agent in data.get("agents", []) if isinstance(agent, dict) and isinstance(agent.get("id"), str)}
@@ -458,6 +564,8 @@ def main():
                         fail("gates must be an object")
                     # Gate keys merge like agents; models/evidence merge per entry so records can arrive one at a time.
                     gates = dict(data.get("gates", {}))
+                    if "observationPolicy" in incoming["gates"] and incoming["gates"]["observationPolicy"] != gates.get("observationPolicy", POLICIES[0]):
+                        fail("observationPolicy is immutable; start a separate run to change policy")
                     for key, value in incoming["gates"].items():
                         gates[key] = {**gates.get(key, {}), **value} if key in ("models", "evidence", "exceptions") and isinstance(value, dict) else value
                     for key in ("models", "evidence", "exceptions"):
@@ -469,7 +577,8 @@ def main():
             now = datetime.now().astimezone().isoformat(timespec="seconds")
             data["updated"] = now
             data["path"] = str(path)
-            data["_progress"] = {"checkpoint": args.checkpoint, "revision": revision, "saved_at": now}
+            schema_version = 2 if args.command == "init" else data.get("_progress", {}).get("schemaVersion", 1)
+            data["_progress"] = {"checkpoint": args.checkpoint, "revision": revision, "saved_at": now, "schemaVersion": schema_version}
             warnings = graph_warnings(data)
             if warnings:
                 data["_progress"]["graph_warnings"] = warnings

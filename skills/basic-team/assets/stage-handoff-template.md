@@ -1,6 +1,6 @@
 # Stage handoff
 
-- Run / round:
+- Run / round / observation policy:
 - Source -> target stage:
 - Outcome: ready | BLOCKED | cancelled
 - Approved plan path / revision:
@@ -9,7 +9,7 @@
 
 ## Required artifacts
 
-Use the transition row in SKILL.md. List every required artifact with its saved path and revision; the HTML page cannot replace another artifact.
+Use the transition row in references/workflow-contracts.md. List every required artifact with its saved path and revision; the HTML page cannot replace another artifact.
 
 | Artifact | Saved path / revision | Verified result or gap |
 | --- | --- | --- |
@@ -40,7 +40,7 @@ Check only with evidence above. Mark inapplicable items with a reason; record an
 
 - [ ] Every artifact in this transition's row exists and was read.
 - [ ] Task ownership, prerequisites, and acceptance criteria are recorded.
-- [ ] Both model and effort have actual host evidence, or a specific user-approved unknown-setting exception; no known mismatch remains.
+- [ ] Settings satisfy the recorded observation policy; accepted invocation is distinguished from actual observation, and no known mismatch remains.
 - [ ] Validation covers the latest relevant edit and states unchecked scope.
 - [ ] Required reviews are complete for the same frozen revision, or this earlier transition records their pending status.
 - [ ] Tool failures are recorded as BLOCKED without inferring a product defect.

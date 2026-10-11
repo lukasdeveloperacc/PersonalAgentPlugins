@@ -34,3 +34,7 @@ Edges exist only where `dependsOn` records them, so every dispatch save must wri
 | `karpathy`, `ponytail`, activated `impeccable`/`e2e` | `review` | every implementation agent in the reviewed revision |
 
 Add required reviewers at kickoff as queued nodes (`status: "대기"`, `tone: "neutral"`, empty `result`) so the page shows the whole path before they run. Main is not a node; keep it in `flow`. Reuse the same IDs for fix rounds.
+
+## Presentation contract
+
+Preserve major-domain Plan / Agent Progress / Reviews & Validation / Decisions & Blockers tabs (localized labels), keyboard controls, visible active tab and selected-tab persistence when local storage is available. Goal, stage, overall blockers and confirmed update time stay above tabs. All panels remain in the same standalone HTML file. Show each agent's model/effort and requested-versus-observed labels directly in its node, including “미확인” when hidden; details retain source evidence. Modal opening/closing must preserve keyboard access and return focus to the node. The page's absolute path and copy control remain visible. Do not replace template presentation on every report.
