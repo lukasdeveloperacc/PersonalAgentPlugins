@@ -1,5 +1,8 @@
 # Main-owned progress checkpoints
 
+Records in `flow`, `plan`, `reviews`, `decisions`, `tasks`, `agents`, and `handoffs` accept optional `recordedAt` (ISO datetime with timezone). The writer supplies the first save time for new records when omitted; it is a recording time, not proof of when the underlying event occurred. Resending an existing ID or unchanged list entry preserves its time; do not copy timestamps into newly created records. Legacy entries without a known time remain undated. Agent `reported` remains the separate actual report time/text. Lists display oldest first, with stable ordering for equal times and undated entries last; Phase/stage grouping and flow dependency order remain intact. Stored handoff append order still controls gates. Existing HTML renderers are preserved by `update`; the new display applies to pages created from the updated template.
+
+
 The Main session owns the meaning of each report. `scripts/progress.py` only validates and saves the page; a successful receipt does not prove that implementation, review, or user-facing briefing occurred. Use the same page for the same run across added requests, compaction, and session resume.
 
 Before each save, apply the skill's ELI5-style plain-Korean rule to every changed user-facing field unless the user requested another language. Explain the result, what was verified or remains unresolved, and the next action; do not paste English reviewer reports into `reviewNotice`, `reviews`, `decisions`, or agent reports. Preserve verdict meaning, evidence, technical identifiers, and reported times. The script stores supplied text and does not translate or summarize it.

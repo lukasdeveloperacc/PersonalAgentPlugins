@@ -1,5 +1,8 @@
 # Populate the progress template
 
+Record timestamps and chronological display follow [progress-updates.md](progress-updates.md). Each record shows `recordedAt`, or `시간 미기록` for legacy entries without a known time.
+
+
 Use `scripts/progress.py` from the resolved basic-team skill directory to initialize `<executing-project-root>/docs/inprogress/<task-slug>-<YYYYMMDD-HHmmss>-progress.html` from `assets/progress-template.html`. Follow [progress-updates.md](progress-updates.md) for commands, partial updates, save receipts, and resume checkpoints. Run from the target project/worktree root. Reuse the same file when the task continues or resumes, preserve completed runs, and never overwrite another run’s file. It opens via `file://` with no network, build, server, or periodic refresh. The updater preserves its styles, dependency graph, tooltip, accessible detail modal, and tab interaction code; only the embedded `script#progress-data` JSON changes.
 
 ## Data

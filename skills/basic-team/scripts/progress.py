@@ -48,7 +48,8 @@ BRIEF_FIELDS = ("task_id", "request", "project_instructions", "workdir", "area",
 ROLE_TITLES = {"planner": "Planner", "architect": "Architect", "critic": "Critic", "executor": "Executor", "documentation_executor": "Documentation Executor"}
 TEXT_FIELDS = ("name", "role", "area", "status", "tone", "reported", "owned", "result", "next", "blocker", "model", "observation")
 REQUIRED_AGENT_FIELDS = {"name", "role", "area", "status"}
-AGENT_FIELDS = set(TEXT_FIELDS) | {"id", "stage", "dependsOn"}
+AGENT_FIELDS = set(TEXT_FIELDS) | {"id", "stage", "dependsOn", "recordedAt"}
+RECORD_LISTS = ("flow", "plan", "reviews", "decisions", "tasks", "agents", "handoffs")
 TONES = {"neutral", "active", "good", "warn", "bad"}
 STAGES = {"planning", "implementation", "review", "other"}
 
@@ -98,16 +99,16 @@ def validate(data, strict_dependency_ids=()):
                 fail(f"{key} must be an array")
             required = ("title", "body")
             for item in data[key]:
-                if not isinstance(item, dict) or item.keys() - {"title", "body", "meta"} or any(not isinstance(item.get(field), str) for field in required) or ("meta" in item and not isinstance(item["meta"], str)):
-                    fail(f"{key} entries must contain string title and body, with optional string meta")
+                if not isinstance(item, dict) or item.keys() - {"title", "body", "meta", "recordedAt"} or any(not isinstance(item.get(field), str) for field in required) or ("meta" in item and not isinstance(item["meta"], str)):
+                    fail(f"{key} entries must contain string title and body, with optional string meta and recordedAt")
     if "tasks" in data:
         if not isinstance(data["tasks"], list):
             fail("tasks must be an array")
         ids = set()
         fields = {"id", "phase", "title", "owner", "status", "evidence"}
         for task in data["tasks"]:
-            if not isinstance(task, dict) or task.keys() != fields or any(not isinstance(task[field], str) for field in fields):
-                fail("tasks entries must contain exactly string id, phase, title, owner, status, evidence")
+            if not isinstance(task, dict) or task.keys() - {"recordedAt"} != fields or any(not isinstance(task[field], str) for field in fields):
+                fail("tasks entries must contain string id, phase, title, owner, status, evidence and optional recordedAt")
             if any(not task[field].strip() for field in ("id", "phase", "title", "owner")):
                 fail("task id, phase, title and owner must be nonempty")
             if task["id"] in ids:
@@ -147,6 +148,15 @@ def validate(data, strict_dependency_ids=()):
         validate_gates(data["gates"])
     if "handoffs" in data:
         validate_handoffs(data["handoffs"])
+    for key in RECORD_LISTS:
+        for record in data.get(key, []):
+            if "recordedAt" in record:
+                try:
+                    value = record["recordedAt"]
+                    if not isinstance(value, str) or datetime.fromisoformat(value.replace("Z", "+00:00")).utcoffset() is None:
+                        raise ValueError()
+                except ValueError:
+                    fail(f"{key}.recordedAt must be an ISO datetime with timezone")
     if "_progress" in data:
         meta = data["_progress"]
         if not isinstance(meta, dict) or not isinstance(meta.get("checkpoint"), str) or not isinstance(meta.get("revision"), int) or not isinstance(meta.get("saved_at"), str):
@@ -160,8 +170,8 @@ def validate_handoffs(records):
         fail("handoffs must be an array")
     ids = set()
     for record in records:
-        if not isinstance(record, dict) or record.keys() != HANDOFF_FIELDS:
-            fail("handoffs entries must contain exactly: " + ", ".join(sorted(HANDOFF_FIELDS)))
+        if not isinstance(record, dict) or record.keys() - {"recordedAt"} != HANDOFF_FIELDS:
+            fail("handoffs entries require these fields plus optional recordedAt: " + ", ".join(sorted(HANDOFF_FIELDS)))
         if any(not isinstance(record[key], str) or not record[key].strip() for key in ("id", "revision", "summary")):
             fail("handoff id, revision, and summary must be nonempty strings")
         if not isinstance(record["transition"], str) or record["transition"] not in HANDOFF_TRANSITIONS:
@@ -176,6 +186,25 @@ def validate_handoffs(records):
         if record["id"] in ids:
             fail(f"duplicate handoff id: {record['id']}")
         ids.add(record["id"])
+
+
+def stamp_records(incoming, existing, now):
+    """Keep first-recorded times; stamp new records without dating legacy history."""
+    for key in RECORD_LISTS:
+        records = incoming.get(key, [])
+        if not isinstance(records, list):
+            continue  # Validation reports malformed input without changing the page.
+        previous = existing.get(key, [])
+        for record in records:
+            if not isinstance(record, dict) or "recordedAt" in record:
+                continue
+            old = next((item for item in previous if
+                        (record.get("id") and item.get("id") == record["id"]) or
+                        {k: v for k, v in item.items() if k != "recordedAt"} == record), None)
+            if old is None:
+                record["recordedAt"] = now
+            elif "recordedAt" in old:
+                record["recordedAt"] = old["recordedAt"]
 
 
 def append_handoffs(existing, incoming):
@@ -632,11 +661,13 @@ def main():
             managed = incoming.keys() & {"updated", "path", "_progress"}
             if managed:
                 fail(f"managed fields cannot be supplied: {', '.join(sorted(managed))}")
+            now = datetime.now().astimezone().isoformat(timespec="seconds")
             if args.command == "init":
                 if path.exists():
                     fail(f"progress page already exists: {path}")
                 html = TEMPLATE.read_text(encoding="utf-8")
                 match, data = read_data(html)
+                stamp_records(incoming, {}, now)
                 data.update(incoming)
                 data.setdefault("handoffs", [])
                 gates = data.setdefault("gates", {})
@@ -653,6 +684,7 @@ def main():
                 html = path.read_text(encoding="utf-8")
                 match, data = read_data(html)
                 validate(data)
+                stamp_records(incoming, data, now)
                 if "handoffs" in incoming:
                     incoming["handoffs"] = append_handoffs(data.get("handoffs", []), incoming["handoffs"])
                 if "agents" in incoming:
@@ -701,7 +733,6 @@ def main():
                     incoming["gates"] = gates
                 data.update(incoming)
                 revision = data.get("_progress", {}).get("revision", 0) + 1
-            now = datetime.now().astimezone().isoformat(timespec="seconds")
             data["updated"] = now
             data["path"] = str(path)
             schema_version = 3 if args.command == "init" else data.get("_progress", {}).get("schemaVersion", 1)

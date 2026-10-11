@@ -81,6 +81,69 @@ class CliCase(unittest.TestCase):
 
 
 class ProgressCliTests(CliCase):
+    def test_record_times_saved_preserved_and_legacy_not_invented(self):
+        record = {"title": "First", "body": "evidence"}
+        receipt = self.init({"plan": [record], "agents": [self.agent("a")]})
+        first = self.data()["plan"][0]
+        self.assertEqual(first["recordedAt"], receipt["saved_at"])
+        self.invoke("update", self.page, "--checkpoint", "next", "--input", self.input_file({
+            "plan": [record, {"title": "Second", "body": "new"}], "agents": [{"id": "a", "status": "done"}]
+        }))
+        self.assertEqual(self.data()["plan"][0], first)
+        self.assertEqual(self.data()["agents"][0]["recordedAt"], receipt["saved_at"])
+        self.assertEqual(self.data()["plan"][1]["recordedAt"], self.data()["updated"])
+        # Simulate an existing page whose record predates timestamp support.
+        html = self.page.read_text()
+        import re
+        html = re.sub(r',?\s*"recordedAt": "[^"]+"', '', html)
+        self.page.write_text(html)
+        self.invoke("update", self.page, "--checkpoint", "legacy", "--input", self.input_file({"plan": [record]}))
+        self.assertNotIn("recordedAt", self.data()["plan"][0])
+
+    def test_all_record_types_get_time_and_handoff_retry_keeps_it(self):
+        record = {"title": "entry", "body": "evidence"}
+        handoff = HandoffTests.record()
+        handoff.pop("recordedAt")
+        task = PhaseTodoTests.task()
+        task.pop("recordedAt")
+        payload = {key: [dict(record)] for key in ("flow", "plan", "reviews", "decisions")}
+        payload.update(tasks=[task], agents=[self.agent("a")], handoffs=[handoff])
+        receipt = self.invoke("init", self.page, "--checkpoint", "start", "--input", self.input_file(payload))
+        for key in payload:
+            self.assertEqual(self.data()[key][0]["recordedAt"], receipt["saved_at"], key)
+        original = self.data()["handoffs"]
+        self.invoke("update", self.page, "--checkpoint", "retry", "--input", self.input_file({"handoffs": [handoff]}))
+        self.assertEqual(self.data()["handoffs"], original)
+
+    def test_invalid_record_times_rejected_atomically(self):
+        self.init()
+        before = self.page.read_bytes()
+        for value in (None, 12, "yesterday", "2026-10-11T10:00:00"):
+            result = self.run_cli("update", self.page, "--checkpoint", "bad-time", "--input", self.input_file({
+                "reviews": [{"title": "Review", "body": "result", "recordedAt": value}]
+            }))
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertEqual(self.page.read_bytes(), before)
+
+    def test_renderer_time_sort_is_stable_and_does_not_mutate_records(self):
+        html = TEMPLATE.read_text()
+        helpers = html[html.index("function recordTime("):html.index("function list(")]
+        result = subprocess.run(["node", "-e", "const assert = require('node:assert/strict');\n" + helpers + """
+const records = [
+  {id:'unknown'}, {id:'late',recordedAt:'2026-10-11T01:00:01Z'},
+  {id:'first',recordedAt:'2026-10-11T10:00:00+09:00'},
+  {id:'tie',recordedAt:'2026-10-11T01:00:00Z'}, {id:'invalid',recordedAt:'bad'}
+];
+const before = JSON.stringify(records);
+assert.deepEqual(chronological(records).map(x=>x.id), ['first','tie','late','unknown','invalid']);
+assert.equal(JSON.stringify(records), before);
+assert.equal(recordedTime(records[0]), '시간 미기록');
+const node=(tag,text)=>({tag,text,children:[],append(...items){this.children.push(...items)}});
+assert.equal(timestamp(records[0]).textContent, '시간 미기록');
+assert.equal(timestamp(records[2]).children[1].dateTime, records[2].recordedAt);
+"""], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_partial_agent_update_preserves_existing_fields_and_other_agents(self):
         self.init({"agents": [self.agent("a", model="model-a", dependsOn=["b"]), self.agent("b", name="Bee")]})
         self.invoke("update", self.page, "--checkpoint", "agent-a", "--input", self.input_file({"agents": [{"id": "a", "status": "done", "result": "finished"}]}))
@@ -509,7 +572,7 @@ class HandoffTests(CliCase):
     @staticmethod
     def record(record_id="plan-1", transition="planning-to-implementation", revision="p1", **changes):
         return dict(dict(id=record_id, transition=transition, round=1, revision=revision, outcome="ready",
-                         summary="다음 단계 인수", evidence=["tool call 1 completed"], next=["dispatch owner"], pending=[]), **changes)
+                         recordedAt="2026-10-11T10:00:00+09:00", summary="다음 단계 인수", evidence=["tool call 1 completed"], next=["dispatch owner"], pending=[]), **changes)
 
     def init_current(self, handoffs=None):
         self.invoke("init", self.page, "--checkpoint", "kickoff", "--input", self.input_file({
@@ -652,7 +715,7 @@ class HandoffTests(CliCase):
 class PhaseTodoTests(CliCase):
     @staticmethod
     def task(**changes):
-        return dict(dict(id="build", phase="Implementation", title="Build API", owner="backend", status="pending", evidence=""), **changes)
+        return dict(dict(id="build", phase="Implementation", title="Build API", owner="backend", status="pending", evidence="", recordedAt="2026-10-11T10:00:00+09:00"), **changes)
 
     def patch_tasks(self, tasks, **fields):
         return self.run_cli("update", self.page, "--checkpoint", "todo", "--input", self.input_file(dict(tasks=tasks, **fields)))
