@@ -120,7 +120,7 @@ def validate(data, strict_dependency_ids=()):
         ids = set()
         fields = {"id", "phase", "title", "owner", "status", "evidence"}
         for task in data["tasks"]:
-            if not isinstance(task, dict) or task.keys() - {"recordedAt"} != fields or any(not isinstance(task[field], str) for field in fields):
+            if not isinstance(task, dict) or task.keys() - ({"recordedAt", "supersededBy"} if v4 else {"recordedAt"}) != fields or any(not isinstance(task[field], str) for field in fields):
                 fail("tasks entries must contain string id, phase, title, owner, status, evidence and optional recordedAt")
             if any(not task[field].strip() for field in ("id", "phase", "title", "owner")):
                 fail("task id, phase, title and owner must be nonempty")

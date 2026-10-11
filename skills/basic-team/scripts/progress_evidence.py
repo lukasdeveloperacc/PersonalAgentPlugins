@@ -158,6 +158,15 @@ def validate(data):
         if set(agent) & {'status','tone','result','reported','observation','dependsOn'}: fail('agent state must be derived')
     for task in tasks.values():
         if set(task) & {'status','tone','result'}: fail('task state must be derived')
+    selected = indexes['assignmentBatches'].get(data.get('gates',{}).get('reviewBatch'),{})
+    required_tasks = {assignments[aid]['taskId'] for aid in selected.get('requiredAssignments',[]) if aid in assignments}
+    for task in tasks.values():
+        chain = {task['id']}; current = task
+        while 'supersededBy' in current:
+            replacement = current['supersededBy']
+            if not isinstance(replacement,str) or replacement not in tasks or replacement in chain: fail('supersededBy must name an existing task without cycles')
+            if current['id'] in required_tasks: fail('current required review task cannot be superseded')
+            chain.add(replacement); current = tasks[replacement]
     if 'verdicts' in data.get('gates', {}): fail('verdicts must be derived')
     for aid, assignment in assignments.items():
         if assignment.get('taskId') not in tasks or assignment.get('agentId') not in agents: fail('assignment task/agent missing')
@@ -288,35 +297,55 @@ def project(data):
     current_tasks = {indexes['assignments'][aid]['taskId'] for aid in current_assignments}
     batches = data.get('assignmentBatches',[])
     selected_batch_index = next((i for i,b in enumerate(batches) if b['id']==batch), -1)
+    labels={'pending':'대기중','in_progress':'진행중','done':'완료'}
+    assignment_views=[]
+    for assignment in data.get('assignments',[]):
+        aid=assignment['id']; obs=latest.get(aid,{}); kind=obs.get('kind','unknown')
+        source=indexes['evidence'].get(obs.get('evidenceId'),{})
+        results=[o for o in data.get('observations',[]) if o['assignmentId']==aid and o['kind'] in ('result_received','blocked')]
+        result=results[-1] if results else {}; body=bodies.get(result.get('evidenceId'),{})
+        report=next((r for r in verdicts.values() if r['assignmentId']==aid),None)
+        blocked=kind=='blocked' or result.get('kind')=='blocked' or bool(report and report['verdict']=='BLOCKED')
+        done=not blocked and (bool(report and report['verdict']=='PASS') or ('artifactId' not in assignment and body.get('completed') is True))
+        status='done' if done else 'in_progress' if hosts.get(aid) or kind not in ('queued','unknown') else 'pending'
+        blocker=body.get('blocker','') if blocked else ''
+        if not isinstance(blocker,str): blocker=''
+        if report and report['verdict']!='PASS':
+            blocker='; '.join(f['requiredFix'] for f in report['findings'] if f['severity']=='required') or report['verdict']
+        detail=body.get('summary') or body.get('result') or ('; '.join(body['verification']) if done and not report else '')
+        if not isinstance(detail,str): detail=''
+        assignment_views.append({'id':aid,'taskId':assignment['taskId'],'agentId':assignment['agentId'],'status':status,'label':labels[status],'tone':'warn' if blocked or (report and report['verdict']!='PASS') else 'good' if done else 'neutral','done':done,'blocked':blocked,'blocker':blocker,'result':detail,'resultEvidenceId':report['reportEvidence'] if report else result.get('evidenceId'),'hostAgentId':hosts.get(aid),'observedAt':source.get('observedAt'),'evidenceId':obs.get('evidenceId')})
     task_views=[]
     for task in data.get('tasks',[]):
         task_assignments=[a for a in data.get('assignments',[]) if a['taskId']==task['id']]
         owned=[a for a in task_assignments if a['agentId']==task['owner']]
-        assignment=owned[-1] if owned else {}; obs=latest.get(assignment.get('id'),{}); kind=obs.get('kind','unknown'); label=LABELS[kind]; tone='warn' if kind=='blocked' else 'neutral'
-        report=next((r for r in verdicts.values() if r['assignmentId']==assignment.get('id')),None)
-        if report: label={'PASS':'검토 PASS 보고','CHANGES_REQUIRED':'수정 요청 보고','BLOCKED':'검토 막힘 보고'}[report['verdict']]; tone='good' if report['verdict']=='PASS' else 'warn'
-        if 'artifactId' in assignment and (problems or assignment['artifactId'] != target or assignment['id'] not in indexes['assignmentBatches'].get(batch,{}).get('requiredAssignments',[])): label='재검토 필요'; tone='warn'
-        containing_batches = [i for i,b in enumerate(batches) if assignment.get('id') in b['requiredAssignments']]
-        applicable = not (selected_batch_index >= 0 and task['id'] not in current_tasks and 'artifactId' in assignment and containing_batches and all(i < selected_batch_index for i in containing_batches))
-        if not applicable: label='이전 검토 작업'; tone='neutral'
-        source=indexes['evidence'].get(obs.get('evidenceId'),{})
-        results=[o for o in data.get('observations',[]) if o['assignmentId']==assignment.get('id') and o['kind'] in ('result_received','blocked')]
-        result=results[-1] if results else {}
-        body=bodies.get(result.get('evidenceId'),{})
-        blocked=kind=='blocked' or result.get('kind')=='blocked'
-        done=not blocked and (bool(report and report['verdict']=='PASS') or ('artifactId' not in assignment and body.get('completed') is True))
-        if task['id'] in current_tasks and assignment.get('id') not in current_assignments: done=False
-        if task['owner']=='main':
-            leader_results=[e for e in indexes['evidence'].values() if e.get('purpose')=='leader_task_result' and bodies[e['id']]['taskId']==task['id']]
-            if leader_results:
-                source=leader_results[-1]; body=bodies[source['id']]; done=body['completed']; blocked=False
-                label='리더 완료 보고' if done else '리더 미완료 보고'; tone='neutral'
-                obs={'evidenceId':source['id']}; result=obs
-        if blocked: label='막힘 보고'; tone='warn'
-        task_views.append({'id':task['id'],'applicable':applicable,'status':'done' if done else 'blocked' if blocked else 'pending','label':label,'tone':tone,'done':done,'resultEvidenceId':report['reportEvidence'] if report else result.get('evidenceId'),'assignmentId':assignment.get('id'),'agentId':task['owner'],'hostAgentId':hosts.get(assignment.get('id')),'observedAt':source.get('observedAt'),'evidenceId':obs.get('evidenceId')})
-    agent_views=[{'id':a['id'],'status':'저장된 작업 관측','label':'저장된 작업 관측','tone':'neutral','observedAt':None} for a in data.get('agents',[])]
+        # Main owns grouped reviews; each reviewer's latest assignment still matters.
+        selected=list({a['agentId']:a for a in task_assignments}.values()) if task['owner']=='main' else owned[-1:]
+        if task['owner']=='main' and task['id'] in current_tasks:
+            selected=[a for a in task_assignments if a['id'] in current_assignments]
+        members=[v for v in assignment_views if v['id'] in {a['id'] for a in selected}]
+        containing_batches=[i for i,b in enumerate(batches) if any(a['id'] in b['requiredAssignments'] for a in task_assignments)]
+        is_review=any('artifactId' in a for a in task_assignments)
+        applicable=not task.get('supersededBy') and not (selected_batch_index>=0 and task['id'] not in current_tasks and is_review and containing_batches and all(i<selected_batch_index for i in containing_batches))
+        done=bool(members) and all(v['done'] for v in members)
+        if is_review and (problems or any(a.get('artifactId')!=target or a['id'] not in current_assignments for a in selected)): done=False
+        if task['id'] in current_tasks and not current_assignments.intersection(a['id'] for a in selected): done=False
+        blocked=any(v['blocked'] for v in members)
+        status='done' if done else 'in_progress' if any(v['status']!='pending' for v in members) else 'pending'
+        first=members[-1] if members else {}
+        leader_results=[e for e in indexes['evidence'].values() if e.get('purpose')=='leader_task_result' and bodies[e['id']]['taskId']==task['id']]
+        if leader_results:
+            source=leader_results[-1]; body=bodies[source['id']]; done=body['completed']; status='done' if done else 'in_progress'
+            first={'observedAt':source.get('observedAt'),'evidenceId':source['id'],'resultEvidenceId':source['id'],'result':'; '.join(body['verification'])}
+        task_views.append({'id':task['id'],'applicable':applicable,'status':status,'label':labels[status],'tone':'warn' if blocked else 'good' if done else 'neutral','done':done,'blocked':blocked,'blocker':'; '.join(v['blocker'] for v in members if v['blocker']),'result':first.get('result',''),'resultEvidenceId':first.get('resultEvidenceId'),'assignmentId':selected[-1]['id'] if len(selected)==1 else None,'assignmentIds':[a['id'] for a in selected],'agentId':task['owner'],'agentIds':[a['agentId'] for a in selected],'hostAgentId':first.get('hostAgentId'),'observedAt':first.get('observedAt'),'evidenceId':first.get('evidenceId')})
+    active_ids={aid for t in task_views if t['applicable'] for aid in t['assignmentIds']}
+    agent_views=[]
+    for agent in data.get('agents',[]):
+        members=[v for v in assignment_views if v['id'] in active_ids and v['agentId']==agent['id']]
+        status='done' if members and all(v['done'] for v in members) else 'in_progress' if any(v['status']!='pending' for v in members) else 'pending'
+        agent_views.append({'id':agent['id'],'status':status,'label':labels[status],'tone':'warn' if any(v['blocked'] for v in members) else 'good' if status=='done' else 'neutral','observedAt':members[-1]['observedAt'] if members else None})
     if not batch or not verdicts: problems.append('REVIEW_PENDING: complete current frozen batch has no applicable published reports')
-    problems += [f"TASK_BLOCKED: {t['id']} has an unresolved blocked observation" for t in task_views if t['applicable'] and t['status']=='blocked']
+    problems += [f"TASK_BLOCKED: {t['id']} has an unresolved blocked observation" for t in task_views if t['applicable'] and t['blocked']]
     problems += [f"REVIEW_{r['verdict']}: {name} reported {r['verdict']}" for name,r in verdicts.items() if r['verdict'] != 'PASS']
     relations = [r for r in data.get('relations',[]) if (r['kind'] != 'contributes' or r['to']['id'] == target) and (r['kind'] != 'review_assignment' or r.get('assignmentId') in current_assignments)]
-    return {'verifiedAt':datetime.now().astimezone().isoformat(timespec='seconds'),'problems':problems,'tasks':task_views,'agents':agent_views,'verdicts':verdicts,'reviews':list(verdicts.values()),'relations':[{**r, **({'deliveryState':bodies[r['evidenceId']]['state']} if r['kind']=='delivery' else {})} for r in relations]}
+    return {'verifiedAt':datetime.now().astimezone().isoformat(timespec='seconds'),'problems':problems,'tasks':task_views,'assignments':assignment_views,'agents':agent_views,'verdicts':verdicts,'reviews':list(verdicts.values()),'relations':[{**r, **({'deliveryState':bodies[r['evidenceId']]['state']} if r['kind']=='delivery' else {})} for r in relations]}

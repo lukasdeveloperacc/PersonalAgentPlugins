@@ -326,7 +326,7 @@ def _progress(args, event, session=None, turn=None) -> int:
             continue
         if event.get("tool_name") in ("Agent", "spawn_agent"):
             _log_spawn(run, event)
-        return _emit(f"Basic-team run is active. Reconcile received progress and save verified new facts to {run['page']} before dependent dispatch or briefing. Reuse this page; no new facts means no rewrite.")
+        return _emit(f"Basic-team run is active. Reconcile received facts, dispatch ready work within the released phase, then batch new facts to {run['page']}. Save required phase-gate inputs before changing phases. No new facts means no rewrite.")
     return 0
 
 

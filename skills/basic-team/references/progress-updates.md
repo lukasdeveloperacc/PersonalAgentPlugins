@@ -129,45 +129,46 @@ Save `taskPlanRevision` (source plan revision) and `tasks` at the top level. Sch
 {"taskPlanRevision":"plan-r1","tasks":[{"id":"api-1","phase":"Phase 1 · 구현","title":"할 일 저장 API 구현","owner":"backend-1","status":"done","evidence":"API 테스트 통과 · 구현 r1 · 실행 결과 경로"},{"id":"ui-1","phase":"Phase 1 · 구현","title":"할 일 입력 화면 구현","owner":"frontend-1","status":"in_progress","evidence":"입력창 구현 보고 수신, 연결 검증 대기"},{"id":"verify-1","phase":"Phase 2 · 검증","title":"연결된 사용 흐름 검증","owner":"e2e","status":"pending","evidence":""}]}
 ```
 
-`tasks` replaces the full snapshot, like `plan`; include every retained task on each task update. A status-only fragment is invalid. Reopen affected tasks and replace stale evidence after fixes; remove tasks only when an approved scope change removes them. Save independent review outcomes together after the full set arrives. The renderer groups by first Phase occurrence and derives completed counts from evidence-backed task views in schema 4 (legacy: saved statuses); counts are not effort estimates.
+`tasks` replaces the full snapshot, like `plan`; include every retained task on each task update. A status-only fragment is invalid. Reopen affected tasks and replace stale evidence after fixes; remove tasks only when an approved scope change removes them. For an approved plan task replacement, retain the old task as history with `supersededBy` naming its replacement; exclude it from current counts without calling it complete. Save independent review outcomes together after the full set arrives. The renderer groups by first Phase occurrence and derives completed counts from evidence-backed task views in schema 4 (legacy: saved statuses); counts are not effort estimates.
 
 New pages contain `tasks:[]`. When this field is present, each gate requires a nonempty checklist whose `taskPlanRevision` matches `gates.planApproved`; `complete` also requires all tasks to be `done`. `ready` uses the existing review/validation checks and does not require all TODOs done, allowing cleanup to proceed; the all-done check belongs only to `complete`. Old pages without `tasks` retain their existing gates and renderer. Use the new template on the next run; explicit regeneration limits are in evidence-progress.md. The checklist does not replace native task state or real validation.
 
 ### Checkpoint order
 
-Collect already-received facts into one patch, save, inspect the successful receipt, then dispatch dependent work or brief the user. Do not wait for unrelated agents to finish. Save these events:
+Within a released phase, dispatch newly ready tasks from verified prerequisites before batching the received facts into one checkpoint. Do not wait for unrelated agents or perform one save per reply. Save these meaningful events:
 
-- Kickoff and assignment: record queued/not-launched assignments before launching, then record the actual launch outcome. Do not call a queued agent active.
+- Kickoff and assignment: freeze obligations before launching; batch assignment and actual launch receipts without a separate HTML roundtrip per child. Queued assignments remain 대기중; accepted dispatch moves workflow status to 진행중 (responsibility accepted), without claiming observed live execution.
 - Planning: save approved plan revision, allocation/contracts, and relevant plan-review transitions before implementation starts.
-- Implementation: save consumed agent reports, milestone completion, changed scope, and pending integration before dependent dispatch.
+- Implementation: batch received reports, milestone completion, changed scope and pending integration. Ready tasks inside the released phase need real prerequisite evidence, not a fresh HTML receipt.
 - Review: save review start/collection state; keep independent verdicts and findings out of all page data until all required reviews arrive. Then save their combined results against the actual fixed review target.
 - Fixes: mark affected verdicts superseded before another review round. Save blockers, browser cleanup results, and other changes needed for the next decision.
 - Completion or cancellation: save the final observed state. Completion requires no pending progress updates as well as the skill's implementation, review, and cleanup gates.
 
-Mark a report handled only after its required save succeeds. Deduplicate already-handled reports. On save failure, keep the patch pending, disclose the error and last confirmed save, and repair/retry. Do not announce completion or cross a dependent stage whose checkpoint failed. Unaffected independent work can continue. There is no timer, extra progress agent, or periodic polling.
+Track consumed outcomes separately from pending page patches: consume each outcome once, and clear its pending patch only after a successful save. On save failure, retain the patch and last confirmed receipt, repair/retry at the next checkpoint, and disclose the gap. Continue ready authorized work within the released phase; required phase gates and final completion still need their saved evidence. There is no timer, extra progress agent, or periodic polling.
 
-Every briefing includes `진행판: [<작업명>](<절대 경로>) — <절대 경로> · 마지막 저장: <확인된 시각>`. Use the receipt's actual timestamp. When no facts changed, reuse the last confirmed receipt without another write.
+Every briefing includes `진행판: [<작업명>](<절대 경로>) · 마지막 저장: <확인된 시각>`; the absolute path stays in the link and page copy control. Use the receipt's actual timestamp. When no facts changed, reuse the last confirmed receipt without another write.
 
-## Required briefing template
+## Routine briefings
 
-Use this for kickoff, plan, progress, review, blocker, resume, and completion. Fill every line in plain Korean unless the user requests another language; keep technical identifiers intact. Use known facts, not expected outcomes.
+Keep routine updates short and factual, for example:
 
 ```text
-쉬운 요약: <무엇을 했는지 → 확인한 결과 또는 남은 일 → 다음 행동>
-진행판: [<작업명>](<절대 경로>) — <절대 경로> · 마지막 저장: <successful receipt.saved_at>
-단계 / revision: <현재 단계와 확인 대상>
-산출물: <이번 단계 handoff/계획/검증 자료 링크와 경로, 또는 아직 없음과 이유>
-확인 / 빈틈: <명령·exit code·확인한 revision·결과, 또는 미실행/막힘과 이유>
-Hook: arm 요청 <미요청/접수/실패> · 등록 <확인/미확인/사용 불가> · disarm 요청 <미요청/접수/실패> · 해제 <확인/미확인/사용 불가> · <run_id와 근거, 또는 없음> · <필요하면 수동 체크포인트>
+현재: 독립 리뷰 · 4명 중 2명 결과 수신
+완료: 구현·통합·필수 검사
+남은 일: 리뷰 결과 처리 → 최종 확인
+막힌 일: 없음
+진행판: [<작업명>](<절대 경로>) · 마지막 저장: <confirmed receipt.saved_at>
 ```
 
-If the page has not been saved successfully, report that gap and omit a nonexistent link or fabricated timestamp. When it exists, reuse the same confirmed receipt. The hook line records request acceptance and actual confirmation separately even when no new facts arrived; do not write again just to repeat it. A missing hook confirmation uses manual checkpoints and never removes the ELI5, link/path/time, or handoff requirements.
+Use only **대기중 / 진행중 / 완료** for task and agent status. Not started is 대기중; accepted responsibility, work, review, fixes or a blocked started task is 진행중; 완료 requires acceptance evidence (reviews require the complete published batch). Show a short blocker reason beside 진행중. Receipt counts may be exposed during review collection, but findings and verdicts stay private until the complete set arrives. Events such as 호출 수락/결과 수신 and verdicts are details, not statuses.
+
+Put commands, revision/hash identities, artifact links, model/effort and hook request/confirmation evidence in expandable details and the final compliance report instead of repeating them in each update. Mention relevant validation gaps or reporting failures briefly. If no successful save exists, disclose that and omit a nonexistent link or timestamp. Reuse the confirmed receipt when no facts changed; missing hook confirmation uses manual checkpoints without slowing ready work.
 
 ## Resume
 
 Before compaction or handoff, preserve the exact page path, last confirmed checkpoint/revision/save time, unsaved patches, outstanding agent/task IDs, and actual implementation/review target. Put this in the existing handoff or context summary; do not write hook-owned OMX runtime state.
 
-On resume, run `status` and read the relevant `handoffs` records on that exact page; reconcile them with real host messages and current repository evidence. Existing external handoff paths from older runs remain valid read-only recovery evidence; do not recreate or migrate them merely to resume. Restore pending updates before dependent dispatch or briefing. The saved stage and IDs are diagnostic information, never execution authority. Do not find a run by selecting the newest file or create a replacement page automatically. For an older page without checkpoint metadata, inspect its saved JSON and use the first verified `update` to adopt it; do not fabricate a previous receipt.
+On resume, run `status` and read the relevant `handoffs` records on that exact page; reconcile them with real host messages and current repository evidence. Existing external handoff paths from older runs remain valid read-only recovery evidence; do not recreate or migrate them merely to resume. Restore pending updates before a required phase gate or final completion; after reconciling actual prerequisites, independent work in an already released phase may continue. The saved stage and IDs are diagnostic information, never execution authority. Do not find a run by selecting the newest file or create a replacement page automatically. For an older page without checkpoint metadata, inspect its saved JSON and use the first verified `update` to adopt it; do not fabricate a previous receipt.
 
 ## Scoped nonblocking host reminders
 

@@ -57,7 +57,7 @@ class SnapshotTests(unittest.TestCase):
 
     def test_pending_and_current_pass_then_untracked_invalidates(self):
         data=self.fixture(); view=ev.project(data)
-        self.assertFalse(view['verdicts']); self.assertEqual(view['tasks'][0]['label'],'호출 수락'); self.assertIsNone(view['tasks'][0]['observedAt'])
+        self.assertFalse(view['verdicts']); self.assertEqual(view['tasks'][0]['label'],'진행중'); self.assertIsNone(view['tasks'][0]['observedAt'])
         self.publish(data); self.assertEqual(len(ev.project(data)['verdicts']),2)
         self.assertEqual(ev.project(data)['tasks'][0]['resultEvidenceId'],'report-k')
         (self.root/'src/new.py').write_text('untracked')
@@ -119,6 +119,57 @@ class SnapshotTests(unittest.TestCase):
         data['gates'].pop('reviewBatch')
         self.assertTrue(all(t['applicable'] for t in ev.project(data)['tasks']))
 
+    def test_main_owned_multi_reviewer_task_tracks_every_assignment(self):
+        data=self.fixture()
+        data['tasks']=[{'id':'reviews','owner':'main','phase':'review','title':'Reviews'}]
+        for assignment in data['assignments']: assignment['taskId']='reviews'
+        view=ev.project(data); task=view['tasks'][0]
+        self.assertEqual(task['status'],'in_progress')
+        self.assertEqual(task['assignmentIds'],['a-k','a-p'])
+        self.assertEqual({a['status'] for a in view['agents']},{'in_progress'})
+        self.publish(data)
+        task=ev.project(data)['tasks'][0]
+        self.assertTrue(task['done']); self.assertEqual(task['label'],'완료')
+        (self.root/'src/a.py').write_text('changed again')
+        self.assertEqual(ev.project(data)['tasks'][0]['status'],'in_progress')
+
+    def test_grouped_review_ignores_reviewers_not_required_by_current_batch(self):
+        data=self.fixture()
+        data['tasks']=[{'id':'reviews','owner':'main','phase':'review','title':'Reviews'}]
+        for assignment in data['assignments']: assignment['taskId']='reviews'
+        data['agents'].append({'id':'e2e','name':'E2E','role':'reviewer','area':'all'})
+        data['assignments'].append(dict(data['assignments'][0],id='old-e2e',agentId='e2e'))
+        data['assignmentBatches'].insert(0,{'id':'old-batch','artifactId':'r1','requiredAssignments':['a-k','a-p','old-e2e']})
+        self.publish(data)
+        view=ev.project(data); task=view['tasks'][0]
+        self.assertTrue(task['done'])
+        self.assertEqual(task['assignmentIds'],['a-k','a-p'])
+        self.assertEqual(len(data['assignments']),3)
+        self.assertEqual(len(view['assignments']),3)
+
+    def test_queued_and_result_receipt_are_not_completed(self):
+        data=self.fixture()
+        data['observations']=[]; data['evidence']=data['evidence'][:1]
+        self.assertEqual({t['status'] for t in ev.project(data)['tasks']},{'pending'})
+        data=self.fixture()
+        data['evidence'].append({'id':'receipt','source':'child_report','sourceRef':None,'observedAt':None,'captured':{'assignmentId':'a-k','hostAgentId':'host-k','receipt':True}})
+        data['observations'].append({'id':'receipt','kind':'result_received','assignmentId':'a-k','evidenceId':'receipt'})
+        task=ev.project(data)['tasks'][0]
+        self.assertEqual(task['status'],'in_progress'); self.assertFalse(task['done'])
+
+    def test_superseded_plan_is_excluded_without_erasing_history(self):
+        data=self.fixture()
+        data['tasks'] += [{'id':'old-plan','owner':'main','phase':'planning','title':'Old','supersededBy':'new-plan'}, {'id':'new-plan','owner':'main','phase':'planning','title':'New'}]
+        self.assertFalse(ev.project(data)['tasks'][-2]['applicable'])
+        self.assertEqual(len(data['tasks']),4)
+        for replacement in ('missing','old-plan'):
+            invalid=copy.deepcopy(data); invalid['tasks'][-2]['supersededBy']=replacement
+            with self.assertRaises(ValueError): ev.project(invalid)
+        invalid=copy.deepcopy(data); invalid['tasks'][-1]['supersededBy']='old-plan'
+        with self.assertRaises(ValueError): ev.project(invalid)
+        invalid=copy.deepcopy(data); invalid['tasks'][0]['supersededBy']='new-plan'
+        with self.assertRaises(ValueError): ev.project(invalid)
+
     def test_whole_root_scope_is_not_empty_and_prunes_git(self):
         manifest=ev.snapshot(str(self.root),'HEAD',['.'],[])
         self.assertEqual([c['path'] for c in manifest['changes']],['src/a.py'])
@@ -138,7 +189,8 @@ class SnapshotTests(unittest.TestCase):
         data['evidence'].append({'id':'review-blocked','source':'child_report','sourceRef':None,'observedAt':None,'captured':{'assignmentId':'a-k','hostAgentId':'host-k','blocker':'required tool failed'}})
         data['observations'].append({'id':'review-blocked','kind':'blocked','assignmentId':'a-k','evidenceId':'review-blocked'})
         view=ev.project(data); task=view['tasks'][0]
-        self.assertFalse(task['done']); self.assertEqual(task['status'],'blocked'); self.assertEqual(task['label'],'막힘 보고'); self.assertEqual(task['tone'],'warn'); self.assertEqual(task['label'],'막힘 보고'); self.assertEqual(task['tone'],'warn')
+        self.assertFalse(task['done']); self.assertEqual(task['status'],'in_progress'); self.assertEqual(task['label'],'진행중'); self.assertEqual(task['tone'],'warn')
+        self.assertEqual(task['blocker'],'required tool failed')
         self.assertEqual(view['verdicts']['karpathy']['verdict'],'PASS')
         self.assertTrue(any(p.startswith('TASK_BLOCKED:') for p in view['problems']))
 
@@ -174,7 +226,8 @@ class SnapshotTests(unittest.TestCase):
 
     def test_task_completion_survives_termination_not_replacement(self):
         data=self.executor(self.fixture())
-        task=ev.project(data)['tasks'][-1]; self.assertTrue(task['done']); self.assertEqual(task['label'],'종료 관측')
+        task=ev.project(data)['tasks'][-1]; self.assertTrue(task['done']); self.assertEqual(task['label'],'완료')
+        self.assertEqual(task['result'],'test command exit 0')
         data['assignments'].append({'id':'build-replacement','taskId':'build','agentId':'executor'})
         self.assertFalse(ev.project(data)['tasks'][-1]['done'])
         data['evidence'][-2]['source']='leader_record'
@@ -188,7 +241,7 @@ class SnapshotTests(unittest.TestCase):
         self.assertFalse(ev.project(data)['tasks'][-1]['done'])
         data['observations'].append(stop)
         task=ev.project(data)['tasks'][-1]
-        self.assertFalse(task['done']); self.assertEqual(task['status'],'blocked'); self.assertEqual(task['label'],'막힘 보고'); self.assertEqual(task['tone'],'warn')
+        self.assertFalse(task['done']); self.assertEqual(task['status'],'in_progress'); self.assertEqual(task['label'],'진행중'); self.assertEqual(task['tone'],'warn')
 
     def complete_fixture(self):
         import progress
@@ -306,7 +359,7 @@ class SnapshotTests(unittest.TestCase):
         base=self.fixture(); base['tasks'].append({'id':'cleanup','owner':'main','phase':'completion','title':'Cleanup'})
         data=copy.deepcopy(base); data['evidence'].append(record)
         task=ev.project(data)['tasks'][-1]
-        self.assertTrue(task['done']); self.assertIsNone(task['hostAgentId']); self.assertEqual(task['label'],'리더 완료 보고')
+        self.assertTrue(task['done']); self.assertIsNone(task['hostAgentId']); self.assertEqual(task['label'],'완료')
         for change in ({'taskId':'t-k'},{'verification':[]},{'completed':'yes'}):
             data=copy.deepcopy(base); invalid=copy.deepcopy(record); invalid['captured'].update(change); data['evidence'].append(invalid)
             with self.assertRaises(ValueError): ev.project(data)
@@ -354,7 +407,7 @@ class V4CliTests(SnapshotTests):
         result=self.call('init',page,'--checkpoint','start',payload=self.fixture())
         self.assertEqual(result.returncode,0,result.stderr)
         result=self.call('status',page); self.assertEqual(result.returncode,0,result.stderr)
-        self.assertEqual(json.loads(result.stdout)['_view']['tasks'][0]['label'],'호출 수락')
+        self.assertEqual(json.loads(result.stdout)['_view']['tasks'][0]['label'],'진행중')
         self.assertEqual(json.loads(result.stdout)['lifecycleObservationsDigest'],ev.digest(self.fixture()['observations']))
         before=page.read_bytes()
         for patch in ({'agents':[{'id':'karpathy','status':'PASS'}]},{'assignments':None},{'gates':None},{'assignmentBatches':None},{'observations':[{'id':'bad','kind':'queued','assignmentId':[],'evidenceId':'dispatch-k'}]},{'gates':{'verdicts':{'karpathy':{'verdict':'PASS'}}}}):

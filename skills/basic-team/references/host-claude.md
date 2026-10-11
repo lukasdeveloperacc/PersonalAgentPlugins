@@ -18,7 +18,7 @@ BLOCKED example: an organization limit rejects `effort:"max"` on an Executor cal
 
 ## Coordination and exit
 
-Delegate messaging, idle/resume, supported event waits and native task lifecycle to the invoked team. No second mailbox polling loop. Reuse assigned idle teammates for fixes with changed findings/revision; recover existing assignments on resume and consume duplicate outcomes once after the progress receipt succeeds.
+Delegate messaging, idle/resume, supported event waits and native task lifecycle to the invoked team. No second mailbox polling loop. Prefer role/model-compatible idle teammates for sequential integration, verification and fixes, with a new task brief and explicit ownership; recover existing assignments on resume and consume each outcome once using its source identity; batch its progress record without delaying ready work.
 
 Basic-team's required-pass continuation overrides team's default max_fix_loops preference for a new run, but never reset/bypass a mandatory runtime cap. A cap preventing work means BLOCKED with remaining findings.
 
@@ -26,7 +26,7 @@ On success/cancellation/failure, request shutdown once, wait team's documented t
 
 ## Source-bound progress records
 
-Follow [evidence-progress.md](evidence-progress.md). Before dispatch save the assignment/task identity; bind it once to the actual host-returned identity on acceptance. Capture accepted call, child report, send receipt and recipient acknowledgement as different source records. If the host exposes no stable source reference or event time, record null/unknown with clearly labeled captured content; never invent telemetry or treat save time as event time. A captured file hash proves byte consistency, not host authenticity.
+Follow [evidence-progress.md](evidence-progress.md). Before dispatch, freeze the assignment/task identity in the brief input; bind it once to the actual host-returned identity on acceptance. Inside a released phase, dispatch ready tasks before batching these records into the next HTML checkpoint. Save required phase-gate inputs before crossing a phase boundary. Capture accepted call, child report, send receipt and recipient acknowledgement as different source records. If the host exposes no stable source reference or event time, record null/unknown with clearly labeled captured content; never invent telemetry or treat save time as event time. A captured file hash proves byte consistency, not host authenticity.
 
 Reusing an idle agent for fixes requires a new assignment for the new obligations/revision; replacing an agent requires a new assignment and accepted identity. Previous results cannot complete the replacement task. Result received is neither PASS nor host termination. Before all independent reports arrive, save only redacted receipts and immediate tool blockers; keep report paths, bodies and outcomes in the leader’s private collection. Never infer delivery acknowledgement from a successful send.
 

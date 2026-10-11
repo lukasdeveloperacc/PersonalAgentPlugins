@@ -35,9 +35,24 @@ function fixture(name, payload) {
       const page=await browser.newPage({viewport:{width,height}}),errors=[];
       page.setDefaultTimeout(10000);page.on('pageerror',error=>errors.push(error.message));
       await page.goto(fixture('graph-'+width,data));
-      await page.getByRole('tab',{name:'에이전트 진행'}).click();
-      await page.waitForFunction(()=>document.querySelectorAll('.graphedge').length===10);
-      const edges=await page.locator('.graphedge').evaluateAll(items=>items.map(el=>({id:el.dataset.id,kind:el.dataset.kind,from:el.dataset.from,to:el.dataset.to,animation:getComputedStyle(el.querySelector('path')).animationName})));
+      const compact=JSON.parse(JSON.stringify(data));
+      compact.summary='전체 검증 중';compact.stage='저장된 관측';
+      compact.flow=[{title:'통합 진행 중',body:'오래된 수동 기록'}];
+      compact._view.tasks.forEach((task,i)=>Object.assign(task,{status:i<6?'done':'in_progress',label:'결과 수신'}));
+      await page.goto(fixture('compact-'+width,compact));
+      assert.equal(await page.locator('#stage').innerText(),'진행중');
+      assert.match(await page.locator('#summary').innerText(),/현재:.*검토.*4개 진행중/s);
+      assert.match(await page.locator('#summary').innerText(),/완료:.*6/s);
+      assert.doesNotMatch(await page.locator('#summary').innerText(),/전체 검증 중/);
+      assert.equal(await page.getByText('통합 진행 중',{exact:true}).count(),0);
+      assert.equal(await page.locator('#tasks .badge').evaluateAll(items=>items.every(el=>['대기중','진행중','완료'].includes(el.textContent))),true);
+      assert.equal(await page.locator('#tasks input:checked').count(),6);
+      assert.equal(await page.locator('#agent-graph').isVisible(),false);
+      await page.screenshot({path:path.join(root,'overview-'+width+'.png'),fullPage:true});
+      await page.goto(fixture('graph-'+width,data));
+      await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
+      await page.waitForFunction(()=>document.querySelectorAll('.graphedge').length===10&&getComputedStyle(document.querySelector('.graphedge path')).animationName==='none');
+      const edges=await page.evaluate(()=>[...document.querySelectorAll('.graphedge')].map(el=>({id:el.dataset.id,kind:el.dataset.kind,from:el.dataset.from,to:el.dataset.to,animation:getComputedStyle(el.querySelector('path')).animationName})));
       assert.equal(edges.filter(e=>e.kind==='contributes').length,6);
       assert.equal(edges.filter(e=>e.kind==='review_assignment').length,4);
       for(const edge of edges) {
@@ -50,7 +65,7 @@ function fixture(name, payload) {
       assert.equal(await page.locator('.relationrecords details').count(),10);
       assert.equal(await page.locator('img').count(),0,'report values must remain text');
       assert.match(await page.locator('.snapshot-note').innerText(),/실시간 상태가 아닙니다/);
-      assert.match(await page.locator('.nodereport').first().innerText(),/미확인/);
+      assert.equal(await page.locator('#agent-graph .nodemodel, #agent-graph .nodereport').count(),0,'repeated model/time metadata belongs in task details');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no horizontal page overflow');
       const first=page.locator('.agentnode').first();
       await first.focus();await page.keyboard.press('Enter');
@@ -65,7 +80,7 @@ function fixture(name, payload) {
       assert.match(await page.locator('.relationrecords details').first().innerText(),/근거 출처/);
       await page.getByRole('tab',{name:'리뷰와 검증'}).click();
       assert.match(await page.locator('#reviews').innerText(),/전체 리뷰 결과가 아직 없습니다/);
-      await page.getByRole('tab',{name:'에이전트 진행'}).click();
+      await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
       await page.screenshot({path:path.join(root,'graph-'+width+'.png'),fullPage:true});
       assert.deepEqual(errors,[]);
       await page.close();
@@ -74,9 +89,9 @@ function fixture(name, payload) {
     const legacy={...base,_progress:{schemaVersion:3},agents:[
       {id:'a',name:'구현',role:'Executor',area:'Frontend',stage:'implementation',status:'완료',tone:'good'},
       {id:'b',name:'검토',role:'Reviewer',area:'Frontend',stage:'review',status:'재검토 대기',tone:'active',dependsOn:['a']}]};
-    await page.goto(fixture('legacy',legacy));await page.getByRole('tab',{name:'에이전트 진행'}).click();
+    await page.goto(fixture('legacy',legacy));await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
     await page.waitForFunction(()=>document.querySelector('.graphedge'));
-    assert.equal(await page.locator('.graphedge path').evaluate(el=>getComputedStyle(el).animationName),'none');
+    assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.graphedge path')).animationName),'none');
     assert.match(await page.locator('#agents').innerText(),/이전 형식/);
     // A changed target must not display an earlier round's PASS as current.
     const pending=JSON.parse(JSON.stringify(data));pending.reviewRounds=[{id:'round-r1',artifactId:'r1',reports:{old:'old-report'}}];
@@ -96,26 +111,53 @@ function fixture(name, payload) {
     await page.goto(fixture('task-history',historyTasks));
     assert.equal(await page.getByText('이전 차수 검토',{exact:true}).count(),0);
     assert.equal(await page.locator('#tasks input:checked').count(),1);
-    await page.getByRole('tab',{name:'에이전트 진행'}).click();
+    await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
     assert.equal(await page.locator('.agentnode').count(),11,'Main cleanup belongs in checklist, not agent graph');
     const terminated=JSON.parse(JSON.stringify(data));
     terminated._view.tasks[0]={...terminated._view.tasks[0],status:'done',label:'종료 관측',resultEvidenceId:'completion-0'};
     terminated.evidence.push({id:'completion-0',source:'child_report',sourceRef:'result-ref',observedAt:null,captured:{completed:true,verification:['test passed']}});
     await page.goto(fixture('completed-terminated',terminated));
+    await page.locator('#tasks details').first().evaluate(el=>el.open=true);
     assert.match(await page.locator('#tasks').innerText(),/완료 판단 근거: completion-0/);
-    await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('.agentnode').first().click();
+    await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);await page.locator('.agentnode').first().click();
     assert.match(await page.locator('#agent-details').innerText(),/작업 결과 · 근거 ID/);
     assert.match(await page.locator('#agent-details').innerText(),/test passed/);
+    const grouped=JSON.parse(JSON.stringify(data));
+    grouped.tasks[6].owner='main';grouped.tasks.splice(7,1);
+    grouped.assignments[7].taskId='task-6';grouped._view.tasks.splice(7,1);
+    Object.assign(grouped._view.tasks[6],{status:'in_progress',assignmentId:null,assignmentIds:['assignment-6','assignment-7'],agentIds:['agent-6','agent-7']});
+    Object.assign(grouped._view.tasks[0],{status:'in_progress',blocked:true,blocker:'테스트 서버 연결 문제'});
+    await page.goto(fixture('grouped-blocked',grouped));
+    assert.match(await page.locator('#summary').innerText(),/막힌 일:.*테스트 서버 연결 문제/s);
+    assert.match(await page.locator('#tasks').innerText(),/담당: 리뷰어 6, 리뷰어 7/);
+    assert.equal(await page.locator('#tasks .badge').evaluateAll(items=>items.every(el=>['대기중','진행중','완료'].includes(el.textContent))),true);
+    await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
+    await page.getByRole('button',{name:/리뷰 작업 6/}).click();
+    assert.match(await page.locator('#agent-details').innerText(),/assignment-6/);
+    assert.match(await page.locator('#agent-details').innerText(),/assignment-7/);
+    assert.equal(await page.getByRole('button',{name:/리뷰 작업 6/}).evaluate(el=>el.closest('.graphlane').querySelector('h3').textContent),'리뷰 담당자의 작업');
+    // Several sequential tasks assigned to one Executor must not look like new agents.
+    const reused=JSON.parse(JSON.stringify(data));
+    reused.tasks.push({id:'verify',title:'전체 검사 실행',owner:'agent-0',phase:'검증'});
+    reused.assignments.push({id:'verify-assignment',agentId:'agent-0',taskId:'verify'});
+    reused._view.tasks.push({id:'verify',assignmentId:'verify-assignment',agentId:'agent-0',status:'in_progress'});
+    reused._view.agents=reused.agents.map(agent=>({id:agent.id,status:agent.id==='agent-0'?'in_progress':'pending'}));
+    await page.goto(fixture('reused-executor',reused));await page.getByRole('tab',{name:'에이전트 진행'}).click();
+    assert.equal(await page.locator('#agent-roster li').count(),10,'one row per agent, not per assignment');
+    assert.match(await page.locator('#agent-roster').innerText(),/등록된 담당자 10명 · 현재 작업 11개/);
+    assert.match(await page.locator('#agent-roster li').first().innerText(),/진행중.*Executor 0/s);
+    assert.equal(await page.locator('#agent-graph').isVisible(),false);
+    assert.equal(await page.locator('#agent-roster .badge').evaluateAll(items=>items.every(el=>['대기중','진행중','완료'].includes(el.textContent))),true);
     const delivery=JSON.parse(JSON.stringify(data));
     for(const state of ['sent','acknowledged'])delivery._view.relations.push({id:state,kind:'delivery',deliveryState:state,from:{type:'task',id:'task-0'},to:{type:'task',id:'task-1'},evidenceId:'evidence-0'});
-    await page.goto(fixture('delivery',delivery));await page.getByRole('tab',{name:'에이전트 진행'}).click();
+    await page.goto(fixture('delivery',delivery));await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
     assert.match(await page.locator('[data-relation-id=sent] summary').innerText(),/전송 수락 · 수신 미확인/);
     assert.match(await page.locator('[data-relation-id=acknowledged] summary').innerText(),/수신 확인 · 보고/);
     if(process.argv[2]){
       await page.goto(pathToFileURL(path.resolve(process.argv[2])).href);
       const saved=await page.locator('#progress-data').textContent(),actual=JSON.parse(saved);
       assert.equal(actual._progress.schemaVersion,4);assert.ok(actual._view);
-      await page.getByRole('tab',{name:'에이전트 진행'}).click();
+      await page.getByRole('tab',{name:'에이전트 진행'}).click();await page.locator('#agent-evidence').evaluate(el=>el.open=true);
       const current=(actual._view.relations||[]).filter(r=>r.from.type!=='artifact'||r.from.id===actual.gates.reviewTarget).filter(r=>r.to.type!=='artifact'||r.to.id===actual.gates.reviewTarget);
       await page.waitForFunction(count=>document.querySelectorAll('.graphedge').length===count,current.length);
       await page.getByRole('tab',{name:'리뷰와 검증'}).click();
