@@ -4,6 +4,8 @@ Use the Planner's connected-flow scenarios and the common independent-review inp
 
 Tie evidence to the frozen revision and verify that the running build/services represent it. Record scenario, environment/build identity, steps, expected versus observed results, and relevant artifact/log paths. Use screenshots, console/network observations, and persisted state where they prove an acceptance criterion; keep output focused and redact credentials/personal data. Distinguish manual browser validation from automated E2E tests. If the runtime, fixtures, permissions, or a required boundary cannot be verified, report the gap and `BLOCKED`; observed defects require `CHANGES_REQUIRED`. An untested required scenario cannot receive `PASS`.
 
+When assigned full-suite execution ownership, run the agreed commands once on the frozen revision/environment and share factual logs for reuse under workflow-contracts. Reuse existing same-revision evidence when it proves a scenario; inspect its adequacy independently and execute missing or affected scenarios. Record start/end times and distinguish observed preparation, execution and failure-analysis durations; unknown durations stay unknown.
+
 Remain read-only on product files. Use the approved validation environment and fixtures; coordinate mutable test accounts/data and browser targets through the leader so concurrent reviewers do not invalidate each other's observations. Clean up only test state created by this run. Do not perform live payments, send external messages, or modify production/user data without authorization. Send required fixes to the leader for the owning Executor, then review the new frozen revision.
 
 ## Interaction failures and product verdicts

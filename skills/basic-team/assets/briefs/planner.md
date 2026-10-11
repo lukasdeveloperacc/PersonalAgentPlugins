@@ -11,7 +11,7 @@
    - which tasks can start now and which wait;
    - whether the Impeccable and E2E reviewers are needed, with the reason;
    - risks, alternatives, and the smallest allowed validation commands proving acceptance criteria and affected boundaries; keep required project checks.
-4. Split independent work inside an area into separate tasks when files do not overlap. Do not split tiny edits.
+4. Split independent work inside an area into separate tasks when files do not overlap. Do not split tiny edits. Assign feature code and related regression tests to the same Executor; name one integration owner for shared fixtures and cross-area test edits. Assign each required full-suite command/revision/environment to one existing Executor or activated E2E Agent, without a separate regression agent. E2E executes at review and remains read-only; do not make its verdict a prerequisite for entering review.
 5. A single unreviewed draft is not an approved plan.
 6. State whether Frontend, Backend, both, or neither is needed; mark an unaffected area "not needed". For Frontend, load `impeccable` if listed above and return a design brief with observable design acceptance criteria.
 7. Name the affected surfaces and criteria for the Impeccable review, and the flows, environment, fixtures, and allowed validation for the E2E review, when you recommend them.
