@@ -60,10 +60,16 @@ Do not create or edit agent definitions or user settings, and do not publish, pu
 
 ## Reports
 
+Use the assignment/task identity in Inputs. Report actual outputs and completion evidence; task completion does not mean host termination or completion of other assignments. The leader captures your source report; do not invent host IDs, message references or observation timestamps.
+
 Report to the leader when you finish a milestone, change scope or dependencies, or hit a blocker. Executors and the Planner finish with this shape (a Reviewer's final block replaces it):
 
 ```text
 id: $task_id
+assignmentId: <frozen assignment ID from Inputs; report missing ID to leader>
+paths: <actual changed relative paths, including deletions; [] if none>
+completed: <true only when this assignment’s acceptance criteria are met; otherwise false>
+verification: <nonempty array of actual check/result references when completed is true; disclose unchecked scope>
 area: $area
 status: working | waiting | blocked | done
 done: <what changed, with file paths>

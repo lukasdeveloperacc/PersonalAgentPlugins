@@ -16,21 +16,21 @@
 .graphlanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:72px;position:relative}
 .graphlane{min-width:0}.graphlane h3{margin:0 0 18px;color:var(--muted);font-size:.85rem;font-weight:600}
 .graphnodes{display:grid;gap:32px}.agentnode{position:relative;display:block;width:100%;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
-.agentnode[data-tone=active]{border-color:var(--accent)}.agentnode[data-tone=active] .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:active-signal 2s ease-in-out infinite}
+.agentnode[data-tone=active]{border-color:var(--accent)}
 .agentnode:hover{border-color:var(--accent);background:var(--soft)}.agentnode strong{display:block;margin:12px 0 3px;overflow-wrap:anywhere;font-size:1rem}.agentnode small{display:block;overflow-wrap:anywhere}
-.nodemodel{margin:10px 0;padding-top:10px;border-top:1px solid var(--line)}.nodereport{font-variant-numeric:tabular-nums}
-.graphedges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}.graphedges path{fill:none;stroke:#8795a8;stroke-width:1.5}.graphedges marker path{fill:#8795a8;stroke:none}.graphedge path[data-active=true]{stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;animation:active-edge 1.2s linear infinite}.graphedges #edge-arrow-active path{fill:var(--accent)}
-.graphedge circle{stroke:#8795a8;stroke-width:1.5;fill:var(--paper)}.graphedge circle[data-end=true]{fill:#8795a8}.graphedge[data-active=true] circle{stroke:var(--accent)}.graphedge[data-active=true] circle[data-end=true]{fill:var(--accent)}
+.nodemodel{margin:10px 0;padding-top:10px;border-top:1px solid var(--line)}.nodereport{font-variant-numeric:tabular-nums}.noderelations{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.graphedges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}.graphedges path{fill:none;stroke:#8795a8;stroke-width:1.5}.graphedges marker path{fill:#8795a8;stroke:none}.graphedges #edge-arrow-active path{fill:var(--accent)}
+.graphedge circle{stroke:#8795a8;stroke-width:1.5;fill:var(--paper)}.graphedge circle[data-end=true]{fill:#8795a8}
 .graphedge[data-highlight=false]{opacity:.2}.graphedge[data-highlight=true] path{stroke:var(--accent);stroke-width:3}.graphedge[data-highlight=true] circle{stroke:var(--accent)}.graphedge[data-highlight=true] circle[data-end=true]{fill:var(--accent)}
 .agentnode[data-relation=selected],.agentnode[data-relation=related]{border-color:var(--accent);background:var(--soft)}.agentnode[data-relation=unrelated]{background:var(--canvas)}
 .relationlist{margin:12px 0 0;padding:12px 18px 12px 36px;background:var(--soft);border-radius:8px;font-size:.85rem;color:var(--ink)}.relationlist li{overflow-wrap:anywhere}
-@keyframes active-signal{0%,100%{opacity:1}50%{opacity:.3}}@keyframes active-edge{to{stroke-dashoffset:-24}}
-@media(prefers-reduced-motion:reduce){.agentnode[data-tone=active] .badge::before,.graphedge path[data-active=true]{animation:none}}
+.graphedge[data-kind=prerequisite] path{stroke-dasharray:5 5}
+.graphlegend{display:flex;flex-wrap:wrap;gap:8px 24px;margin:16px 0;color:var(--muted);font-size:.85rem}.relationrecords{border-top:1px solid var(--line);margin-top:20px}.relationrecords summary{overflow-wrap:anywhere}.relationrecords .details{padding:12px 0}.snapshot-note{white-space:pre-line}.artifactnode{border-style:double;border-width:3px}.graphnote,.snapshot-note{overflow-wrap:anywhere}
 .graphnote{margin-top:16px;font-size:.8rem;color:var(--muted)}
 .agenttooltip{position:fixed;z-index:5;max-width:min(340px,calc(100vw - 24px));background:var(--soft);color:var(--ink);padding:12px 16px;border-radius:8px;font-size:.85rem;white-space:pre-line;overflow-wrap:anywhere;box-shadow:0 8px 24px #00000066}
 .agentdialog{padding:0;border:0;border-radius:16px;width:min(720px,calc(100% - 32px));max-height:calc(100dvh - 48px);color:var(--ink);background:var(--paper);box-shadow:0 18px 60px #00000066;overflow:auto}.agentdialog::backdrop{background:#00000099}.dialoghead{position:sticky;top:0;z-index:1;background:var(--paper);display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px;border-bottom:1px solid var(--line)}.dialoghead h2{overflow-wrap:anywhere}.dialoghead p{font-size:.85rem;color:var(--muted);margin:6px 0 12px}.dialoghead .quiet{flex-shrink:0}
 @media(max-width:1000px){.graphlanes{gap:48px}.agentgraph{padding:18px 18px 44px}.agentnode{padding:14px}}
-@media(max-width:760px){.graphlanes{grid-template-columns:1fr;gap:36px}.graphlane h3{margin-bottom:12px}.agentdialog{max-height:calc(100dvh - 24px)}.dialoghead{padding:20px}}
+@media(max-width:760px){.graphedges{display:none}.graphlanes{grid-template-columns:1fr;gap:36px}.graphlane h3{margin-bottom:12px}.agentdialog{max-height:calc(100dvh - 24px)}.dialoghead{padding:20px}}
 @media print{.agenttooltip,.agentdialog{display:none}.agentnode{break-inside:avoid}}
 </style>
 </head>
@@ -41,7 +41,7 @@
 <div class="location"><span>진행판 경로</span><code id="path"></code><button class="quiet" id="copy" type="button">경로 복사</button><span id="copy-status" role="status"></span></div>
 <nav class="tabs" role="tablist" aria-label="진행판 영역"><button type="button" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true">계획</button><button type="button" role="tab" id="tab-agents" aria-controls="panel-agents" aria-selected="false" tabindex="-1">에이전트 진행</button><button type="button" role="tab" id="tab-reviews" aria-controls="panel-reviews" aria-selected="false" tabindex="-1">리뷰와 검증</button><button type="button" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">결정과 막힌 일</button><button type="button" role="tab" id="tab-handoffs" aria-controls="panel-handoffs" aria-selected="false" tabindex="-1">인수인계</button></nav>
 <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" tabindex="0"><div class="panelhead"><h2>작업 계획</h2><p>담당 영역과 다음 작업을 확인합니다.</p></div><div class="flow" id="flow" aria-label="작업 흐름"></div><section class="todos" aria-labelledby="todo-heading"><div class="panelhead"><h2 id="todo-heading">Phase별 TODO</h2><p id="todo-summary"></p></div><p class="graphnote" id="todo-plan"></p><p class="graphnote">리더가 확인한 작업 결과를 표시합니다. 완료 체크는 저장된 근거를 따르며, 새 보고는 새로고침하면 반영됩니다.</p><div id="tasks"></div></section><div class="surface" id="plan"></div></section>
-<section class="panel" id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" tabindex="0" hidden><div class="panelhead"><h2>에이전트 진행</h2><p>연결선을 따라 진행 흐름을 확인합니다. 노드에 마우스를 올리면 요약, 누르면 상세 보고가 열립니다.</p></div><div id="agents"></div></section>
+<section class="panel" id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" tabindex="0" hidden><div class="panelhead"><h2>에이전트 진행</h2><p>작업과 변경본 사이에 기록된 관계를 확인합니다. 노드에 마우스를 올리면 요약, 누르면 상세 보고가 열립니다.</p></div><div id="agents"></div></section>
 <section class="panel" id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" tabindex="0" hidden><div class="panelhead"><h2>리뷰와 검증</h2><p>같은 구현을 검토한 근거와 남은 확인 사항입니다.</p></div><div class="notice" id="review-notice"></div><div class="surface" id="reviews"></div></section>
 <section class="panel" id="panel-decisions" role="tabpanel" aria-labelledby="tab-decisions" tabindex="0" hidden><div class="panelhead"><h2>결정과 막힌 일</h2><p>선택한 이유와 사용자 입력이 필요한 일을 기록합니다.</p></div><div class="surface" id="decisions"></div></section>
 <section class="panel" id="panel-handoffs" role="tabpanel" aria-labelledby="tab-handoffs" tabindex="0" hidden><div class="panelhead"><h2>단계별 인수인계</h2><p>오래된 기록부터 시간순으로 표시합니다. 펼치면 근거와 다음 작업을 확인할 수 있습니다.</p></div><div class="surface" id="handoffs"></div></section>
@@ -82,7 +82,8 @@ function recordedTime(item){return recordTime(item)===Infinity?'시간 미기록
 function timestamp(item){const el=node('small');if(recordTime(item)===Infinity){el.textContent='시간 미기록'}else{const time=node('time',item.recordedAt);time.dateTime=item.recordedAt;el.append('기록 시각: ',time)}return el}
 function list(id,items,empty){const root=byId(id);if(!items.length){root.append(node('p',empty,'empty'));return}const ul=node('ul',undefined,'stack');chronological(items).forEach(item=>{const li=node('li');li.append(node('h3',item.title),node('p',item.body),timestamp(item));if(item.meta)li.append(node('small',item.meta));ul.append(li)});root.append(ul)}
 function renderTasks(data){
-  const tasks=chronological(data.tasks||[]),root=byId('tasks');
+  const taskViews=new Map((data._view?.tasks||[]).map(task=>[task.id,task]));
+  const tasks=chronological((data.tasks||[]).map(task=>data._progress?.schemaVersion>=4?{...task,status:'pending',evidence:'',...taskViews.get(task.id)}:task).filter(task=>task.applicable!==false)),root=byId('tasks');
   byId('todo-summary').textContent=tasks.length?'완료 '+tasks.filter(task=>task.status==='done').length+' / '+tasks.length+'개':'아직 작업 목록 없음';
   const approved=data.taskPlanRevision&&data.taskPlanRevision===data.gates?.planApproved;
   byId('todo-plan').textContent=data.taskPlanRevision?'계획 버전: '+data.taskPlanRevision+(approved?' · 승인 기록과 일치':' · 승인 전 또는 승인 계획과 다름'):'Planner의 계획을 기다리고 있습니다.';
@@ -94,8 +95,10 @@ function renderTasks(data){
     heading.append(node('small','완료 '+items.filter(task=>task.status==='done').length+' / '+items.length));section.append(heading);
     items.forEach(task=>{
       const row=node('li'),layout=node('div',undefined,'todo-row'),check=node('input'),copy=node('div',undefined,'todo-copy');
-      const [status,tone]=states[task.status]||['미확인','neutral'];check.type='checkbox';check.checked=task.status==='done';check.disabled=true;check.setAttribute('aria-label',task.title+' · '+status);
+      const [fallback,tone]=states[task.status]||['미확인','neutral'];const status=task.label||fallback;check.type='checkbox';check.checked=task.status==='done';check.disabled=true;check.setAttribute('aria-label',task.title+' · '+status);
       copy.append(node('strong',task.title),badge(status,tone),node('small','담당: '+task.owner+' · '+task.id),timestamp(task));
+      if(task.evidenceId)copy.append(node('small','최근 관측 근거: '+task.evidenceId));
+      if(task.status==='done'&&(task.resultEvidenceId||task.evidenceId))copy.append(node('small','완료 판단 근거: '+(task.resultEvidenceId||task.evidenceId)));
       if(task.evidence)copy.append(node('small',(task.status==='blocked'?'막힌 이유: ':'근거: ')+task.evidence));
       layout.append(check,copy);row.append(layout);list.append(row);
     });section.append(list);root.append(section);
@@ -117,7 +120,7 @@ function renderHandoffs(records){
 }
 
 const tooltip=byId('agent-tooltip'),dialog=byId('agent-dialog');
-let graphLinks=[],graphButtons=new Map(),modalTrigger=null,tooltipAnchor=null,tooltipTimer;
+let graphLinks=[],graphButtons=new Map(),graphRecords=[],explicitGraph=false,modalTrigger=null,tooltipAnchor=null,tooltipTimer;
 function hideTooltip(){clearTimeout(tooltipTimer);tooltip.hidden=true;tooltipAnchor?.removeAttribute('aria-describedby');tooltipAnchor=null;clearRelations()}
 function positionTooltip(button){
   const rect=button.getBoundingClientRect();const width=tooltip.offsetWidth,height=tooltip.offsetHeight;
@@ -129,7 +132,7 @@ function showTooltip(button,agent){
   hideTooltip();tooltipAnchor=button;tooltip.textContent=summary(agent.result||'최근 보고 없음')+'\n다음: '+summary(agent.next||'아직 보고 없음');tooltip.hidden=false;button.setAttribute('aria-describedby','agent-tooltip');
   const names=ids=>{const text=ids.map(id=>graphButtons.get(id).querySelector('strong').textContent).join(', ');return text.length>80?text.slice(0,80)+'…':text||'기록 없음'};
   const predecessors=graphLinks.filter(([,to])=>graphButtons.get(to)===button).map(([from])=>from),successors=graphLinks.filter(([from])=>graphButtons.get(from)===button).map(([,to])=>to);
-  tooltip.textContent+='\n선행: '+names(predecessors)+'\n후속: '+names(successors);positionTooltip(button);highlightRelations(button);
+  tooltip.textContent+='\n들어오는 관계: '+names(predecessors)+'\n나가는 관계: '+names(successors);positionTooltip(button);highlightRelations(button);
 }
 function delayTooltipHide(){tooltipTimer=setTimeout(()=>{if(document.activeElement!==tooltipAnchor)hideTooltip()},120)}
 tooltip.addEventListener('mouseenter',()=>clearTimeout(tooltipTimer));tooltip.addEventListener('mouseleave',delayTooltipHide);
@@ -138,7 +141,7 @@ function openAgent(button,agent,agents){
   byId('agent-status').replaceChildren(badge(agent.status,agent.tone));
   const dependencies=Array.isArray(agent.dependsOn)?agent.dependsOn:[];
   const names=dependencies.map(id=>agents.find(item=>item.id===id)?.name||id);
-  const fields=[['담당 작업·파일',agent.owned],['완료·최근 보고',agent.result],['다음 행동',agent.next],['막힌 일',agent.blocker||'보고 없음'],['모델·추론 설정',agent.model||'미확인'],['실제 설정 관찰',agent.observation],['기록 시각',recordedTime(agent)],['마지막 보고',agent.reported],['선행 에이전트',names.join(', ')||'기록 없음']];
+  const fields=agent.fields||[['담당 작업·파일',agent.owned],['완료·최근 보고',agent.result],['다음 행동',agent.next],['막힌 일',agent.blocker||'보고 없음'],['모델·추론 설정',agent.model||'미확인'],['실제 설정 관찰',agent.observation],['기록 시각',recordedTime(agent)],['마지막 보고',agent.reported],['선행 에이전트',names.join(', ')||'기록 없음']];
   byId('agent-details').replaceChildren(...fields.map(([label,value])=>{const group=node('div');group.append(node('dt',label),node('dd',value||'아직 보고 없음'));return group}));dialog.showModal();dialog.scrollTop=0;
 }
 byId('agent-close').addEventListener('click',()=>dialog.close());
@@ -151,39 +154,40 @@ function renderAgents(agents){
   const graph=node('div',undefined,'agentgraph');graph.id='agent-graph';
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('graphedges');svg.setAttribute('aria-hidden','true');svg.innerHTML='<defs><marker id="edge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="edge-arrow-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>';graph.append(svg);
   const lanes=node('div',undefined,'graphlanes');
-  const stages=[['planning','계획과 검토'],['implementation','구현과 통합'],['review','독립 리뷰'],['other','단계 미분류']];
+  const stages=[['planning','계획과 검토'],['implementation','구현 작업'],['artifact','검토 대상 변경본'],['review','리뷰 작업'],['other','단계 미분류']];
   const stageOf=agent=>stages.some(([key])=>key===agent.stage)?agent.stage:'other';
   const activeStages=stages.filter(([key])=>agents.some(agent=>stageOf(agent)===key));lanes.style.setProperty('--lanes',activeStages.length);
   const counts=new Map();agents.forEach(agent=>{if(agent.id)counts.set(agent.id,(counts.get(agent.id)||0)+1)});
   activeStages.forEach(([key,title])=>{
     const lane=node('section',undefined,'graphlane');lane.append(node('h3',title));const nodes=node('div',undefined,'graphnodes');
     chronological(agents.filter(agent=>stageOf(agent)===key)).forEach(agent=>{
-      const button=node('button',undefined,'agentnode');button.type='button';button.dataset.tone=tones.has(agent.tone)?agent.tone:'neutral';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','agent-dialog');
-      button.append(badge(agent.status,agent.tone),node('strong',agent.name),node('small',agent.role+' · '+agent.area),node('small','모델·추론: '+(agent.model||'미확인'),'nodemodel'),node('small',agent.reported||'아직 보고 없음','nodereport'),timestamp(agent));
+      const button=node('button',undefined,'agentnode'+(agent.stage==='artifact'?' artifactnode':''));button.type='button';button.dataset.tone=tones.has(agent.tone)?agent.tone:'neutral';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','agent-dialog');
+      button.append(badge(agent.status,agent.tone),node('strong',agent.name),node('small',agent.role+' · '+agent.area),node('small',agent.stage==='artifact'?'변경본 ID: '+agent.artifactId:'모델·추론: '+(agent.model||'미확인'),'nodemodel'),node('small',agent.reported||'아직 보고 없음','nodereport'),timestamp(agent));
+      if(explicitGraph){const related=graphLinks.filter(([from,to])=>from===agent.id||to===agent.id);const kinds=[...new Set(related.map(([, ,record])=>relationLabel(record)))];button.append(node('small',kinds.length?kinds.join(' · '):'기록된 관계 없음','noderelations'))}
       button.addEventListener('mouseenter',()=>showTooltip(button,agent));button.addEventListener('mouseleave',delayTooltipHide);button.addEventListener('focus',()=>showTooltip(button,agent));button.addEventListener('blur',hideTooltip);button.addEventListener('click',()=>openAgent(button,agent,agents));
       nodes.append(button);if(agent.id&&counts.get(agent.id)===1)graphButtons.set(agent.id,button);
     });lane.append(nodes);lanes.append(lane);
   });graph.append(lanes);byId('agents').append(graph);
-  agents.forEach(agent=>{if(graphButtons.has(agent.id)&&Array.isArray(agent.dependsOn))new Set(agent.dependsOn).forEach(id=>{if(id!==agent.id&&graphButtons.has(id))graphLinks.push([id,agent.id])})});
-  byId('agents').append(node('p','빈 연결점에서 채워진 연결점 방향으로 이어집니다. 노드에 마우스를 올리거나 포커스하면 직접 연결된 관계를 강조합니다. 흐르는 선은 최근 보고가 진행 중인 노드의 선행 관계입니다.','graphnote'));
+  if(!explicitGraph)agents.forEach(agent=>{if(graphButtons.has(agent.id)&&Array.isArray(agent.dependsOn))new Set(agent.dependsOn).forEach(id=>{if(id!==agent.id&&graphButtons.has(id))graphLinks.push([id,agent.id])})});
+  byId('agents').append(node('p','화살표는 기록된 관계의 방향입니다. 노드를 선택하면 직접 연결만 강조합니다. 연결 자체는 실행 중·전달 확인·검토 완료를 뜻하지 않습니다.','graphnote'));
   const relations=node('div');relations.id='graph-relations';relations.setAttribute('role','status');byId('agents').append(relations);
   new ResizeObserver(drawEdges).observe(graph);requestAnimationFrame(drawEdges);
 }
 function clearRelations(){
   graphButtons.forEach(button=>delete button.dataset.relation);
-  byId('agent-graph')?.querySelectorAll('.graphedge').forEach(edge=>{delete edge.dataset.highlight;edge.querySelector('path').setAttribute('marker-end',edge.dataset.active==='true'?'url(#edge-arrow-active)':'url(#edge-arrow)')});
+  byId('agent-graph')?.querySelectorAll('.graphedge').forEach(edge=>{delete edge.dataset.highlight;edge.querySelector('path').setAttribute('marker-end','url(#edge-arrow)')});
   byId('graph-relations')?.replaceChildren();
 }
 function highlightRelations(button){
   const selected=[...graphButtons].find(([,value])=>value===button)?.[0];if(!selected)return;
-  const links=graphLinks.filter(([from,to])=>from===selected||to===selected),related=new Set(links.flat());
+  const links=graphLinks.filter(([from,to])=>from===selected||to===selected),related=new Set(links.flatMap(([from,to])=>[from,to]));
   graphButtons.forEach((node,id)=>node.dataset.relation=id===selected?'selected':related.has(id)?'related':'unrelated');
   byId('agent-graph').querySelectorAll('.graphedge').forEach(edge=>{
     const highlighted=edge.dataset.from===selected||edge.dataset.to===selected;edge.dataset.highlight=String(highlighted);
-    edge.querySelector('path').setAttribute('marker-end',highlighted||edge.dataset.active==='true'?'url(#edge-arrow-active)':'url(#edge-arrow)');
+    edge.querySelector('path').setAttribute('marker-end',highlighted?'url(#edge-arrow-active)':'url(#edge-arrow)');
   });
   const list=node('ul',undefined,'relationlist');
-  links.forEach(([from,to])=>list.append(node('li',graphButtons.get(from).querySelector('strong').textContent+' → '+graphButtons.get(to).querySelector('strong').textContent)));
+  links.forEach(([from,to,record])=>list.append(node('li',(record?relationLabel(record)+' · ':'선행 관계 · ')+graphButtons.get(from).querySelector('strong').textContent+' → '+graphButtons.get(to).querySelector('strong').textContent)));
   if(!links.length)list.append(node('li','기록된 연결 관계가 없습니다.'));
   byId('graph-relations').replaceChildren(list);
 }
@@ -191,7 +195,7 @@ function drawEdges(){
   const graph=byId('agent-graph');if(!graph||graph.offsetWidth===0)return;
   const svg=graph.querySelector('svg');svg.querySelectorAll('.graphedge').forEach(edge=>edge.remove());const bounds=graph.getBoundingClientRect();
   const vertical=matchMedia('(max-width:760px)').matches,buttons=[...graph.querySelectorAll('.agentnode')];
-  graphLinks.forEach(([from,to],index)=>{
+  graphLinks.forEach(([from,to,record],index)=>{
     const source=graphButtons.get(from),target=graphButtons.get(to),a=source.getBoundingClientRect(),b=target.getBoundingClientRect();
     const sameLane=source.closest('.graphlane')===target.closest('.graphlane');
     const outgoing=graphLinks.filter(([id])=>id===from),incoming=graphLinks.filter(([,id])=>id===to);
@@ -221,12 +225,66 @@ function drawEdges(){
     }
     points[points.length-1]=[end[0]-arrival[0]*6,end[1]-arrival[1]*6];
     const create=tag=>document.createElementNS('http://www.w3.org/2000/svg',tag),edge=create('g'),path=create('path');
-    edge.classList.add('graphedge');edge.dataset.from=from;edge.dataset.to=to;
+    edge.classList.add('graphedge');edge.dataset.from=from;edge.dataset.to=to;if(record){edge.dataset.kind=record.kind;edge.dataset.id=record.id;const title=create('title');title.textContent=relationLabel(record);edge.append(title)}
     path.setAttribute('d',points.map(([x,y],i)=>(i?'L':'M')+' '+x+' '+y).join(' '));path.setAttribute('stroke-linejoin','round');
-    const active=target.dataset.tone==='active';edge.dataset.active=String(active);path.dataset.active=String(active);path.setAttribute('marker-end',active?'url(#edge-arrow-active)':'url(#edge-arrow)');edge.append(path);
+    path.setAttribute('marker-end','url(#edge-arrow)');edge.append(path);
     [start,end].forEach(([x,y],i)=>{const port=create('circle');port.setAttribute('cx',x);port.setAttribute('cy',y);port.setAttribute('r','3');port.dataset.end=String(i===1);edge.append(port)});svg.append(edge);
   });
   if(tooltipAnchor)highlightRelations(tooltipAnchor);
+}
+
+
+const relationNames={prerequisite:'선행 조건 · 계획',contributes:'산출물 기여 · 보고',review_assignment:'리뷰 배정 · 호출 수락',delivery:'전달 기록'};
+function relationLabel(record){if(record.kind==='delivery')return record.deliveryState==='acknowledged'?'수신 확인 · 보고':record.deliveryState==='sent'?'전송 수락 · 수신 미확인':'전달 · 상태 미확인';return relationNames[record.kind]||'관계 미확인'}
+function evidenceFields(data,id){
+  const record=(data.evidence||[]).find(item=>item.id===id);
+  if(!record)return [['근거','미확인']];
+  const sourceNames={host_response:'호스트 응답',child_report:'에이전트 보고',command_result:'명령 결과',leader_record:'리더 기록'};
+  return [['근거 ID',id],['근거 출처',sourceNames[record.source]||record.source],['원본 참조',record.sourceRef||'미확인'],['관측 시각',record.observedAt||'미확인'],['캡처된 내용',record.captured===undefined?record.artifact||record.path||'별도 산출물':typeof record.captured==='string'?record.captured:JSON.stringify(record.captured,null,2)]];
+}
+function addDetails(root,fields){
+  const dl=node('dl',undefined,'details');
+  fields.forEach(([label,value])=>{const group=node('div');group.append(node('dt',label),node('dd',value||'미확인'));dl.append(group)});root.append(dl);
+}
+function renderEvidence(data){
+  const view=data._view||{},problems=view.problems||[],target=data.gates?.reviewTarget;
+  const notice=node('div',undefined,'notice snapshot-note');notice.append(node('strong','마지막으로 확인해 저장한 기록'),node('p','근거 확인: '+(view.verifiedAt||'미확인')+'\n파일 저장: '+data.updated+'\n실시간 상태가 아닙니다. 이후의 파일 변경이나 에이전트 활동은 이 화면에서 자동 확인되지 않습니다.'));
+  if(problems.length){const ul=node('ul');problems.forEach(problem=>ul.append(node('li',problem)));notice.append(ul)}byId('agents').append(notice);
+  const legend=node('div',undefined,'graphlegend');Object.values(relationNames).forEach(label=>legend.append(node('span',label)));byId('agents').append(legend);
+  const taskViews=new Map((view.tasks||[]).map(item=>[item.id,item]));
+  const agentMap=new Map((data.agents||[]).map(item=>[item.id,item]));
+  const assignments=data.assignments||[],tasks=data.tasks||[];
+  const nodes=tasks.filter(task=>task.owner!=='main'&&taskViews.get(task.id)?.applicable!==false).map(task=>{
+    const saved=taskViews.get(task.id)||{};
+    const assignment=assignments.find(item=>item.id===saved.assignmentId);
+    const agent=agentMap.get(assignment?.agentId)||agentMap.get(task.owner)||{};
+    return {id:'task:'+task.id,name:task.title,role:agent.name||task.owner,area:task.id,stage:agent.stage||'other',status:saved.label||'미확인',tone:saved.tone||'neutral',model:agent.model,reported:'관측: '+(saved.observedAt||'미확인'),recordedAt:task.recordedAt,result:saved.result||saved.label||'근거가 아직 없습니다.',next:'연결 관계와 근거를 확인하세요.',fields:[['작업',task.title+' · '+task.id],['담당 에이전트',agent.name||task.owner],['배정 ID',saved.assignmentId],['실제 호스트 에이전트',saved.hostAgentId||'미확인'],['마지막 보고',saved.label||'미확인'],['모델·추론',agent.model||'미확인'],['모델 실제 관측',agent.observation||'미확인'],...evidenceFields(data,saved.evidenceId),...(saved.resultEvidenceId&&saved.resultEvidenceId!==saved.evidenceId?evidenceFields(data,saved.resultEvidenceId).map(([label,value])=>['작업 결과 · '+label,value]):[])]};
+  });
+  const artifacts=(data.artifacts||[]).filter(item=>item.id===target);
+  artifacts.forEach(artifact=>nodes.push({id:'artifact:'+artifact.id,artifactId:artifact.id,name:artifact.id,role:'동결 변경본',area:'검토 입력',stage:'artifact',status:problems.length?'근거 확인 필요':'기록된 검토 대상',tone:problems.length?'warn':'neutral',result:'리뷰 배정과 결과는 이 변경본을 기준으로 확인합니다.',reported:'확인: '+(view.verifiedAt||'미확인'),fields:[['변경본',artifact.id],['내용 해시',artifact.digest],['현재 상태',problems.join('\n')||'저장 시점의 근거 기록'],...evidenceFields(data,artifact.manifestEvidence)]}));
+  const nodeIds=new Set(nodes.map(item=>item.id));
+  graphRecords=(view.relations||[]).filter(record=>nodeIds.has(record.from.type+':'+record.from.id)&&nodeIds.has(record.to.type+':'+record.to.id));
+  graphLinks=graphRecords.map(record=>[record.from.type+':'+record.from.id,record.to.type+':'+record.to.id,record]);explicitGraph=true;
+  if(nodes.length)renderAgents(nodes);else byId('agents').append(node('p','배정된 작업과 근거가 없습니다. 확인되지 않은 연결은 표시하지 않습니다.','empty'));
+  const records=node('section',undefined,'relationrecords');records.append(node('h3','관계별 근거'));
+  if(!graphRecords.length)records.append(node('p','기록된 관계가 없습니다. 같은 단계에 있다는 이유로 연결하지 않습니다.','empty'));
+  graphRecords.forEach(record=>{
+    const details=node('details',undefined,'handoff'),from=nodes.find(item=>item.id===record.from.type+':'+record.from.id),to=nodes.find(item=>item.id===record.to.type+':'+record.to.id);
+    details.dataset.relationId=record.id;details.append(node('summary',relationLabel(record)+' · '+from.name+' → '+to.name));
+    addDetails(details,[['관계 ID',record.id],['시작',record.from.type+' · '+record.from.id],['대상',record.to.type+' · '+record.to.id],['의미',record.kind==='review_assignment'?'검토를 배정한 기록입니다. 검토 완료나 전체 파일 확인을 뜻하지 않습니다.':record.kind==='delivery'?'전송 수락은 수신 확인과 다릅니다. 아래 원본의 수신 응답 유무를 확인하세요.':record.kind==='prerequisite'?'계획상 선행 조건입니다. 실제 전달이나 작업 완료를 뜻하지 않습니다.':'해당 작업이 이 변경본에 기여했다는 보고입니다.'],...evidenceFields(data,record.evidenceId)]);records.append(details);
+  });byId('agents').append(records);
+  byId('review-notice').textContent='검토 대상: '+(target||'아직 미정')+' · 배정과 결과는 별도입니다. 검토 범위는 리뷰어가 보고한 범위이며, 필요한 보고가 모두 모인 뒤 함께 공개합니다.';
+  const verdicts=view.verdicts||{},labels={PASS:'통과 보고',CHANGES_REQUIRED:'수정 필요 보고',BLOCKED:'확인 보류 보고'};
+  if(!Object.keys(verdicts).length)byId('reviews').append(node('p','현재 변경본의 전체 리뷰 결과가 아직 없습니다. 배정·보고 수신만으로 통과를 표시하지 않습니다.','empty'));
+  Object.entries(verdicts).forEach(([reviewer,report])=>{
+    const details=node('details',undefined,'handoff');details.append(node('summary',(agentMap.get(reviewer)?.name||reviewer)+' · '+(labels[report.verdict]||'판정 미확인')));
+    const assignment=assignments.find(item=>item.id===report.assignmentId);
+    const excluded=(assignment?.criteria||[]).filter(item=>item.applicable===false);
+    addDetails(details,[['사전에 제외한 검토 범위',excluded.length?excluded.map(item=>item.id+' · '+item.target+' · 제외 이유: '+item.reason).join('\n'):'없음']]);
+    addDetails(details,[['검토 버전',report.revision||target],['배정 ID',report.assignmentId],['보고된 검토 범위',(report.reportedScope||[]).join('\n')],['미확인 범위',(report.uncheckedScope||[]).join('\n')||'보고상 없음'],['항목별 결과',JSON.stringify(report.criteria||[],null,2)],['발견 사항',JSON.stringify(report.findings||[],null,2)],...evidenceFields(data,report.reportEvidence)]);byId('reviews').append(details);
+  });
+  const rounds=data.reviewRounds||[];
+  if(rounds.length){const history=node('details',undefined,'handoff');history.append(node('summary','저장된 검토 차수 · '+rounds.length+'건 (현재 판정과 별도)'));rounds.forEach(round=>addDetails(history,[['차수',round.id],['대상 변경본',round.artifactId],['배정과 보고 참조',JSON.stringify(round.reports,null,2)]]));byId('reviews').append(history)}
 }
 
 try{
@@ -238,13 +296,17 @@ byId('blockers').textContent=data.blockers.text;byId('blockers').dataset.tone=to
 data.flow.forEach((step,i)=>{if(i){const arrow=node('span',undefined,'connector');arrow.textContent='→';arrow.setAttribute('aria-hidden','true');byId('flow').append(arrow)}const el=node('div',undefined,'flowstep');el.append(node('strong',step.title),node('small',step.body),timestamp(step));byId('flow').append(el)});
 list('plan',data.plan,'Planner의 계획이 도착하면 작업 배정·의존성·완료 기준을 여기에 표시합니다.');
 renderTasks(data);
-list('reviews',data.reviews,'아직 리뷰 보고가 없습니다. 미실행 검증은 통과로 표시하지 않습니다.');
+if(data._progress?.schemaVersion<4||!data._progress)list('reviews',data.reviews,'아직 리뷰 보고가 없습니다. 미실행 검증은 통과로 표시하지 않습니다.');
 list('decisions',data.decisions,'결정이나 막힌 일이 보고되면 선택한 이유와 다음 행동을 여기에 기록합니다.');
 renderHandoffs(data.handoffs||[]);
-const warnings=data._progress?.graph_warnings;
+const warnings=data._progress?.schemaVersion>=4?[]:data._progress?.graph_warnings;
 if(Array.isArray(warnings)&&warnings.length){const box=node('div',undefined,'notice');box.append(node('strong','그래프 연결 점검: 선이 빠졌을 수 있습니다.'));const ul=node('ul');warnings.forEach(text=>ul.append(node('li',String(text))));box.append(ul);byId('agents').append(box)}
-if(!data.agents.length)byId('agents').append(node('p','아직 배정된 에이전트가 없습니다. 배정 후 최근 회신이 여기에 표시됩니다.','empty'));
-renderAgents(data.agents);
+if(data._progress?.schemaVersion>=4){
+  byId('stage').textContent='저장된 관측';byId('blockers').textContent=data._view?.problems?.length?'근거 확인 필요':'관계·보고 근거 보기';byId('blockers').dataset.tone=data._view?.problems?.length?'warn':'neutral';renderEvidence(data);
+}else{
+  byId('agents').append(node('p','이전 형식의 저장된 기록입니다. 연결은 선행 관계이며 실행·리뷰 범위를 증명하지 않습니다.','notice'));
+  if(!data.agents.length)byId('agents').append(node('p','아직 배정된 에이전트가 없습니다. 배정 후 최근 회신이 여기에 표시됩니다.','empty'));renderAgents(data.agents);
+}
 byId('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(displayPath);byId('copy-status').textContent='복사했습니다.'}catch{byId('copy-status').textContent='자동 복사가 허용되지 않았습니다. 표시된 경로를 선택해 복사하세요.'}});
 }catch(error){byId('plan').append(node('p','진행 데이터를 표시할 수 없습니다. Main Session에서 progress-data JSON을 확인해 다시 저장하세요.','error'));byId('copy').disabled=true}
 const tabs=[...document.querySelectorAll('[role="tab"]')];

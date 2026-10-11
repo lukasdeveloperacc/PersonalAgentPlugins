@@ -25,7 +25,11 @@ class CliCase(unittest.TestCase):
         self.temp.cleanup()
 
     def run_cli(self, *args, stdin=None):
-        return subprocess.run([sys.executable, str(SCRIPT), *map(str, args)], cwd=self.root, text=True, capture_output=True, input=stdin)
+        command = [sys.executable, str(SCRIPT), *map(str, args)]
+        if args and args[0] == "init":
+            bootstrap = f"import sys; sys.path.insert(0, {str(SCRIPT.parent)!r}); import progress; progress.DEFAULT_SCHEMA = 3; raise SystemExit(progress.main())"
+            command = [sys.executable, "-c", bootstrap, *map(str, args)]
+        return subprocess.run(command, cwd=self.root, text=True, capture_output=True, input=stdin)
 
     def invoke(self, *args):
         result = self.run_cli(*args)
@@ -315,7 +319,10 @@ class GateAndBriefTests(CliCase):
         self.patch({"exceptions": {"planner2": "다른 에이전트 승인"}})
         self.assertEqual(self.gate("implementation")[0], 1)
         self.patch({"exceptions": {"planner": "사용자가 미확인 진행 승인"}})
-        self.assertEqual(self.gate("implementation"), (0, {"gate": "implementation", "ok": True, "problems": []}))
+        code, result = self.gate("implementation")
+        self.assertEqual(code, 0)
+        self.assertTrue(result["ok"])
+        self.assertIn("Legacy", result["warning"])
 
     def test_model_record_must_use_the_role_requested_id_and_can_be_deleted(self):
         self.init({"gates": {"models": {"x": self.EXECUTOR}}})
@@ -401,7 +408,7 @@ class GateAndBriefTests(CliCase):
                              "evidence": {"hook": {"status": "함", "evidence": "run_id x | confirmed\nline2"}}}})
         result = self.run_cli("compliance", self.page)
         self.assertEqual(result.returncode, 0, result.stderr)
-        rows = {line.split("|")[1].strip(): line.split("|")[2].strip() for line in result.stdout.splitlines()[2:]}
+        rows = {line.split("|")[1].strip(): line.split("|")[2].strip() for line in result.stdout.splitlines()[2:] if line.startswith("|")}
         self.assertEqual(len(rows), 10)
         self.assertEqual(rows["HTML progress page, final save, link/absolute path/save time"], "함")
         self.assertEqual(rows["Hook arm/disarm and actual confirmation or manual checkpoints"], "함")
@@ -426,7 +433,7 @@ class GateAndBriefTests(CliCase):
         self.assertTrue(brief.startswith("ROLE: Karpathy Agent (task_id value)"))
         self.assertIn("without a separate identity-release handshake", brief)
         self.assertNotIn("MODEL: <the exact model ID", brief)
-        self.assertIn("Reviewed revision: r2", brief)
+        self.assertIn('"revisionDigest":"r2"', brief)
         self.assertNotIn("claude-", brief)
         self.assertNotIn("$role", brief)
         dollar = self.run_cli("brief", "--role", "executor", "--input", self.input_file(dict(fields, request="costs $5 and ${HOME} $role_title")))

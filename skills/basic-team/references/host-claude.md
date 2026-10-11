@@ -24,6 +24,12 @@ Basic-team's required-pass continuation overrides team's default max_fix_loops p
 
 On success/cancellation/failure, request shutdown once, wait team's documented timeout (otherwise one bounded 60-second event wait), and verify each worker's exit. Timeout records unresponsive identity, request/time and last evidence; diagnose once and use team's supported scoped recovery. Do not fabricate acknowledgement or delete live-worker state. After confirmed worker shutdown finish native cleanup and verify THIS run terminal/inactive through supported team evidence (`active=false` or confirmed supported removal where applicable). No manual flag edits or broad .omc/.omx deletion. Unverified/active state means cleanup BLOCKED and stops subsequent git mutations, including push.
 
+## Source-bound progress records
+
+Follow [evidence-progress.md](evidence-progress.md). Before dispatch save the assignment/task identity; bind it once to the actual host-returned identity on acceptance. Capture accepted call, child report, send receipt and recipient acknowledgement as different source records. If the host exposes no stable source reference or event time, record null/unknown with clearly labeled captured content; never invent telemetry or treat save time as event time. A captured file hash proves byte consistency, not host authenticity.
+
+Reusing an idle agent for fixes requires a new assignment for the new obligations/revision; replacing an agent requires a new assignment and accepted identity. Previous results cannot complete the replacement task. Result received is neither PASS nor host termination. Before all independent reports arrive, save only redacted receipts and immediate tool blockers; keep report paths, bodies and outcomes in the leader’s private collection. Never infer delivery acknowledgement from a successful send.
+
 ## Progress hook
 
 Only executing Main, after the exact page exists; Claude substitutes its skill-body session variable:

@@ -20,6 +20,12 @@ Provide returned agent paths/task names as contact addresses. `send_message` rea
 
 Before launch, identify the host's supported scoped termination and verification surface. On exit request shutdown once for this run's agents, use the documented timeout or one bounded 60-second event wait, and verify stopped/terminal status through supported lifecycle evidence. An idle/completed task is not proof of terminated agent. If shutdown times out, record agent ID, request/time and last evidence, diagnose that agent once, then apply only a supported scoped stop. Missing termination proof is cleanup BLOCKED. Do not require Claude's TeamDelete/inactive team-state file on Codex; do not invent one. No broad process kill or unrelated agent stop.
 
+## Source-bound progress records
+
+Follow [evidence-progress.md](evidence-progress.md). Before dispatch save the assignment/task identity; bind it once to the actual host-returned identity on acceptance. Capture accepted call, child report, send receipt and recipient acknowledgement as different source records. If the host exposes no stable source reference or event time, record null/unknown with clearly labeled captured content; never invent telemetry or treat save time as event time. A captured file hash proves byte consistency, not host authenticity.
+
+Reusing an idle agent for fixes requires a new assignment for the new obligations/revision; replacing an agent requires a new assignment and accepted identity. Previous results cannot complete the replacement task. Result received is neither PASS nor host termination. Before all independent reports arrive, save only redacted receipts and immediate tool blockers; keep report paths, bodies and outcomes in the leader’s private collection. Never infer delivery acknowledgement from a successful send.
+
 ## Progress hook
 
 Only executing Main, after the exact page exists:

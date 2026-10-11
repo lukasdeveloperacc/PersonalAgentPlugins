@@ -5,6 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import progress_evidence
+
 EXPECTED = {"planner": ("opus", "medium"), "architect": ("opus", "medium"),
             "critic": ("opus", "medium"), "executor": ("haiku", "max"),
             "documentation_executor": ("sonnet", "medium"),
@@ -159,7 +162,13 @@ def analyze(run):
         else:
             plan_valid = False
         target = gates.get("reviewTarget")
+        v4 = page_data.get("_progress", {}).get("schemaVersion") == 4
         records = gates.get("verdicts", {})
+        if v4:
+            try:
+                records = progress_evidence.project(page_data)["verdicts"]
+            except (ValueError, OSError, KeyError, TypeError):
+                records = {}
         necessary = required | {role({"name": name}) for name in gates.get("requiredReviewers", [])}
         necessary |= {name for name, decision in gates.get("conditionalReviews", {}).items()
                       if isinstance(decision, dict) and decision.get("required") is True}
@@ -170,9 +179,18 @@ def analyze(run):
             record = recorded_roles.get(assigned, {})
             reports = [report(key, data) for key, data, r in successful if r == assigned]
             valid = valid and record.get("revision") == target and record.get("verdict") == "PASS"
-            valid = valid and any(re.search(r"Verdict:\s*PASS\b", report) and
-                                     re.search(r"Reviewed revision:\s*" + re.escape(str(target)) + r"(?:\s|$)", report)
-                                     for report in reports)
+            if v4:
+                parsed = []
+                for text in reports:
+                    try:
+                        parsed.append(progress_evidence.parse_report(text))
+                    except ValueError:
+                        continue
+                valid = valid and any(all(result.get(k) == record.get(k) for k in ("assignmentId", "revisionDigest", "verdict", "criteria", "findings", "reportedScope", "uncheckedScope")) for result in parsed)
+            else:
+                valid = valid and any(re.search(r"Verdict:\s*PASS\b", report) and
+                                         re.search(r"Reviewed revision:\s*" + re.escape(str(target)) + r"(?:\s|$)", report)
+                                         for report in reports)
         bound_gate = any(g.get("gate") == "complete" and g.get("ok") is True
                          and g.get("reviewTarget") == target and g.get("path") == str(page.resolve())
                          and g.get("progressRevision") == page_data.get("_progress", {}).get("revision")

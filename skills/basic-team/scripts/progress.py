@@ -5,6 +5,8 @@
 # ///
 """Create and update a Basic Team progress page without changing its renderer."""
 import argparse
+import copy
+import progress_evidence as evidence_v4
 import hashlib
 import json
 import os
@@ -12,18 +14,20 @@ from pathlib import Path
 import re
 from string import Template
 import sys
+import subprocess
 import tempfile
 from datetime import datetime
 
+DEFAULT_SCHEMA = 4
 SKILL_DIR = Path(__file__).resolve().parents[1]
 TEMPLATE = SKILL_DIR / "assets" / "progress-template.html"
 BRIEFS = SKILL_DIR / "assets" / "briefs"
 ROLES = Path(__file__).resolve().parent / "roles.json"
 DATA_TAG = re.compile(r'(<script type="application/json" id="progress-data">)(.*?)(</script>)', re.S)
-TOP_FIELDS = {"goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates", "handoffs", "tasks", "taskPlanRevision"}
+TOP_FIELDS = set(evidence_v4.LISTS) | {"_view", "goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates", "handoffs", "tasks", "taskPlanRevision"}
 HANDOFF_TRANSITIONS = {"planning-to-implementation", "implementation-to-verification", "verification-to-fixes", "fixes-to-verification", "completion"}
 HANDOFF_FIELDS = {"id", "transition", "round", "revision", "outcome", "summary", "evidence", "next", "pending"}
-GATE_FIELDS = {"planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
+GATE_FIELDS = {"reviewBatch", "planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
 VERDICTS = {"PASS", "CHANGES_REQUIRED", "BLOCKED"}
 MANDATORY_REVIEWERS = {"karpathy", "ponytail"}
 UNOBSERVED = "미확인"
@@ -83,6 +87,15 @@ def read_data(html):
 
 
 def validate(data, strict_dependency_ids=()):
+    v4 = data.get("_progress", {}).get("schemaVersion") == 4
+    if v4:
+        evidence_v4.validate(data)
+        data = copy.deepcopy(data)
+        for task in data.get("tasks", []):
+            task.setdefault("status", "pending")
+            task.setdefault("evidence", "")
+        for agent in data.get("agents", []):
+            agent.setdefault("status", "미확인")
     unknown = data.keys() - TOP_FIELDS - {"_progress"}
     if unknown:
         fail(f"unknown progress fields: {', '.join(sorted(unknown))}")
@@ -161,7 +174,7 @@ def validate(data, strict_dependency_ids=()):
         meta = data["_progress"]
         if not isinstance(meta, dict) or not isinstance(meta.get("checkpoint"), str) or not isinstance(meta.get("revision"), int) or not isinstance(meta.get("saved_at"), str):
             fail("invalid _progress metadata")
-        if "schemaVersion" in meta and (type(meta["schemaVersion"]) is not int or meta["schemaVersion"] not in (1, 2, 3)):
+        if "schemaVersion" in meta and (type(meta["schemaVersion"]) is not int or meta["schemaVersion"] not in (1, 2, 3, 4)):
             fail("invalid _progress.schemaVersion")
 
 
@@ -429,6 +442,19 @@ def saved_evidence_problems(gates, stage):
 
 
 def gate_problems(data, stage):
+    evidence_problems = []
+    if data.get("_progress", {}).get("schemaVersion") == 4:
+        data = copy.deepcopy(data)
+        view = evidence_v4.project(data)
+        data["gates"]["verdicts"] = view["verdicts"]
+        data["tasks"] = [task for task in data.get("tasks", []) if next(t for t in view["tasks"] if t["id"] == task["id"])["applicable"]]
+        for task in data.get("tasks", []):
+            state = next(t for t in view["tasks"] if t["id"] == task["id"])
+            task["status"] = "done" if state["done"] else "pending"
+        if stage != "implementation" and not data.get("gates", {}).get("reviewBatch"):
+            evidence_problems.append("REVIEW_BATCH_MISSING: freeze and select a required assignment batch")
+        if stage != "implementation":
+            evidence_problems += [p for p in view["problems"] if stage != "review" or not p.startswith("REVIEW_PENDING:")]
     gates = data.get("gates", {})
     problems = [] if gates.get("planApproved") else ["plan not approved: set gates.planApproved to the approved plan revision"]
     if "tasks" in data:
@@ -450,10 +476,13 @@ def gate_problems(data, stage):
         problems += saved_evidence_problems(gates, stage)
     if data.get("_progress", {}).get("schemaVersion", 1) >= 3:
         problems += handoff_problems(data, stage)
-    return problems
+    return evidence_problems + problems
 
 
 def compliance_table(data):
+    if data.get("_progress", {}).get("schemaVersion") == 4:
+        data = copy.deepcopy(data)
+        data["gates"]["verdicts"] = evidence_v4.project(data)["verdicts"]
     gates = data.get("gates", {})
     meta = data.get("_progress")
     derived = {"page": ("함", f"{data.get('path')} · 마지막 저장 {meta['saved_at']} · checkpoint {meta['checkpoint']}") if meta else ("안 함", "저장 기록 없음")}
@@ -476,7 +505,7 @@ def compliance_table(data):
         row = gates.get("evidence", {}).get(key)
         status, evidence = derived.get(key) or ((row["status"], row["evidence"]) if row else ("안 함", "증거 기록 없음"))
         lines.append(f"| {label} | {status} | {" ".join(evidence.replace("|", "/").split())} |")
-    return "\n".join(lines)
+    return "\n".join(lines) + ("" if data.get("_progress", {}).get("schemaVersion") == 4 else "\n\n" + evidence_v4.LEGACY)
 
 
 def spawn_args(host, role):
@@ -517,8 +546,10 @@ def briefing_line(data, path, saved_at):
     return f"진행판: [{data.get('goal') or path.stem}]({path}) — {path} · 마지막 저장: {saved_at}"
 
 
-def graph_warnings(data):
+def graph_warnings(data, view=None):
     """Non-blocking hints for graphs that would render without the intended edges."""
+    if data.get("_progress", {}).get("schemaVersion") == 4:
+        return (view if view is not None else evidence_v4.project(data))["problems"]
     agents = [a for a in data.get("agents", []) if isinstance(a, dict)]
     by_stage = {}
     for agent in agents:
@@ -581,7 +612,7 @@ def read_input(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("init", "update", "status", "handoffs", "gate", "compliance", "spawn-args", "brief"))
+    parser.add_argument("command", choices=("init", "update", "status", "handoffs", "gate", "compliance", "spawn-args", "brief", "snapshot"))
     parser.add_argument("PAGE", nargs="?", help="absolute progress page; required except for spawn-args and brief")
     parser.add_argument("--input", type=Path)
     parser.add_argument("--id", help="handoffs only: select one saved record")
@@ -592,6 +623,12 @@ def main():
     parser.add_argument("--observation-policy", choices=POLICIES, help="init only; defaults to invocation-evidence-v2")
     args = parser.parse_args()
     try:
+        if args.command == "snapshot":
+            if not args.input:
+                fail("snapshot requires --input {root,baseline,scope,exclusions}")
+            manifest = evidence_v4.snapshot(**read_input(args.input))
+            print(json.dumps({"manifest": manifest, "digest": evidence_v4.digest(manifest)}, ensure_ascii=False))
+            return 0
         if args.id is not None and args.command != "handoffs":
             fail("--id is handoffs-only")
         if args.observation_policy and args.command != "init":
@@ -632,6 +669,8 @@ def main():
                 fail("gate requires --stage")
             problems = gate_problems(data, args.stage)
             result = {"gate": args.stage, "ok": not problems, "problems": problems}
+            if data.get("_progress", {}).get("schemaVersion") != 4:
+                result["warning"] = evidence_v4.LEGACY
             if data.get("_progress", {}).get("schemaVersion", 1) >= 2 or data.get("gates", {}).get("observationPolicy", POLICIES[0]) == POLICIES[1]:
                 result["path"] = str(path)
                 result["reviewTarget"] = data.get("gates", {}).get("reviewTarget")
@@ -649,7 +688,11 @@ def main():
                 fail("progress page has no resume metadata")
             receipt = {"path": str(path), "saved_at": meta["saved_at"], "checkpoint": meta["checkpoint"], "revision": meta["revision"],
                        "briefing": briefing_line(data, path, meta["saved_at"])}
-            warnings = graph_warnings(data)
+            if meta.get("schemaVersion") == 4:
+                receipt["_view"] = evidence_v4.project(data)
+            else:
+                receipt["warning"] = evidence_v4.LEGACY
+            warnings = graph_warnings(data, receipt.get("_view"))
             if warnings:
                 receipt["graph_warnings"] = warnings
         else:
@@ -667,6 +710,13 @@ def main():
                     fail(f"progress page already exists: {path}")
                 html = TEMPLATE.read_text(encoding="utf-8")
                 match, data = read_data(html)
+                schema = DEFAULT_SCHEMA
+                if schema == 4:
+                    evidence_v4.check_input(incoming)
+                    for key in ("agents", "tasks", "reviews"):
+                        data[key] = []
+                    data.setdefault("gates", {}).pop("verdicts", None)
+                    data["_progress"] = {"schemaVersion": 4, "checkpoint": args.checkpoint, "revision": 1, "saved_at": now}
                 stamp_records(incoming, {}, now)
                 data.update(incoming)
                 data.setdefault("handoffs", [])
@@ -684,6 +734,12 @@ def main():
                 html = path.read_text(encoding="utf-8")
                 match, data = read_data(html)
                 validate(data)
+                if data.get("_progress", {}).get("schemaVersion") == 4:
+                    evidence_v4.check_input(incoming)
+                    evidence_v4.check_update(data, incoming)
+                    for key in evidence_v4.LISTS:
+                        if key in incoming:
+                            incoming[key] = evidence_v4.append(data.get(key, []), incoming[key])
                 stamp_records(incoming, data, now)
                 if "handoffs" in incoming:
                     incoming["handoffs"] = append_handoffs(data.get("handoffs", []), incoming["handoffs"])
@@ -710,7 +766,7 @@ def main():
                         else:
                             merged.append(agent)
                     for key, change in changes.items():
-                        if key not in consumed and REQUIRED_AGENT_FIELDS - change.keys():
+                        if key not in consumed and (REQUIRED_AGENT_FIELDS - ({"status"} if data.get("_progress", {}).get("schemaVersion") == 4 else set())) - change.keys():
                             fail(f"new agent {key} must contain all renderer fields")
                         if key not in consumed:
                             merged.append(change)
@@ -735,9 +791,11 @@ def main():
                 revision = data.get("_progress", {}).get("revision", 0) + 1
             data["updated"] = now
             data["path"] = str(path)
-            schema_version = 3 if args.command == "init" else data.get("_progress", {}).get("schemaVersion", 1)
+            schema_version = (DEFAULT_SCHEMA) if args.command == "init" else data.get("_progress", {}).get("schemaVersion", 1)
             data["_progress"] = {"checkpoint": args.checkpoint, "revision": revision, "saved_at": now, "schemaVersion": schema_version}
-            warnings = graph_warnings(data)
+            if schema_version == 4:
+                data["_view"] = evidence_v4.project(data)
+            warnings = graph_warnings(data, data.get("_view") if schema_version == 4 else None)
             if warnings:
                 data["_progress"]["graph_warnings"] = warnings
             validate(data, strict_dependency_ids)
@@ -750,9 +808,14 @@ def main():
                        "briefing": briefing_line(data, path, now)}
             if warnings:
                 receipt["graph_warnings"] = warnings
+        if data.get("_progress", {}).get("schemaVersion") != 4:
+            receipt["warning"] = evidence_v4.LEGACY
         print(json.dumps(receipt, ensure_ascii=False))
         return 0
-    except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+    except (TypeError, AttributeError) as error:
+        print(f"progress.py: invalid input shape: {error}", file=sys.stderr)
+        return 2
+    except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.SubprocessError) as error:
         print(f"progress.py: {error}", file=sys.stderr)
         return 2  # tool error; exit 1 is reserved for an unmet gate
 

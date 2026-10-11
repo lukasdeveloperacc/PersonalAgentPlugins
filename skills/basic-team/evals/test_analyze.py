@@ -41,6 +41,26 @@ class AnalyzerTests(unittest.TestCase):
         self.assertTrue(result['workflow_verified'])
         self.assertTrue(result['product']['passed'])
 
+    def test_v4_requires_structured_transcript_to_match_derived_report(self):
+        from unittest.mock import patch
+        self.complete()
+        reports = {name: {"assignmentId": name + "-a", "revisionDigest": "digest", "verdict": "PASS", "criteria": [], "findings": [], "reportedScope": ["util.py"], "uncheckedScope": []} for name in ("karpathy", "ponytail")}
+        for event in self.events:
+            if event.get("type") == "user":
+                result = event["message"]["content"][0]
+                if result.get("tool_use_id") in reports:
+                    result["content"] = json.dumps(reports[result["tool_use_id"]])
+        page = self.run / "work/docs/inprogress/task-progress.html"
+        content = page.read_text().replace('"revision": 1}', '"revision": 1, "schemaVersion": 4}')
+        page.write_text(content)
+        view = {"verdicts": {name: dict(report, revision="rev1") for name, report in reports.items()}}
+        with patch("analyze.progress_evidence.project", return_value=view):
+            self.assertTrue(self.score()["workflow_verified"])
+            for event in self.events:
+                if event.get("type") == "user" and event["message"]["content"][0].get("tool_use_id") == "karpathy":
+                    event["message"]["content"][0]["content"] = json.dumps(dict(reports["karpathy"], verdict="CHANGES_REQUIRED"))
+            self.assertFalse(self.score()["workflow_verified"])
+
     def test_keywords_do_not_spawn_reviewers(self):
         self.call('plan', 'Agent', {'name': 'planner', 'prompt': 'karpathy ponytail impeccable', 'model': 'opus', 'effort': 'medium'}, 'done')
         self.assertFalse(self.score()['checks']['mandatory_review_calls_succeeded'])
