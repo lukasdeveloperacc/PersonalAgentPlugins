@@ -190,7 +190,7 @@ class SnapshotTests(unittest.TestCase):
         task=ev.project(data)['tasks'][-1]
         self.assertFalse(task['done']); self.assertEqual(task['status'],'blocked'); self.assertEqual(task['label'],'막힘 보고'); self.assertEqual(task['tone'],'warn')
 
-    def test_complete_gate_and_compliance_revalidate_same_snapshot(self):
+    def complete_fixture(self):
         import progress
         data=self.executor(self.publish(self.fixture()))
         data['tasks'].append({'id':'cleanup','owner':'main','phase':'completion','title':'Leader cleanup'})
@@ -203,6 +203,11 @@ class SnapshotTests(unittest.TestCase):
             launch=progress.spawn_args('codex',role)
             gates['models'][name]={'role':role,'requested':launch['requested']['id'],'invocation':'accepted','invocationArguments':launch['arguments'],'invocationAccepted':True,'invocationEvidence':'host accepted','observed':launch['requested']['id'],'observedEffort':launch['requested']['effort'],'observationEvidence':'host record'}
         data['handoffs']=[{'id':ident,'transition':transition,'round':1,'revision':'r1','outcome':'ready','summary':'verified','evidence':['record'],'next':[],'pending':[]} for ident,transition in [('release','implementation-to-verification'),('done','completion')]]
+        return data
+
+    def test_complete_gate_and_compliance_revalidate_same_snapshot(self):
+        import progress
+        data=self.complete_fixture()
         self.assertEqual(progress.gate_problems(data,'complete'),[])
         self.assertIn('revision r1: karpathy PASS',progress.compliance_table(data))
         # A fresh batch uses new task IDs without deleting immutable history.
@@ -236,6 +241,66 @@ class SnapshotTests(unittest.TestCase):
         self.assertTrue(any('REVISION_STALE' in p for p in progress.gate_problems(data,'complete')))
         self.assertNotIn('revision r1: karpathy PASS',progress.compliance_table(data))
 
+    def quiescent_fixture(self):
+        data=self.complete_fixture()
+        data['tasks'].append({'id':'plan-task','owner':'planner','phase':'planning','title':'Plan'})
+        data['agents'].append({'id':'planner','name':'Planner','role':'planner','area':'all'})
+        data['assignments'].append({'id':'plan-a','taskId':'plan-task','agentId':'planner'})
+        for ident,kind,source,body in [('plan-dispatch','dispatch_accepted','host_response',{'accepted':True}),('plan-result','result_received','child_report',{'completed':True,'paths':[],'verification':['plan reviewed']})]:
+            data['evidence'].append({'id':ident,'source':source,'sourceRef':None,'observedAt':None,'captured':dict(body,assignmentId='plan-a',hostAgentId='host-plan')})
+            data['observations'].append({'id':ident,'kind':kind,'assignmentId':'plan-a','evidenceId':ident})
+        data['gates']['lifecycle']={'host':'codex','mode':'task-quiescence','terminationSupported':False,'terminationRequired':False,'capabilityEvidence':'cap','snapshotEvidence':'inactive'}
+        data['gates']['evidence']['shutdown']={'status':'부분','evidence':'termination unavailable; all tracked turns inactive'}
+        data['observations']=[o for o in data['observations'] if o['kind']!='terminated']
+        data['evidence'].extend([
+            {'id':'cap','source':'leader_record','sourceRef':'native tool metadata','observedAt':None,'captured':{'tools':['collaboration.list_agents','collaboration.interrupt_agent'],'terminationSupported':False}},
+            {'id':'inactive','source':'host_response','sourceRef':'list_agents response after work reconciled','observedAt':None,'captured':{'agents':[{'hostAgentId':host,'state':state} for host,state in [('host-k','idle'),('host-p','completed'),('host-build','interrupted'),('host-plan','idle')]],'pending':[],'observationsDigest':ev.digest(data['observations'])}}
+        ])
+        return data
+
+    def test_quiescence_allows_completion_without_claiming_termination(self):
+        import progress
+        data=self.quiescent_fixture()
+        progress.validate(data)
+        self.assertEqual(progress.gate_problems(data,'complete'),[])
+        # Even an inaccurate manually entered row cannot produce shutdown=done.
+        data['gates']['evidence']['shutdown']['status']='함'
+        self.assertIn('verification | 부분 | 종료 미확인',progress.compliance_table(data))
+        self.assertFalse(any(o['kind']=='terminated' for o in data['observations']))
+
+    def test_quiescence_blocks_missing_active_or_unsupported_evidence(self):
+        import progress
+        changes=[
+            lambda d:d['evidence'][-1]['captured']['agents'][0].update(state='running'),
+            lambda d:d['evidence'][-1]['captured']['agents'][0].update(state='unknown'),
+            lambda d:d['evidence'][-1]['captured']['agents'].pop(),
+            lambda d:d['evidence'][-1]['captured']['agents'][0].update(hostAgentId='wrong'),
+            lambda d:d['evidence'][-1]['captured'].update(pending=['background write command still running']),
+            lambda d:d['gates']['lifecycle'].update(host='claude'),
+            lambda d:d['gates']['lifecycle'].update(terminationRequired=True),
+            lambda d:d['gates']['lifecycle'].update(terminationSupported=True),
+            lambda d:d['gates']['lifecycle'].update(capabilityEvidence='missing'),
+            lambda d:d['evidence'][-2]['captured'].update(tools=[]),
+            lambda d:d['evidence'][-1].update(source='leader_record'),
+            lambda d:d['evidence'][-1]['captured'].update(observationsDigest='stale'),
+            lambda d:d['gates']['models'].update(untracked=dict(d['gates']['models']['planner'])),
+        ]
+        for change in changes:
+            with self.subTest(change=change):
+                data=self.quiescent_fixture();change(data)
+                self.assertTrue(any(p.startswith('LIFECYCLE_') for p in progress.gate_problems(data,'complete')))
+
+    def test_interrupted_agent_is_not_a_completed_task_and_snapshot_expires(self):
+        import progress
+        data=self.quiescent_fixture()
+        data['observations']=[o for o in data['observations'] if o['id']!='build-result']
+        # Refreshing inactivity still cannot replace the missing task result.
+        data['evidence'][-1]['captured']['observationsDigest']=ev.digest(data['observations'])
+        self.assertIn('TASKS_INCOMPLETE: finish all phase tasks before completion',progress.gate_problems(data,'complete'))
+        data=self.quiescent_fixture()
+        data['observations'].append({'id':'new-progress','kind':'progress_reported','assignmentId':'plan-a','evidenceId':'plan-result'})
+        self.assertTrue(any(p.startswith('LIFECYCLE_STALE:') for p in progress.gate_problems(data,'complete')))
+
     def test_leader_cleanup_result_cannot_complete_child_or_review_tasks(self):
         record={'id':'leader','source':'leader_record','sourceRef':None,'observedAt':None,'purpose':'leader_task_result','captured':{'taskId':'cleanup','completed':True,'verification':['host cleanup checked']}}
         base=self.fixture(); base['tasks'].append({'id':'cleanup','owner':'main','phase':'completion','title':'Cleanup'})
@@ -266,6 +331,19 @@ class V4CliTests(SnapshotTests):
         if payload is not None: command += ['--input','-']
         return subprocess.run(command,cwd=self.root,text=True,capture_output=True,input=json.dumps(payload) if payload is not None else None)
 
+    def test_cli_quiescence_gate_and_partial_shutdown(self):
+        import json
+        data=self.quiescent_fixture(); data.pop('_progress')
+        page=self.root/'docs/inprogress/quiescent.html'
+        result=self.call('init',page,'--checkpoint','complete',payload=data)
+        self.assertEqual(result.returncode,0,result.stderr)
+        result=self.call('gate',page,'--stage','complete')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertTrue(json.loads(result.stdout)['ok'])
+        result=self.call('compliance',page)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('verification | 부분 | 종료 미확인',result.stdout)
+
     def test_snapshot_git_failure_is_tool_error(self):
         result=self.call('snapshot',payload={'root':str(self.root),'baseline':'missing-reference','scope':['src'],'exclusions':[]})
         self.assertEqual(result.returncode,2); self.assertNotIn('Traceback',result.stderr); self.assertIn('git',result.stderr.lower())
@@ -277,6 +355,7 @@ class V4CliTests(SnapshotTests):
         self.assertEqual(result.returncode,0,result.stderr)
         result=self.call('status',page); self.assertEqual(result.returncode,0,result.stderr)
         self.assertEqual(json.loads(result.stdout)['_view']['tasks'][0]['label'],'호출 수락')
+        self.assertEqual(json.loads(result.stdout)['lifecycleObservationsDigest'],ev.digest(self.fixture()['observations']))
         before=page.read_bytes()
         for patch in ({'agents':[{'id':'karpathy','status':'PASS'}]},{'assignments':None},{'gates':None},{'assignmentBatches':None},{'observations':[{'id':'bad','kind':'queued','assignmentId':[],'evidenceId':'dispatch-k'}]},{'gates':{'verdicts':{'karpathy':{'verdict':'PASS'}}}}):
             result=self.call('update',page,'--checkpoint','invalid',payload=patch)

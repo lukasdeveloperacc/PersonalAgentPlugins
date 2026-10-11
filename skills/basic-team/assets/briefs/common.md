@@ -77,3 +77,5 @@ evidence: <commands run and their results, or "not run" and why>
 next: <next action>
 blocker: <blocker, or none>
 ```
+
+Before returning, report any still-running command/process or write job with its owned session handle; explicitly report none when none remain. Do not detach write work without a tracked handle. A finished turn or interruption does not prove its processes exited.

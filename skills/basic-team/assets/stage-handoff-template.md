@@ -33,6 +33,6 @@ Before dependent dispatch, check the saved record against the actual evidence:
 - Reviews cover the same frozen revision; early independent findings stay out of all page JSON until the required set arrives.
 - Tool failures remain BLOCKED without inferring a product defect.
 - The page receipt is confirmed; briefing includes its path, saved time, and actual hook request/confirmation state.
-- Completion additionally requires all PASS verdicts, validation, actual shutdown/cleanup, reconciled tasks, and no pending writes/updates.
+- Completion additionally requires all PASS verdicts, validation, verified host-appropriate lifecycle cleanup (Codex task quiescence does not claim agent disposal), reconciled tasks, and no pending writes/updates.
 
 An unmet required check blocks the transition. Mark genuine inapplicability with its reason and omissions with the specific user exception; a JSON record alone cannot prove host actions or grant permission.

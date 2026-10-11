@@ -27,7 +27,7 @@ DATA_TAG = re.compile(r'(<script type="application/json" id="progress-data">)(.*
 TOP_FIELDS = set(evidence_v4.LISTS) | {"_view", "goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates", "handoffs", "tasks", "taskPlanRevision"}
 HANDOFF_TRANSITIONS = {"planning-to-implementation", "implementation-to-verification", "verification-to-fixes", "fixes-to-verification", "completion"}
 HANDOFF_FIELDS = {"id", "transition", "round", "revision", "outcome", "summary", "evidence", "next", "pending"}
-GATE_FIELDS = {"reviewBatch", "planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
+GATE_FIELDS = {"lifecycle", "reviewBatch", "planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
 VERDICTS = {"PASS", "CHANGES_REQUIRED", "BLOCKED"}
 MANDATORY_REVIEWERS = {"karpathy", "ponytail"}
 UNOBSERVED = "미확인"
@@ -281,6 +281,11 @@ def validate_gates(gates):
             fail(f"gates.{key} must be a nonempty string")
     if "requiredReviewers" in gates and not is_text_list(gates["requiredReviewers"]):
         fail("gates.requiredReviewers must be an array of nonempty strings")
+    if "lifecycle" in gates:
+        record = gates["lifecycle"]
+        fields = {"host", "mode", "terminationSupported", "terminationRequired", "capabilityEvidence", "snapshotEvidence"}
+        if not isinstance(record, dict) or set(record) != fields or any(not isinstance(record.get(k), str) or not record[k].strip() for k in ("host", "mode", "capabilityEvidence", "snapshotEvidence")) or any(type(record.get(k)) is not bool for k in ("terminationSupported", "terminationRequired")):
+            fail("gates.lifecycle needs host, mode, terminationSupported, terminationRequired, capabilityEvidence and snapshotEvidence")
     exceptions = gates.get("exceptions", {})
     if not isinstance(exceptions, dict) or any(not isinstance(k, str) or not isinstance(v, str) or not v.strip() for k, v in exceptions.items()):
         fail("gates.exceptions must be an object of agent-id -> nonempty reason")
@@ -397,6 +402,38 @@ def artifact_problems(record, label):
     return [] if actual == digest else [f"ARTIFACT_STALE: {label}: sha256 does not match {path}; review the current artifact and save its digest"]
 
 
+def lifecycle_problems(data):
+    """Validate observed inactivity without claiming reusable agents were terminated."""
+    record = data.get("gates", {}).get("lifecycle", {})
+    if data.get("_progress", {}).get("schemaVersion") != 4 or record.get("host") != "codex" or record.get("mode") != "task-quiescence" or record.get("terminationSupported") is not False or record.get("terminationRequired") is not False:
+        return ["LIFECYCLE_POLICY: quiescence requires schema 4 Codex without termination support or an explicit termination requirement"]
+    evidence = {e["id"]: e for e in data.get("evidence", [])}
+    capability = evidence.get(record.get("capabilityEvidence"), {})
+    snapshot = evidence.get(record.get("snapshotEvidence"), {})
+    try:
+        caps = evidence_v4.evidence_body(capability)
+        state = evidence_v4.evidence_body(snapshot)
+    except (ValueError, OSError, KeyError):
+        return ["LIFECYCLE_EVIDENCE: readable capability and host inactivity evidence required"]
+    if capability.get("source") != "leader_record" or not isinstance(caps, dict) or caps.get("terminationSupported") is not False or not is_text_list(caps.get("tools")) or not caps["tools"]:
+        return ["LIFECYCLE_CAPABILITY: record inspected native tools and unavailable termination support"]
+    if snapshot.get("source") != "host_response" or not isinstance(state, dict) or state.get("pending") != []:
+        return ["LIFECYCLE_PENDING: host snapshot must confirm no pending work"]
+    if state.get("observationsDigest") != evidence_v4.digest(data.get("observations", [])):
+        return ["LIFECYCLE_STALE: refresh inactivity evidence after dispatch or observations change"]
+    rows = state.get("agents")
+    if not isinstance(rows, list) or any(not isinstance(a, dict) or set(a) != {"hostAgentId", "state"} or not isinstance(a["hostAgentId"], str) or not a["hostAgentId"] or a["state"] not in ("completed", "idle", "interrupted") for a in rows):
+        return ["LIFECYCLE_ACTIVE: each host agent needs completed, idle or interrupted inactivity evidence; running/unknown blocks"]
+    accepted = [o for o in data.get("observations", []) if o["kind"] == "dispatch_accepted"]
+    hosts = {evidence_v4.evidence_body(evidence[o["evidenceId"]])["hostAgentId"] for o in accepted}
+    assignments = {a["id"]: a for a in data.get("assignments", [])}
+    agents = {assignments[o["assignmentId"]]["agentId"] for o in accepted}
+    invoked = {name for name, model in data.get("gates", {}).get("models", {}).items() if model.get("invocationAccepted") is True}
+    if not invoked <= agents or not hosts or len(rows) != len(hosts) or {a["hostAgentId"] for a in rows} != hosts or {a["id"] for a in data.get("agents", [])} != agents:
+        return ["LIFECYCLE_COVERAGE: include every tracked agent and accepted host ID, including prior assignments"]
+    return []
+
+
 def saved_evidence_problems(gates, stage):
     problems = []
     plan = gates.get("planReview", {})
@@ -436,6 +473,8 @@ def saved_evidence_problems(gates, stage):
     if stage == "complete":
         for name in ("tasks", "shutdown", "cleanup"):
             row = gates.get("evidence", {}).get(name, {})
+            if name == "shutdown" and gates.get("lifecycle") is not None:
+                continue  # Checked against immutable native receipts by gate_problems.
             if row.get("status") != "함" and not (name == "cleanup" and row.get("status") == "안 함" and "해당 없음" in row.get("evidence", "")):
                 problems.append(f"TERMINAL_EVIDENCE: save evidence.{name} after verified host cleanup; missing or partial evidence blocks completion")
     return problems
@@ -456,6 +495,8 @@ def gate_problems(data, stage):
         if stage != "implementation":
             evidence_problems += [p for p in view["problems"] if stage != "review" or not p.startswith("REVIEW_PENDING:")]
     gates = data.get("gates", {})
+    if stage == "complete" and "lifecycle" in gates:
+        evidence_problems += lifecycle_problems(data)
     problems = [] if gates.get("planApproved") else ["plan not approved: set gates.planApproved to the approved plan revision"]
     if "tasks" in data:
         if not data["tasks"]:
@@ -500,6 +541,9 @@ def compliance_table(data):
     open_reviews = review_problems(gates, "complete")
     derived["reviews"] = ("안 함", "판정 기록 없음") if not verdicts else ("부분", "; ".join(open_reviews)) if open_reviews else (
         "함", f"revision {gates['reviewTarget']}: " + ", ".join(f"{n} {v['verdict']}" for n, v in verdicts.items()))
+    if "lifecycle" in gates:
+        gaps = lifecycle_problems(data)
+        derived["shutdown"] = ("부분", "종료 미확인 · " + ("; ".join(gaps) if gaps else "저장된 native 관측에서 전원 비활성; 재사용 가능한 agent 유지"))
     lines = ["| Requirement | 함 / 부분 / 안 함 | Evidence, gap, or approved exception |", "| --- | --- | --- |"]
     for key, label in COMPLIANCE_ROWS:
         row = gates.get("evidence", {}).get(key)
@@ -690,6 +734,7 @@ def main():
                        "briefing": briefing_line(data, path, meta["saved_at"])}
             if meta.get("schemaVersion") == 4:
                 receipt["_view"] = evidence_v4.project(data)
+                receipt["lifecycleObservationsDigest"] = evidence_v4.digest(data.get("observations", []))
             else:
                 receipt["warning"] = evidence_v4.LEGACY
             warnings = graph_warnings(data, receipt.get("_view"))
