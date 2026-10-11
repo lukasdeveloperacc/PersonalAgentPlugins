@@ -6,7 +6,7 @@ Read at preflight and reuse for dispatch, recovery, and exit. Inspect the visibl
 
 Use native `spawn_agent` with explicit `model` and `reasoning_effort` from `spawn-args`, unique `task_name`, and `fork_turns: "none"` when supported. Use `agent_type: "default"` if installed role profiles override the requested settings. If per-call overrides are unavailable, an existing custom role is usable only after its model/effort are verified to match. Do not substitute inherited settings, a CLI process, global config changes, or a tmux team.
 
-Architect/Critic use `--role architect|critic`; their arguments map to Planner settings while their briefs remain distinct. All product-review personas and their helpers use Reviewer settings. Queue within host capacity; never lower effort or omit roles.
+Architect/Critic use `--role architect|critic`; their arguments map to Planner settings while their briefs remain distinct. The four product-review roles use Reviewer settings; no review helpers are dispatched. Queue within host capacity; never lower effort or omit roles.
 
 Record requested ID/effort, actual argument object, accepted call/returned agent identity and source, and actual host-observed model/effort separately. Hidden observations remain `미확인`; an accepted explicit invocation permits work under v2 but does not confirm exact running settings. Strict policy pauses unknown settings. Any known mismatch blocks regardless of policy/unknown-setting exception.
 
