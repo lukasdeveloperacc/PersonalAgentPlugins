@@ -12,6 +12,7 @@
 
 .agentgraph{position:relative;padding:24px 24px 48px;isolation:isolate}
 .handoff{padding:18px 22px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.handoff:last-child{border-bottom:0}.handoff summary{cursor:pointer;font-weight:600}.handoff summary:hover{color:var(--accent)}.handoff summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}.handoff p{white-space:pre-line;margin-top:12px}.handoff .details{padding:16px 0 0}.handoff small{display:block;margin-top:8px}
+.todos{margin-bottom:28px}.todo-phase{margin-top:16px}.todo-phase h3{display:flex;justify-content:space-between;gap:16px;padding:16px 22px;border-bottom:1px solid var(--line)}.todo-phase h3 small{white-space:nowrap;font-weight:400}.todo-row{display:flex;gap:12px;align-items:flex-start}.todo-row input{flex-shrink:0;width:18px;height:18px;margin:4px 0 0;accent-color:var(--good);opacity:1}.todo-copy{min-width:0;flex:1;overflow-wrap:anywhere}.todo-copy .badge{margin-left:10px}.todo-copy small{white-space:pre-line}
 .graphlanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:72px;position:relative}
 .graphlane{min-width:0}.graphlane h3{margin:0 0 18px;color:var(--muted);font-size:.85rem;font-weight:600}
 .graphnodes{display:grid;gap:32px}.agentnode{position:relative;display:block;width:100%;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
@@ -39,7 +40,7 @@
 <div class="overview"><div><h1 id="goal">작업 진행판</h1><p id="summary">계획과 에이전트의 최근 보고를 한곳에서 확인합니다.</p></div><aside class="stagebox" aria-label="현재 상태"><small>현재 단계</small><strong id="stage">시작 전</strong><span class="badge" id="blockers">아직 확인되지 않음</span></aside></div>
 <div class="location"><span>진행판 경로</span><code id="path"></code><button class="quiet" id="copy" type="button">경로 복사</button><span id="copy-status" role="status"></span></div>
 <nav class="tabs" role="tablist" aria-label="진행판 영역"><button type="button" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true">계획</button><button type="button" role="tab" id="tab-agents" aria-controls="panel-agents" aria-selected="false" tabindex="-1">에이전트 진행</button><button type="button" role="tab" id="tab-reviews" aria-controls="panel-reviews" aria-selected="false" tabindex="-1">리뷰와 검증</button><button type="button" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">결정과 막힌 일</button><button type="button" role="tab" id="tab-handoffs" aria-controls="panel-handoffs" aria-selected="false" tabindex="-1">인수인계</button></nav>
-<section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" tabindex="0"><div class="panelhead"><h2>작업 계획</h2><p>담당 영역과 다음 작업을 확인합니다.</p></div><div class="flow" id="flow" aria-label="작업 흐름"></div><div class="surface" id="plan"></div></section>
+<section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" tabindex="0"><div class="panelhead"><h2>작업 계획</h2><p>담당 영역과 다음 작업을 확인합니다.</p></div><div class="flow" id="flow" aria-label="작업 흐름"></div><section class="todos" aria-labelledby="todo-heading"><div class="panelhead"><h2 id="todo-heading">Phase별 TODO</h2><p id="todo-summary"></p></div><p class="graphnote" id="todo-plan"></p><p class="graphnote">리더가 확인한 작업 결과를 표시합니다. 완료 체크는 저장된 근거를 따르며, 새 보고는 새로고침하면 반영됩니다.</p><div id="tasks"></div></section><div class="surface" id="plan"></div></section>
 <section class="panel" id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" tabindex="0" hidden><div class="panelhead"><h2>에이전트 진행</h2><p>연결선을 따라 진행 흐름을 확인합니다. 노드에 마우스를 올리면 요약, 누르면 상세 보고가 열립니다.</p></div><div id="agents"></div></section>
 <section class="panel" id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" tabindex="0" hidden><div class="panelhead"><h2>리뷰와 검증</h2><p>같은 구현을 검토한 근거와 남은 확인 사항입니다.</p></div><div class="notice" id="review-notice"></div><div class="surface" id="reviews"></div></section>
 <section class="panel" id="panel-decisions" role="tabpanel" aria-labelledby="tab-decisions" tabindex="0" hidden><div class="panelhead"><h2>결정과 막힌 일</h2><p>선택한 이유와 사용자 입력이 필요한 일을 기록합니다.</p></div><div class="surface" id="decisions"></div></section>
@@ -60,6 +61,8 @@
   "blockers": {"text": "아직 확인되지 않음", "tone": "neutral"},
   "flow": [],
   "plan": [],
+  "taskPlanRevision": "",
+  "tasks": [],
   "agents": [],
   "reviewNotice": "필요한 독립 리뷰가 모두 수집되면 판정을 함께 공개합니다.",
   "reviews": [],
@@ -74,6 +77,26 @@ const node=(tag,text,className)=>{const el=document.createElement(tag);if(text!=
 const tones=new Set(['neutral','active','good','warn','bad']);
 function badge(text,tone){const el=node('span',text,'badge');el.dataset.tone=tones.has(tone)?tone:'neutral';return el}
 function list(id,items,empty){const root=byId(id);if(!items.length){root.append(node('p',empty,'empty'));return}const ul=node('ul',undefined,'stack');items.forEach(item=>{const li=node('li');li.append(node('h3',item.title),node('p',item.body));if(item.meta)li.append(node('small',item.meta));ul.append(li)});root.append(ul)}
+function renderTasks(data){
+  const tasks=data.tasks||[],root=byId('tasks');
+  byId('todo-summary').textContent=tasks.length?'완료 '+tasks.filter(task=>task.status==='done').length+' / '+tasks.length+'개':'아직 작업 목록 없음';
+  const approved=data.taskPlanRevision&&data.taskPlanRevision===data.gates?.planApproved;
+  byId('todo-plan').textContent=data.taskPlanRevision?'계획 버전: '+data.taskPlanRevision+(approved?' · 승인 기록과 일치':' · 승인 전 또는 승인 계획과 다름'):'Planner의 계획을 기다리고 있습니다.';
+  if(!tasks.length){root.append(node('p','Planner가 계획을 Phase별 작업으로 나누면 담당자, 진행 상태, 완료 근거가 여기에 표시됩니다.','empty'));return}
+  const phases=new Map(),states={pending:['대기','neutral'],in_progress:['진행 중','active'],blocked:['막힘','bad'],done:['완료','good']};
+  tasks.forEach(task=>{if(!phases.has(task.phase))phases.set(task.phase,[]);phases.get(task.phase).push(task)});
+  phases.forEach((items,phase)=>{
+    const section=node('section',undefined,'surface todo-phase'),heading=node('h3',phase),list=node('ul',undefined,'stack');
+    heading.append(node('small','완료 '+items.filter(task=>task.status==='done').length+' / '+items.length));section.append(heading);
+    items.forEach(task=>{
+      const row=node('li'),layout=node('div',undefined,'todo-row'),check=node('input'),copy=node('div',undefined,'todo-copy');
+      const [status,tone]=states[task.status]||['미확인','neutral'];check.type='checkbox';check.checked=task.status==='done';check.disabled=true;check.setAttribute('aria-label',task.title+' · '+status);
+      copy.append(node('strong',task.title),badge(status,tone),node('small','담당: '+task.owner+' · '+task.id));
+      if(task.evidence)copy.append(node('small',(task.status==='blocked'?'막힌 이유: ':'근거: ')+task.evidence));
+      layout.append(check,copy);row.append(layout);list.append(row);
+    });section.append(list);root.append(section);
+  });
+}
 function renderHandoffs(records){
   const root=byId('handoffs');
   if(!records.length){root.append(node('p','단계를 넘길 때 완료 결과와 다음 작업을 이곳에 기록합니다. 아직 저장된 인수인계가 없습니다.','empty'));return}
@@ -209,6 +232,7 @@ const displayPath=data.path||decodeURI(location.pathname);byId('path').textConte
 byId('blockers').textContent=data.blockers.text;byId('blockers').dataset.tone=tones.has(data.blockers.tone)?data.blockers.tone:'neutral';
 data.flow.forEach((step,i)=>{if(i){const arrow=node('span',undefined,'connector');arrow.textContent='→';arrow.setAttribute('aria-hidden','true');byId('flow').append(arrow)}const el=node('div',undefined,'flowstep');el.append(node('strong',step.title),node('small',step.body));byId('flow').append(el)});
 list('plan',data.plan,'Planner의 계획이 도착하면 작업 배정·의존성·완료 기준을 여기에 표시합니다.');
+renderTasks(data);
 list('reviews',data.reviews,'아직 리뷰 보고가 없습니다. 미실행 검증은 통과로 표시하지 않습니다.');
 list('decisions',data.decisions,'결정이나 막힌 일이 보고되면 선택한 이유와 다음 행동을 여기에 기록합니다.');
 renderHandoffs(data.handoffs||[]);

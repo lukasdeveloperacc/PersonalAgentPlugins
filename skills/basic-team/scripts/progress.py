@@ -20,7 +20,7 @@ TEMPLATE = SKILL_DIR / "assets" / "progress-template.html"
 BRIEFS = SKILL_DIR / "assets" / "briefs"
 ROLES = Path(__file__).resolve().parent / "roles.json"
 DATA_TAG = re.compile(r'(<script type="application/json" id="progress-data">)(.*?)(</script>)', re.S)
-TOP_FIELDS = {"goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates", "handoffs"}
+TOP_FIELDS = {"goal", "summary", "stage", "updated", "path", "blockers", "flow", "plan", "reviewNotice", "reviews", "decisions", "agents", "gates", "handoffs", "tasks", "taskPlanRevision"}
 HANDOFF_TRANSITIONS = {"planning-to-implementation", "implementation-to-verification", "verification-to-fixes", "fixes-to-verification", "completion"}
 HANDOFF_FIELDS = {"id", "transition", "round", "revision", "outcome", "summary", "evidence", "next", "pending"}
 GATE_FIELDS = {"planApproved", "requiredReviewers", "reviewTarget", "verdicts", "models", "exceptions", "evidence", "observationPolicy", "planReview", "conditionalReviews", "validation"}
@@ -85,7 +85,7 @@ def validate(data, strict_dependency_ids=()):
     unknown = data.keys() - TOP_FIELDS - {"_progress"}
     if unknown:
         fail(f"unknown progress fields: {', '.join(sorted(unknown))}")
-    for key in ("goal", "summary", "stage", "updated", "path", "reviewNotice"):
+    for key in ("goal", "summary", "stage", "updated", "path", "reviewNotice", "taskPlanRevision"):
         if key in data and not isinstance(data[key], str):
             fail(f"{key} must be a string")
     blockers = data.get("blockers")
@@ -100,6 +100,23 @@ def validate(data, strict_dependency_ids=()):
             for item in data[key]:
                 if not isinstance(item, dict) or item.keys() - {"title", "body", "meta"} or any(not isinstance(item.get(field), str) for field in required) or ("meta" in item and not isinstance(item["meta"], str)):
                     fail(f"{key} entries must contain string title and body, with optional string meta")
+    if "tasks" in data:
+        if not isinstance(data["tasks"], list):
+            fail("tasks must be an array")
+        ids = set()
+        fields = {"id", "phase", "title", "owner", "status", "evidence"}
+        for task in data["tasks"]:
+            if not isinstance(task, dict) or task.keys() != fields or any(not isinstance(task[field], str) for field in fields):
+                fail("tasks entries must contain exactly string id, phase, title, owner, status, evidence")
+            if any(not task[field].strip() for field in ("id", "phase", "title", "owner")):
+                fail("task id, phase, title and owner must be nonempty")
+            if task["id"] in ids:
+                fail(f"duplicate task id: {task['id']}")
+            ids.add(task["id"])
+            if task["status"] not in ("pending", "in_progress", "blocked", "done"):
+                fail("task status must be pending, in_progress, blocked or done")
+            if task["status"] in ("done", "blocked") and not task["evidence"].strip():
+                fail("done and blocked tasks require evidence")
     if "agents" in data:
         if not isinstance(data["agents"], list):
             fail("agents must be an array")
@@ -385,6 +402,13 @@ def saved_evidence_problems(gates, stage):
 def gate_problems(data, stage):
     gates = data.get("gates", {})
     problems = [] if gates.get("planApproved") else ["plan not approved: set gates.planApproved to the approved plan revision"]
+    if "tasks" in data:
+        if not data["tasks"]:
+            problems.append("TASKS_EMPTY: save the approved plan's phase checklist")
+        if not data.get("taskPlanRevision") or data["taskPlanRevision"] != gates.get("planApproved"):
+            problems.append("TASK_PLAN_REVISION: taskPlanRevision must match gates.planApproved")
+        if stage == "complete" and any(task["status"] != "done" for task in data["tasks"]):
+            problems.append("TASKS_INCOMPLETE: finish all phase tasks before completion")
     need = ("planner",) if stage == "implementation" else ("planner", "executor")
     final = stage in ("ready", "complete")
     current_schema = data.get("_progress", {}).get("schemaVersion", 1) >= 2

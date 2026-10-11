@@ -48,6 +48,8 @@ class CliCase(unittest.TestCase):
         html = self.page.read_text()
         data = self.data()
         data["_progress"]["schemaVersion"] = version
+        data.pop("tasks", None)
+        data.pop("taskPlanRevision", None)
         start = html.index('>', html.index('<script type="application/json" id="progress-data">')) + 1
         end = html.index('</script>', start)
         self.page.write_text(html[:start] + "\n" + json.dumps(data).replace("<", "\\u003c") + "\n" + html[end:])
@@ -60,6 +62,8 @@ class CliCase(unittest.TestCase):
         # Existing tests are recovery fixtures for pages written before policy/schema metadata existed.
         html = self.page.read_text()
         data = self.data()
+        data.pop("tasks", None)
+        data.pop("taskPlanRevision", None)
         data["gates"].pop("observationPolicy", None)
         data["_progress"].pop("schemaVersion", None)
         start = html.index('>', html.index('<script type="application/json" id="progress-data">')) + 1
@@ -509,7 +513,8 @@ class HandoffTests(CliCase):
 
     def init_current(self, handoffs=None):
         self.invoke("init", self.page, "--checkpoint", "kickoff", "--input", self.input_file({
-            "gates": self.v2_gates(), "handoffs": handoffs or []}))
+            "gates": self.v2_gates(), "handoffs": handoffs or [],
+            "taskPlanRevision": "p1", "tasks": [dict(id="build", phase="Implementation", title="Build", owner="executor", status="done", evidence="verified")]}))
 
     def append(self, records):
         return self.run_cli("update", self.page, "--checkpoint", "handoff", "--input", "-", stdin=json.dumps({"handoffs": records}))
@@ -642,6 +647,87 @@ class HandoffTests(CliCase):
                 self.assertEqual(self.gate("implementation")[0], 0)
                 self.assertEqual(self.append([self.record()]).returncode, 0)
                 self.assertEqual(self.data()["_progress"]["schemaVersion"], version)
+
+
+class PhaseTodoTests(CliCase):
+    @staticmethod
+    def task(**changes):
+        return dict(dict(id="build", phase="Implementation", title="Build API", owner="backend", status="pending", evidence=""), **changes)
+
+    def patch_tasks(self, tasks, **fields):
+        return self.run_cli("update", self.page, "--checkpoint", "todo", "--input", self.input_file(dict(tasks=tasks, **fields)))
+
+    def test_snapshot_roundtrip_reopen_and_unrelated_update(self):
+        self.init()
+        tasks = [self.task(), self.task(id="cleanup", phase="Finish", owner="leader")]
+        self.assertEqual(self.patch_tasks(tasks, taskPlanRevision="p1").returncode, 0)
+        self.assertEqual(self.data()["tasks"], tasks)
+        self.invoke("update", self.page, "--checkpoint", "summary", "--input", self.input_file({"summary": "unchanged checklist"}))
+        self.assertEqual(self.data()["tasks"], tasks)
+        tasks[0].update(status="done", evidence="API test passed")
+        self.assertEqual(self.patch_tasks(tasks).returncode, 0)
+        tasks[0].update(status="in_progress", evidence="regression found")
+        self.assertEqual(self.patch_tasks(tasks).returncode, 0)
+        self.assertEqual(self.data()["tasks"], tasks)
+        self.assertEqual(self.data()["taskPlanRevision"], "p1")
+        self.assertEqual(self.patch_tasks(tasks[:1]).returncode, 0)
+        self.assertEqual(self.data()["tasks"], tasks[:1])
+
+    def test_invalid_snapshots_leave_page_intact(self):
+        self.init()
+        before = self.page.read_bytes()
+        invalid = [None, {}, [None], [self.task(extra="unexpected")], [self.task(title=" ")],
+                   [self.task(owner=2)], [self.task(status="complete")], [self.task(status="done")],
+                   [self.task(status="blocked", evidence=" ")], [self.task(), self.task(phase="Another phase")]]
+        missing = self.task()
+        del missing["evidence"]
+        invalid.append([missing])
+        for tasks in invalid:
+            with self.subTest(tasks=tasks):
+                self.assertNotEqual(self.patch_tasks(tasks).returncode, 0)
+                self.assertEqual(self.page.read_bytes(), before)
+        self.assertNotEqual(self.patch_tasks([self.task()], taskPlanRevision=12).returncode, 0)
+        self.assertEqual(self.page.read_bytes(), before)
+        self.assertEqual(self.patch_tasks([self.task(status="blocked", evidence="waiting for API contract")]).returncode, 0)
+
+    def test_all_gates_require_checklist_and_matching_source_plan(self):
+        self.init({"gates": {"planApproved": "p1"}})
+        for fields, expected in (({}, "TASK_PLAN_REVISION"), ({"taskPlanRevision": "p0"}, "TASK_PLAN_REVISION"),
+                                 ({"taskPlanRevision": ""}, "TASK_PLAN_REVISION")):
+            self.assertEqual(self.patch_tasks([self.task()], **fields).returncode, 0)
+            for stage in ("implementation", "review", "ready", "complete"):
+                result = self.run_cli("gate", self.page, "--stage", stage)
+                self.assertTrue(any(expected in p for p in json.loads(result.stdout)["problems"]), result.stdout)
+        self.assertEqual(self.patch_tasks([], taskPlanRevision="p1").returncode, 0)
+        for stage in ("implementation", "review", "ready", "complete"):
+            result = self.run_cli("gate", self.page, "--stage", stage)
+            self.assertTrue(any("TASKS_EMPTY" in p for p in json.loads(result.stdout)["problems"]))
+
+    def test_legacy_without_tasks_adds_no_checklist_gate(self):
+        self.init()
+        self.assertNotIn("tasks", self.data())
+        for stage in ("implementation", "review", "ready", "complete"):
+            result = self.run_cli("gate", self.page, "--stage", stage)
+            self.assertFalse(any(p.startswith("TASK") for p in json.loads(result.stdout)["problems"]))
+
+    def test_ready_allows_final_cleanup_but_complete_requires_done(self):
+        # Reuse the valid current-run fixture, keeping all other gates exercised.
+        case = HandoffTests(methodName="test_review_and_completion_handoffs_ready_order_and_pending")
+        case.setUp()
+        try:
+            case.prepare_review()
+            case.append([case.record("build", "implementation-to-verification", "r1"), case.record("done", "completion", "r1")])
+            for status in ("pending", "in_progress", "blocked"):
+                task = self.task(id="cleanup", phase="Finish", owner="leader", status=status, evidence="cleanup pending")
+                case.invoke("update", case.page, "--checkpoint", "cleanup", "--input", case.input_file({"tasks": [task]}))
+                self.assertEqual(case.gate("ready")[0], 0)
+                code, result = case.gate("complete")
+                self.assertEqual(code, 1)
+                self.assertTrue(any("TASKS_INCOMPLETE" in p for p in result["problems"]))
+            case.invoke("update", case.page, "--checkpoint", "cleanup-done", "--input", case.input_file({"tasks": [dict(task, status="done", evidence="host stopped")]}))
+            self.assertEqual(case.gate("complete")[0], 0)
+        finally:
+            case.tearDown()
 
 
 if __name__ == "__main__":

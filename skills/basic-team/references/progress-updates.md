@@ -84,9 +84,23 @@ Pass only changed fields in the input JSON. Agent patches merge by stable `id`, 
 }
 ```
 
-Other arrays (`plan`, `reviews`, `decisions`, `flow`) replace their entire array when supplied; include the intended full snapshot. `agents: []` makes no agent changes. Omitted fields remain unchanged. Do not pass script-owned `path`, `updated`, or `_progress`. The script embeds checkpoint/save metadata under `_progress`, escapes report text, and rejects malformed or unknown fields without replacing the existing page. Prefer `--input -` with stdin for `init`, `update`, and `brief` so routine checkpoints do not create patch JSON files. File input remains available when needed; keep it temporary and free of secrets or private reasoning.
+Other arrays (`plan`, `reviews`, `decisions`, `flow`, `tasks`) replace their entire array when supplied; include the intended full snapshot. `agents: []` makes no agent changes. Omitted fields remain unchanged. Do not pass script-owned `path`, `updated`, or `_progress`. The script embeds checkpoint/save metadata under `_progress`, escapes report text, and rejects malformed or unknown fields without replacing the existing page. Prefer `--input -` with stdin for `init`, `update`, and `brief` so routine checkpoints do not create patch JSON files. File input remains available when needed; keep it temporary and free of secrets or private reasoning.
 
 ## Save before continuing
+
+### Phase TODO snapshot
+
+Save `taskPlanRevision` (source plan revision) and `tasks` at the top level. Each task has exactly six string fields: nonempty `id`, `phase`, `title`, `owner`; `status` is `pending`, `in_progress`, `blocked`, or `done`; `evidence` may be empty except that `done` needs completion evidence and `blocked` needs a concrete reason. IDs are unique across Phases. Example after actual implementation reports:
+
+```json
+{"taskPlanRevision":"plan-r1","tasks":[{"id":"api-1","phase":"Phase 1 · 구현","title":"할 일 저장 API 구현","owner":"backend-1","status":"done","evidence":"API 테스트 통과 · 구현 r1 · 실행 결과 경로"},{"id":"ui-1","phase":"Phase 1 · 구현","title":"할 일 입력 화면 구현","owner":"frontend-1","status":"in_progress","evidence":"입력창 구현 보고 수신, 연결 검증 대기"},{"id":"verify-1","phase":"Phase 2 · 검증","title":"연결된 사용 흐름 검증","owner":"e2e","status":"pending","evidence":""}]}
+```
+
+`tasks` replaces the full snapshot, like `plan`; include every retained task on each task update. A status-only fragment is invalid. Reopen affected tasks and replace stale evidence after fixes; remove tasks only when an approved scope change removes them. Save independent review outcomes together after the full set arrives. The renderer groups by first Phase occurrence and derives completed counts from statuses; counts are not effort estimates.
+
+New pages contain `tasks:[]`. When this field is present, each gate requires a nonempty checklist whose `taskPlanRevision` matches `gates.planApproved`; `complete` also requires all tasks to be `done`. `ready` uses the existing review/validation checks and does not require all TODOs done, allowing cleanup to proceed; the all-done check belongs only to `complete`. Old pages without `tasks` retain their existing gates and renderer. Use the new template on the next run rather than recreating or migrating an active page. The checklist does not replace native task state or real validation.
+
+### Checkpoint order
 
 Collect already-received facts into one patch, save, inspect the successful receipt, then dispatch dependent work or brief the user. Do not wait for unrelated agents to finish. Save these events:
 
