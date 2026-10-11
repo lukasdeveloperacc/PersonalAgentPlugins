@@ -58,6 +58,8 @@ $contacts
 
 Do not create or edit agent definitions or user settings, and do not publish, push, or deploy. Send each result once, through the completion surface or one targeted message, not both. Do not message other agents unless the leader gave you their address.
 
+Return progress and results to the leader; only the leader updates the progress HTML's JSON. Do not create progress Markdown, TODO JSON, or handoff files in the worktree. Any assigned planning/review artifact, log, screenshot, or helper input belongs at the exact path under `ARTIFACT_DIR` supplied in Inputs; if a required output path is missing, ask the leader before writing it. Preserve referenced artifacts for verification/resume. Explicitly assigned product files and project documentation keep their owned paths.
+
 ## Reports
 
 Use the assignment/task identity in Inputs. Report actual outputs and completion evidence; task completion does not mean host termination or completion of other assignments. The leader captures your source report; do not invent host IDs, message references or observation timestamps.

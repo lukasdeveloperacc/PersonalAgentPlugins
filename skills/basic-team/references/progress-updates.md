@@ -11,6 +11,8 @@ Before each save, apply the skill's ELI5-style plain-Korean rule to every change
 
 Run from the executing project's root, not the plugin installation directory. Resolve the script from the installed basic-team skill directory. PAGE must be an absolute path beneath that project's `docs/inprogress`.
 
+Only PAGE belongs in `docs/inprogress`. At kickoff create `ARTIFACT_DIR` with `mktemp -d /tmp/basic-team-XXXXXX`, record its exact path in Decisions, and include it in child Inputs and resume context. Put file-backed plans, planning reviews, reports, validation outputs, helper inputs, and the leader task record there. `gates.planReview.artifact` and its review entries accept these absolute temporary paths with their actual SHA256; the gate still reads and verifies the same bytes. Prefer stdin and captured reports when no file is required. Do not delete referenced artifacts during cleanup; `/tmp` removal can leave a readable HTML snapshot whose file-backed verification/resume is blocked.
+
 ```sh
 uv run "<basic-team-base>/scripts/progress.py" init "<project-root>/docs/inprogress/<task>-<start>-progress.html" --input - --checkpoint kickoff <<'JSON'
 {"goal":"목록 API 개선","summary":"계획을 준비합니다","stage":"계획"}

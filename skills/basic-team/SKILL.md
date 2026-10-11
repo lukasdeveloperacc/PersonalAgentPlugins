@@ -41,6 +41,8 @@ If the user requires proof of actual settings, initialize `strict-observation-v1
 
 `<bt>` is this skill's resolved directory. Run `uv run "<bt>/scripts/progress.py" ...` from the target project/worktree root; `PAGE` is an absolute path beneath its `docs/inprogress/`. Never use another Python interpreter. Missing `uv` is BLOCKED.
 
+At kickoff, create one private artifact directory with `mktemp -d /tmp/basic-team-XXXXXX`. Record its exact absolute path as `ARTIFACT_DIR` in the page's Decisions and pass it in every child's Inputs. Store planning drafts, Architect/Critic reviews, file-backed reports, logs, screenshots, helper inputs, and any file-backed leader task record there; do not create a companion artifact folder or reporting MD/JSON files in the worktree. Product files and explicitly assigned project documentation keep their agreed locations. Reuse the recorded directory on resume, including an existing run's original artifact paths; do not relocate active evidence automatically. Keep referenced files unchanged and available after completion: OS cleanup of `/tmp` can break verification/resume and must be disclosed.
+
 Read each stage's directly linked reference when entering it. Gate exit 0 with `ok` means saved-data checks passed; inspect underlying artifacts/host evidence too. Exit 1 gives unmet problem codes and targets: repair only those missing facts or route a blocker. Exit 2 is a command/input failure: read stderr, fix the call, retain pending work. A helper success does not prove the task happened.
 
 | Step | Inputs and reference | Action | Pass evidence | Failure/wait recovery |
@@ -83,7 +85,7 @@ For a blocker: identify affected task/failure → bounded code/config/docs/log i
 
 ## Checkpoints, briefings, and exit
 
-The main session is the sole semantic page writer. Use one standalone HTML page `<project-root>/docs/inprogress/<task-slug>-<YYYYMMDD-HHmmss>-progress.html`, unique at kickoff and reused through fixes/resume/compaction. Never use the plugin directory or silently fall back to `/tmp`; keep artifacts out of product commits unless requested. Preserve the existing accessible tabs, graph/tooltips/modal, inline assets, honest empty states and reduced-motion behavior specified in [references/progress-template.md](references/progress-template.md).
+The main session is the sole semantic page writer. Use one standalone HTML page `<project-root>/docs/inprogress/<task-slug>-<YYYYMMDD-HHmmss>-progress.html`, unique at kickoff and reused through fixes/resume/compaction. Never put this HTML page in the plugin directory or silently fall back to `/tmp`; supporting artifacts use `ARTIFACT_DIR` above. Keep the progress page out of product commits unless requested. Preserve the existing accessible tabs, graph/tooltips/modal, inline assets, honest empty states and reduced-motion behavior specified in [references/progress-template.md](references/progress-template.md).
 
 Use easy Korean ELI5 explanations unless the user asks otherwise: what happened → confirmed result/remaining work → next action. Preserve technical facts and unknowns. Brief at kickoff, after planning, consequential decisions/blockers, review rounds, resume, and completion. Every briefing includes clickable page link, absolute path, confirmed receipt save time, artifact links, validation gaps and separate hook request/confirmation states. No new facts means reuse the receipt without another save.
 

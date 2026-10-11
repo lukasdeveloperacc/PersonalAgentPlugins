@@ -14,6 +14,8 @@ Evidence is exactly one captured body or a local artifact path with its actual S
 
 Artifact-backed evidence is a durable source, including past review rounds: keep its original path and bytes available. Every helper validation rechecks those sources; a missing or changed historical report blocks updates until its exact bytes are restored. Prefer captured original report text when long-term file retention cannot be guaranteed. The saved HTML remains a historical snapshot, not a substitute for the missing source.
 
+For new basic-team runs, file-backed evidence uses the leader's recorded private `ARTIFACT_DIR` under `/tmp`, outside the worktree. This location does not guarantee retention: do not delete referenced files at completion, disclose possible OS cleanup, and preserve the exact directory in resume context. If a source disappears, report the missing-evidence blocker; never fabricate replacement bytes or approval. Existing runs keep their original referenced paths.
+
 ## Freeze the reviewed change
 
 After implementation/integration finishes, freeze the original baseline inventory, approved enumeration roots/patterns and declared unrelated/pre-existing exclusions. The manifest lists sorted relative changed paths with operation and content SHA256 (or explicit deletion), binding baseline, scope and exclusions into its digest. Keep progress/report artifacts outside product scope or explicitly exclude them before freeze; do not shrink scope afterwards to avoid failures.
