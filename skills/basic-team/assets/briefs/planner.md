@@ -16,3 +16,4 @@
 6. State whether Frontend, Backend, both, or neither is needed; mark an unaffected area "not needed". For Frontend, load `impeccable` if listed above and return a design brief with observable design acceptance criteria.
 7. Name the affected surfaces and criteria for the Impeccable review, and the flows, environment, fixtures, and allowed validation for the E2E review, when you recommend them.
 8. This is native ralplan-style planning: do not run `omx ralplan run`, write runtime consensus state, or hand execution to ultragoal or ralph.
+9. Check whether the request or planned behavior changes require updates to existing project documentation. When needed, add a Documentation task in `Other`, name the authoritative files and acceptance criteria, and assign it to `documentation_executor`. Include applicable `AGENTS.md` and `CLAUDE.md` files when the changed behavior or project instructions affect them; do not add a documentation task for unaffected behavior.

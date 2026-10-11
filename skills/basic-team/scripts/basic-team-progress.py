@@ -351,7 +351,7 @@ def _guard_spawn(args, event) -> int:
     if not problems:
         return 0
     reason = ("basic-team: every teammate spawn must pass model and effort as call arguments (" + ", ".join(problems)
-              + "). Run progress.py spawn-args --host claude --role planner|executor|reviewer and pass its arguments.")
+              + "). Run progress.py spawn-args --host claude --role planner|executor|documentation_executor|reviewer and pass its arguments.")
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}))
     return 0
 

@@ -24,8 +24,8 @@ Gate and helper commands (the runbook in SKILL.md says when to use each):
 uv run "<bt>/scripts/progress.py" gate "<page>" --stage implementation|review|ready|complete   # exit 1 + problems list until satisfied
 uv run "<bt>/scripts/progress.py" handoffs "<page>" --id "<handoff-id>"                # omit --id to read all records
 uv run "<bt>/scripts/progress.py" compliance "<page>"                                    # final table; rows without evidence print 안 함
-uv run "<bt>/scripts/progress.py" spawn-args --host claude|codex --role planner|architect|critic|executor|reviewer
-uv run "<bt>/scripts/progress.py" brief --role planner|architect|critic|executor|reviewer --input "<fields.json>"
+uv run "<bt>/scripts/progress.py" spawn-args --host claude|codex --role planner|architect|critic|executor|documentation_executor|reviewer
+uv run "<bt>/scripts/progress.py" brief --role planner|architect|critic|executor|documentation_executor|reviewer --input "<fields.json>"
 ```
 
 ## Evidence fields and observation policy

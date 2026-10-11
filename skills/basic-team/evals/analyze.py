@@ -7,6 +7,7 @@ from pathlib import Path
 
 EXPECTED = {"planner": ("opus", "medium"), "architect": ("opus", "medium"),
             "critic": ("opus", "medium"), "executor": ("haiku", "max"),
+            "documentation_executor": ("sonnet", "medium"),
             "karpathy": ("sonnet", "high"), "ponytail": ("sonnet", "high"),
             "impeccable": ("sonnet", "high"), "e2e": ("sonnet", "high")}
 
@@ -15,6 +16,8 @@ def role(call):
     # Use structured assignment identifiers, never names mentioned inside a prompt.
     names = " ".join(str(call.get(k, "")) for k in ("name", "subagent_type", "description")).lower()
     tokens = re.split(r"[^a-z]+", names)
+    if "documentation" in tokens and "executor" in tokens:
+        return "documentation_executor"
     matches = [r for r in EXPECTED if r in tokens]
     return matches[0] if len(matches) == 1 else None
 

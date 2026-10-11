@@ -28,7 +28,7 @@ VERDICTS = {"PASS", "CHANGES_REQUIRED", "BLOCKED"}
 MANDATORY_REVIEWERS = {"karpathy", "ponytail"}
 UNOBSERVED = "미확인"
 UNOBSERVED_FORMS = {UNOBSERVED, "unknown"}
-ROLE_NAMES = ("planner", "architect", "critic", "executor", "reviewer")
+ROLE_NAMES = ("planner", "architect", "critic", "executor", "documentation_executor", "reviewer")
 POLICIES = ("strict-observation-v1", "invocation-evidence-v2")
 COMPLIANCE_ROWS = (
     ("page", "HTML progress page, final save, link/absolute path/save time"),
@@ -45,7 +45,7 @@ COMPLIANCE_ROWS = (
 DERIVED_ROWS = {"page", "models", "reviews"}
 COMPLIANCE_STATUS = {"함", "부분", "안 함"}
 BRIEF_FIELDS = ("task_id", "request", "project_instructions", "workdir", "area", "owned", "inputs", "deliverable", "validation", "contacts")
-ROLE_TITLES = {"planner": "Planner", "architect": "Architect", "critic": "Critic", "executor": "Executor"}
+ROLE_TITLES = {"planner": "Planner", "architect": "Architect", "critic": "Critic", "executor": "Executor", "documentation_executor": "Documentation Executor"}
 TEXT_FIELDS = ("name", "role", "area", "status", "tone", "reported", "owned", "result", "next", "blocker", "model", "observation")
 REQUIRED_AGENT_FIELDS = {"name", "role", "area", "status"}
 AGENT_FIELDS = set(TEXT_FIELDS) | {"id", "stage", "dependsOn"}
@@ -475,7 +475,12 @@ def render_brief(role, fields):
     values = {key: fields[key].strip() for key in required}
     values["skills"] = "\n".join(f"- {path}" for path in fields["skills"])
     values["role_title"] = fields["reviewer"].strip() if role == "reviewer" else ROLE_TITLES[role]
-    text = (BRIEFS / "common.md").read_text(encoding="utf-8") + (BRIEFS / f"{role}.md").read_text(encoding="utf-8")
+    text = (BRIEFS / "common.md").read_text(encoding="utf-8")
+    if role == "documentation_executor":
+        text += (BRIEFS / "executor.md").read_text(encoding="utf-8")
+        text += (BRIEFS / "documentation_executor.md").read_text(encoding="utf-8")
+    else:
+        text += (BRIEFS / f"{role}.md").read_text(encoding="utf-8")
     return Template(text).substitute(values)
 
 

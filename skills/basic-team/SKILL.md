@@ -25,6 +25,7 @@ Use this table for every new child, including replacements and conditional revie
 | --- | --- | --- | --- | --- |
 | Planner | `gpt-6.1-sol` | `high` | `claude-opus-5-5` | `medium` |
 | Executor | `gpt-6-luna` | `max` | `claude-haiku-5-5` | `max` |
+| Documentation Executor (only when the approved plan includes documentation work) | `gpt-6.1-sol` | `medium` | `claude-sonnet-5-5` | `medium` |
 | Reviewer (each) | `gpt-6.1-sol` | `medium` | `claude-sonnet-5-5` | `high` |
 
 At preflight read ONLY the current host reference: [Codex](references/host-codex.md) or [Claude](references/host-claude.md). Check the actual spawn schema, reply/resume/wait and termination capabilities. Unsupported required invocation or lifecycle operations remain BLOCKED; do not invent settings or configuration.
@@ -59,7 +60,7 @@ The planning order is **Planner → Architect → Critic**; Critic receives Arch
 
 The Planner groups the allocation into Phase TODOs. Save `taskPlanRevision` and the full `tasks` snapshot in the same progress HTML before implementation; match the approved plan and reuse task IDs in briefs/reports. The Plan tab shows per-Phase checklists and completed counts. Update statuses from actual reports and validation, require evidence for `done`, and reopen affected tasks when fixes invalidate completion. Publish independent review TODO outcomes only after the full review set is collected. See [progress-updates.md](references/progress-updates.md) for fields; no separate TODO file is needed.
 
-Generate prompts with `brief --role <planner|architect|critic|executor|reviewer> --input <fields.json>` and call arguments with `spawn-args --host <codex|claude> --role <role>`. Use generated arguments as actual tool arguments, not merely prompt text. Pass generated briefs unchanged; put task detail in their fields.
+Generate prompts with `brief --role <planner|architect|critic|executor|documentation_executor|reviewer> --input <fields.json>` and call arguments with `spawn-args --host <codex|claude> --role <role>`. Use generated arguments as actual tool arguments, not merely prompt text. Pass generated briefs unchanged; put task detail in their fields. When the approved plan includes documentation work, assign that task to `documentation_executor`; otherwise do not create this role.
 
 Each brief requires `task_id`, `request` including amendments, `project_instructions`, `workdir`, `area`, `owned`, `inputs`, `deliverable`, `validation`, `contacts`, and `skills` (resolved paths). Reviewers additionally need `revision` and `reviewer`. Give read-only roles `owned: none (read-only)`. Architect Inputs contain plan revision/path; Critic Inputs contain that plan and Architect artifact. Executor Inputs contain agreed contracts, prerequisites, existing pattern paths and concrete input/output examples; Deliverable gives observable completion criteria and Validation gives exact allowed commands. The child confirms ownership in its first factual checkpoint and works without a redundant MODEL/leader-release exchange unless strict observation is pending.
 
