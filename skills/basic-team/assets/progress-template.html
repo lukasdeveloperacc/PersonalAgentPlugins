@@ -3,359 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Basic Team · 진행판</title>
+<title>Basic Team 진행판</title>
 <style>
-:root{color-scheme:dark;--ink:#dfe7f2;--muted:#acb9ca;--line:#3a485b;--canvas:#141922;--paper:#1d2531;--accent:#9abafd;--soft:#26364f;--good:#8bd5ae;--warn:#f0c27c;--bad:#f29ca7;--good-bg:#203a30;--warn-bg:#3f3322;--bad-bg:#432a32;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;font-size:15px;line-height:1.65}
-*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink)}::selection{background:var(--accent);color:var(--canvas)}button{font:inherit;cursor:pointer}button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:4px}h1,h2,h3,p{margin:0}h1{font-size:1.8rem;letter-spacing:-.025em;line-height:1.4;max-width:36ch;text-wrap:balance}h2{font-size:1.2rem;letter-spacing:-.015em}h3{font-size:1rem}p{max-width:75ch}.shell{max-width:1360px;margin:auto;padding:0 40px 48px}.masthead{display:flex;justify-content:space-between;align-items:center;padding:22px 0;border-bottom:1px solid var(--line);gap:16px}.brand{display:flex;align-items:center;gap:10px;font-weight:700}.mark{display:grid;place-items:center;background:var(--accent);color:var(--canvas);width:30px;height:30px;border-radius:7px;font-size:.8rem}small{color:var(--muted)}small{font-size:.8rem}.snapshot{font-size:.8rem;color:var(--muted)}.overview{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:40px;padding:32px 0}.overview p{margin-top:12px;color:var(--muted)}.stagebox{border-left:1px solid var(--line);padding-left:24px}.stagebox strong{display:block;font-size:1.12rem;margin:8px 0}.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:5px;font-size:.8rem;font-weight:600;background:var(--line);color:var(--ink)}.badge[data-tone=active]{background:var(--soft);color:var(--accent)}.badge[data-tone=good]{background:var(--good-bg);color:var(--good)}.badge[data-tone=warn]{background:var(--warn-bg);color:var(--warn)}.badge[data-tone=bad]{background:var(--bad-bg);color:var(--bad)}.location{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:13px 0;min-width:0}.location span{flex-shrink:0;font-size:.85rem;color:var(--muted)}.location code{font-size:.8rem;overflow-wrap:anywhere;flex:1;min-width:0}.quiet{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 12px;font-size:.85rem;white-space:nowrap}.quiet:hover{background:var(--soft)}.quiet:disabled{cursor:default;color:var(--muted)}.tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);overflow-x:auto}.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:16px 0 13px;white-space:nowrap;color:var(--muted);font-size:.93rem;font-weight:600}.tabs button:hover{color:var(--ink)}.tabs button[aria-selected=true]{border-bottom-color:var(--accent);color:var(--accent)}.panel{padding-top:28px}.panelhead{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:20px}.panelhead p{font-size:.85rem;color:var(--muted)}.surface{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}.flow{display:flex;align-items:stretch;gap:14px;margin-bottom:24px;overflow-x:auto;padding:2px 0}.flowstep{flex:1;min-width:170px;padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:10px}.flowstep strong{display:block;margin-bottom:5px}.flowstep small{display:block;white-space:pre-line}.connector{display:flex;align-items:center;color:var(--muted)}.stack{list-style:none;padding:0;margin:0}.stack li{padding:19px 22px;border-bottom:1px solid var(--line)}.stack li:last-child{border-bottom:0}.stack p{white-space:pre-line;margin-top:5px;font-size:.93rem}.stack small{display:block;margin-top:8px;overflow-wrap:anywhere}.empty{padding:30px 22px;color:var(--muted);font-size:.93rem}.details{display:grid;grid-template-columns:1fr 1fr;gap:18px 32px;margin:0;padding:24px}.details dt{font-size:.8rem;color:var(--muted);margin-bottom:3px}.details dd{margin:0;font-size:.9rem;white-space:pre-line;overflow-wrap:anywhere}.foot{display:flex;justify-content:space-between;gap:20px;padding-top:28px;font-size:.8rem;color:var(--muted)}.notice{padding:12px 16px;margin-bottom:20px;background:var(--soft);color:var(--ink);font-size:.87rem;border-radius:6px}.error{padding:24px;color:var(--bad)}
-@media(max-width:760px){.shell{padding:0 18px 28px}.overview{grid-template-columns:1fr;gap:20px;padding:24px 0}h1{font-size:1.5rem}.stagebox{border-left:0;border-top:1px solid var(--line);padding:16px 0 0}.stagebox strong{display:inline;margin:0 10px}.tabs{gap:22px}.snapshot{max-width:22ch;text-align:right}.location{flex-wrap:wrap}.location code{flex-basis:70%}.panelhead{display:block}.panelhead p{margin-top:5px}.details{grid-template-columns:1fr;padding:20px}.foot{flex-direction:column;gap:5px}}
-@media print{:root{color-scheme:light;--ink:#202b39;--muted:#536277;--line:#dae0e7;--canvas:#fff;--paper:#fff;--accent:#244dba;--soft:#edf2ff;--good:#176447;--warn:#805315;--bad:#a32937;--good-bg:#e8f4ec;--warn-bg:#fff2df;--bad-bg:#fcebee}body{background:var(--canvas)}.shell{padding:0}.tabs,.quiet{display:none}.panel[hidden]{display:block}.panel{break-inside:avoid}.flow{flex-wrap:wrap}.foot{border-top:1px solid var(--line)}}
-
-.agentgraph{position:relative;padding:24px 24px 48px;isolation:isolate}
-#agent-evidence{margin-top:24px}
-.handoff{padding:18px 22px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.handoff:last-child{border-bottom:0}.handoff summary{cursor:pointer;font-weight:600}.handoff summary:hover{color:var(--accent)}.handoff summary:focus-visible{outline:3px solid var(--accent);outline-offset:4px}.handoff p{white-space:pre-line;margin-top:12px}.handoff .details{padding:16px 0 0}.handoff small{display:block;margin-top:8px}
-.todos{margin-bottom:28px}.todo-phase{margin-top:16px}.todo-phase h3{display:flex;justify-content:space-between;gap:16px;padding:16px 22px;border-bottom:1px solid var(--line)}.todo-phase h3 small{white-space:nowrap;font-weight:400}.todo-row{display:flex;gap:12px;align-items:flex-start}.todo-row input{flex-shrink:0;width:18px;height:18px;margin:4px 0 0;accent-color:var(--good);opacity:1}.todo-copy{min-width:0;flex:1;overflow-wrap:anywhere}.todo-copy .badge{margin-left:10px}.todo-copy small{white-space:pre-line}
-.graphlanes{display:grid;grid-template-columns:repeat(var(--lanes,3),minmax(0,1fr));gap:72px;position:relative}
-.graphlane{min-width:0}.graphlane h3{margin:0 0 18px;color:var(--muted);font-size:.85rem;font-weight:600}
-.graphnodes{display:grid;gap:32px}.agentnode{position:relative;display:block;width:100%;text-align:left;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
-.agentnode[data-tone=active]{border-color:var(--accent)}
-.agentnode:hover{border-color:var(--accent);background:var(--soft)}.agentnode strong{display:block;margin:12px 0 3px;overflow-wrap:anywhere;font-size:1rem}.agentnode small{display:block;overflow-wrap:anywhere}
-.nodemodel{margin:10px 0;padding-top:10px;border-top:1px solid var(--line)}.nodereport{font-variant-numeric:tabular-nums}.noderelations{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-.graphedges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}.graphedges path{fill:none;stroke:#8795a8;stroke-width:1.5}.graphedges marker path{fill:#8795a8;stroke:none}.graphedges #edge-arrow-active path{fill:var(--accent)}
-.graphedge circle{stroke:#8795a8;stroke-width:1.5;fill:var(--paper)}.graphedge circle[data-end=true]{fill:#8795a8}
-.graphedge[data-highlight=false]{opacity:.2}.graphedge[data-highlight=true] path{stroke:var(--accent);stroke-width:3}.graphedge[data-highlight=true] circle{stroke:var(--accent)}.graphedge[data-highlight=true] circle[data-end=true]{fill:var(--accent)}
-.agentnode[data-relation=selected],.agentnode[data-relation=related]{border-color:var(--accent);background:var(--soft)}.agentnode[data-relation=unrelated]{background:var(--canvas)}
-.relationlist{margin:12px 0 0;padding:12px 18px 12px 36px;background:var(--soft);border-radius:8px;font-size:.85rem;color:var(--ink)}.relationlist li{overflow-wrap:anywhere}
-.graphedge[data-kind=prerequisite] path{stroke-dasharray:5 5}
-.graphlegend{display:flex;flex-wrap:wrap;gap:8px 24px;margin:16px 0;color:var(--muted);font-size:.85rem}.relationrecords{border-top:1px solid var(--line);margin-top:20px}.relationrecords summary{overflow-wrap:anywhere}.relationrecords .details{padding:12px 0}.snapshot-note{white-space:pre-line}.artifactnode{border-style:double;border-width:3px}.graphnote,.snapshot-note{overflow-wrap:anywhere}
-.graphnote{margin-top:16px;font-size:.8rem;color:var(--muted)}
-.agenttooltip{position:fixed;z-index:5;max-width:min(340px,calc(100vw - 24px));background:var(--soft);color:var(--ink);padding:12px 16px;border-radius:8px;font-size:.85rem;white-space:pre-line;overflow-wrap:anywhere;box-shadow:0 8px 24px #00000066}
-.agentdialog{padding:0;border:0;border-radius:16px;width:min(720px,calc(100% - 32px));max-height:calc(100dvh - 48px);color:var(--ink);background:var(--paper);box-shadow:0 18px 60px #00000066;overflow:auto}.agentdialog::backdrop{background:#00000099}.dialoghead{position:sticky;top:0;z-index:1;background:var(--paper);display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px;border-bottom:1px solid var(--line)}.dialoghead h2{overflow-wrap:anywhere}.dialoghead p{font-size:.85rem;color:var(--muted);margin:6px 0 12px}.dialoghead .quiet{flex-shrink:0}
-@media(max-width:1000px){.graphlanes{gap:48px}.agentgraph{padding:18px 18px 44px}.agentnode{padding:14px}}
-@media(max-width:760px){.graphedges{display:none}.graphlanes{grid-template-columns:1fr;gap:36px}.graphlane h3{margin-bottom:12px}.agentdialog{max-height:calc(100dvh - 24px)}.dialoghead{padding:20px}}
-@media print{.agenttooltip,.agentdialog{display:none}.agentnode{break-inside:avoid}}
+:root{--bg:#f7f7f5;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#d9d9d4;--wait:#9a9a94;--run:#2563eb;--done:#15803d;--warn:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1f1f1d;--text:#ececea;--muted:#a3a39e;--line:#3a3a37;--wait:#8a8a84;--run:#60a5fa;--done:#4ade80;--warn:#fbbf24}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif}
+main{max-width:1200px;margin:0 auto;padding:24px 16px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 10px}
+.meta{color:var(--muted);font-size:13px}.meta code{word-break:break-all}
+.top{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}.box b{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.blocker{border-color:var(--warn)}
+#graph{position:relative;display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:28px;overflow-x:auto;padding-bottom:8px}
+.lane h3{font-size:13px;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
+.card{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--wait);border-radius:6px;padding:8px 10px;margin-bottom:10px}
+.card[data-s="진행중"]{border-left-color:var(--run)}.card[data-s="완료"]{border-left-color:var(--done)}
+.card strong{display:block;font-size:14px}.card small{display:block;color:var(--muted);font-size:12px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:9px;border:1px solid currentColor;color:var(--wait)}
+.card[data-s="진행중"] .badge{color:var(--run)}.card[data-s="완료"] .badge{color:var(--done)}
+svg#edges{position:absolute;inset:0;pointer-events:none;overflow:visible}svg#edges path{fill:none;stroke:var(--muted);stroke-width:1.5;opacity:.7}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}th{font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);font-size:14px}
+@media (max-width:720px){#graph{grid-template-columns:1fr}svg#edges{display:none}}
 </style>
 </head>
 <body>
-<main class="shell">
-<header class="masthead"><div class="brand"><span class="mark" aria-hidden="true">BT</span>Basic Team</div><span class="snapshot" id="updated">아직 보고 없음</span></header>
-<div class="overview"><div><h1 id="goal">작업 진행판</h1><div id="summary">작업 보고를 기다리고 있습니다.</div></div><aside class="stagebox" aria-label="현재 상태"><small>현재 상태</small><strong id="stage">대기중</strong><span class="badge" id="blockers">막힌 일 없음</span></aside></div>
-<details><summary>진행판 경로</summary><div class="location"><code id="path"></code><button class="quiet" id="copy" type="button">경로 복사</button><span id="copy-status" role="status"></span></div></details>
-<nav class="tabs" role="tablist" aria-label="진행판 영역"><button type="button" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true">계획</button><button type="button" role="tab" id="tab-agents" aria-controls="panel-agents" aria-selected="false" tabindex="-1">에이전트 진행</button><button type="button" role="tab" id="tab-reviews" aria-controls="panel-reviews" aria-selected="false" tabindex="-1">리뷰와 검증</button><button type="button" role="tab" id="tab-decisions" aria-controls="panel-decisions" aria-selected="false" tabindex="-1">결정과 막힌 일</button><button type="button" role="tab" id="tab-handoffs" aria-controls="panel-handoffs" aria-selected="false" tabindex="-1">인수인계</button></nav>
-<section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" tabindex="0"><section class="todos" aria-labelledby="todo-heading"><div class="panelhead"><h2 id="todo-heading">작업 목록</h2><p id="todo-summary"></p></div><div id="tasks"></div></section><details><summary>계획 상세</summary><p class="graphnote" id="todo-plan"></p><div class="flow" id="flow" aria-label="작업 흐름"></div><div class="surface" id="plan"></div></details></section>
-<section class="panel" id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" tabindex="0" hidden><div id="agent-roster"></div><details id="agent-evidence"><summary>작업 관계와 근거 상세</summary><div id="agents"></div></details></section>
-<section class="panel" id="panel-reviews" role="tabpanel" aria-labelledby="tab-reviews" tabindex="0" hidden><div class="panelhead"><h2>리뷰와 검증</h2><p>같은 구현을 검토한 근거와 남은 확인 사항입니다.</p></div><div class="notice" id="review-notice"></div><div class="surface" id="reviews"></div></section>
-<section class="panel" id="panel-decisions" role="tabpanel" aria-labelledby="tab-decisions" tabindex="0" hidden><div class="panelhead"><h2>결정과 막힌 일</h2><p>선택한 이유와 사용자 입력이 필요한 일을 기록합니다.</p></div><div class="surface" id="decisions"></div></section>
-<section class="panel" id="panel-handoffs" role="tabpanel" aria-labelledby="tab-handoffs" tabindex="0" hidden><div class="panelhead"><h2>단계별 인수인계</h2><p>오래된 기록부터 시간순으로 표시합니다. 펼치면 근거와 다음 작업을 확인할 수 있습니다.</p></div><div class="surface" id="handoffs"></div></section>
-<footer class="foot"><span>마지막 회신을 기준으로 저장한 진행판입니다. 새 보고는 파일을 다시 열거나 새로고침해 확인하세요.</span><span>Basic Team</span></footer>
-<noscript><p class="error">탭과 보고를 표시하려면 이 파일의 JavaScript 실행을 허용하세요.</p></noscript>
+<main>
+<h1 id="title"></h1>
+<div class="meta">마지막 저장 <span id="updated"></span> · <code id="path"></code></div>
+<div class="top">
+  <div class="box"><b>현재 단계</b><span id="stage"></span></div>
+  <div class="box"><b>요약</b><span id="summary"></span></div>
+  <div class="box" id="blockerBox"><b>막힌 일</b><span id="blockers"></span></div>
+  <div class="box"><b>작업</b><span id="counts"></span></div>
+</div>
+<h2>작업 흐름</h2>
+<div id="graph"><svg id="edges" aria-hidden="true"></svg></div>
+<h2>리뷰 결과</h2>
+<div id="reviews"></div>
+<h2>결정</h2>
+<div id="decisions"></div>
 </main>
-<div id="agent-tooltip" class="agenttooltip" role="tooltip" hidden></div>
-<dialog id="agent-dialog" class="agentdialog" aria-labelledby="agent-title"><header class="dialoghead"><div><h2 id="agent-title"></h2><p id="agent-subtitle"></p><div id="agent-status"></div></div><button type="button" class="quiet" id="agent-close" autofocus>닫기</button></header><dl class="details" id="agent-details"></dl></dialog>
-<!-- Replace this JSON with reported facts. Escape '<' as '\u003c' when serializing. -->
-<script type="application/json" id="progress-data">
-{
-  "goal": "작업 진행판",
-  "summary": "계획과 에이전트의 최근 보고를 한곳에서 확인합니다.",
-  "stage": "시작 전",
-  "updated": "아직 보고 없음",
-  "path": "",
-  "blockers": {"text": "아직 확인되지 않음", "tone": "neutral"},
-  "flow": [],
-  "plan": [],
-  "taskPlanRevision": "",
-  "tasks": [],
-  "agents": [],
-  "reviewNotice": "필요한 독립 리뷰가 모두 수집되면 판정을 함께 공개합니다.",
-  "reviews": [],
-  "decisions": [],
-  "handoffs": []
-}
+<script type="application/json" id="data">
+{}
 </script>
 <script>
-'use strict';
-const byId=id=>document.getElementById(id);
-const node=(tag,text,className)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(className)el.className=className;return el};
-const tones=new Set(['neutral','active','good','warn','bad']);
-function badge(text,tone){const el=node('span',text,'badge');el.dataset.tone=tones.has(tone)?tone:'neutral';return el}
-function recordTime(item){const value=Date.parse(item.recordedAt);return Number.isFinite(value)?value:Infinity}
-function chronological(items){return [...items].sort((a,b)=>recordTime(a)-recordTime(b))}
-function recordedTime(item){return recordTime(item)===Infinity?'시간 미기록':item.recordedAt}
-function timestamp(item){const el=node('small');if(recordTime(item)===Infinity){el.textContent='시간 미기록'}else{const time=node('time',item.recordedAt);time.dateTime=item.recordedAt;el.append('기록 시각: ',time)}return el}
-function list(id,items,empty){const root=byId(id);if(!items.length){root.append(node('p',empty,'empty'));return}const ul=node('ul',undefined,'stack');chronological(items).forEach(item=>{const li=node('li');li.append(node('h3',item.title),node('p',item.body),timestamp(item));if(item.meta)li.append(node('small',item.meta));ul.append(li)});root.append(ul)}
-const taskStates={pending:['대기중','neutral'],in_progress:['진행중','active'],blocked:['진행중','active'],done:['완료','good']};
-function currentTasks(data){
-  const taskViews=new Map((data._view?.tasks||[]).map(task=>[task.id,task]));
-  return chronological((data.tasks||[]).map(task=>data._progress?.schemaVersion>=4?{...task,status:'pending',evidence:'',...taskViews.get(task.id)}:task).filter(task=>task.applicable!==false));
-}
-function renderOverview(data){
-  const tasks=currentTasks(data),done=tasks.filter(task=>task.status==='done'),active=tasks.filter(task=>['in_progress','blocked'].includes(task.status)),remaining=tasks.filter(task=>task.status!=='done');
-  const phases=items=>[...new Set(items.map(task=>task.phase))].join(', ');
-  const blockers=tasks.filter(task=>task.blocked||task.blocker||task.status==='blocked').map(task=>task.title+': '+(task.blocker||task.evidence||'원인 확인 중'));
-  const problems=(data._view?.problems||[]).filter(problem=>!problem.startsWith('REVIEW_PENDING:')&&!problem.startsWith('TASK_BLOCKED:'));
-  if(problems.length)blockers.push('검증·리뷰 근거 확인 필요 (상세 참고)');
-  const lines=[['현재',active.length?phases(active)+' · '+active.length+'개 진행중':remaining.length?'다음 작업 대기':'작업 보고 확인 완료'],['완료',done.length+' / '+tasks.length+'개'],['남은 일',remaining.length?phases(remaining)+' · '+remaining.length+'개':'없음'],['막힌 일',blockers.join('; ')||'없음']];
-  if(!tasks.length)lines.splice(0,lines.length,['현재','작업 배정 대기'],['완료','0개'],['남은 일','계획과 작업 배정'],['막힌 일',blockers.join('; ')||'없음']);
-  byId('summary').replaceChildren(...lines.map(([label,value])=>node('p',label+': '+value)));
-  byId('stage').textContent=taskStates[tasks.length&&!remaining.length?'done':active.length||done.length?'in_progress':'pending'][0];
-  byId('blockers').textContent=blockers.length?'막힌 일 '+blockers.length+'건':'막힌 일 없음';byId('blockers').dataset.tone=blockers.length?'warn':'neutral';
-}
-function renderTasks(data){
-  const tasks=currentTasks(data),root=byId('tasks');
-  byId('todo-summary').textContent=tasks.length?'완료 '+tasks.filter(task=>task.status==='done').length+' / '+tasks.length+'개':'아직 작업 목록 없음';
-  const approved=data.taskPlanRevision&&data.taskPlanRevision===data.gates?.planApproved;
-  byId('todo-plan').textContent=data.taskPlanRevision?'계획 버전: '+data.taskPlanRevision+(approved?' · 승인 기록과 일치':' · 승인 전 또는 승인 계획과 다름'):'Planner의 계획을 기다리고 있습니다.';
-  if(!tasks.length){root.append(node('p','Planner가 계획을 Phase별 작업으로 나누면 담당자, 진행 상태, 완료 근거가 여기에 표시됩니다.','empty'));return}
-  const phases=new Map();
-  tasks.forEach(task=>{if(!phases.has(task.phase))phases.set(task.phase,[]);phases.get(task.phase).push(task)});
-  phases.forEach((items,phase)=>{
-    const section=node('section',undefined,'surface todo-phase'),heading=node('h3',phase),list=node('ul',undefined,'stack');
-    heading.append(node('small','완료 '+items.filter(task=>task.status==='done').length+' / '+items.length));section.append(heading);
-    items.forEach(task=>{
-      const row=node('li'),layout=node('div',undefined,'todo-row'),check=node('input'),copy=node('div',undefined,'todo-copy');
-      const [status,tone]=taskStates[task.status]||taskStates.pending;check.type='checkbox';check.checked=task.status==='done';check.disabled=true;check.setAttribute('aria-label',task.title+' · '+status);
-      const owners=(task.agentIds?.length?task.agentIds:[task.owner]).map(id=>data.agents?.find(agent=>agent.id===id)?.name||id);
-      copy.append(node('strong',task.title),badge(status,tone),node('small','담당: '+owners.join(', ')));
-      if(task.blocked||task.status==='blocked')copy.append(node('small','막힌 이유: '+(task.blocker||task.evidence||'확인 중')));
-      const details=node('details');details.append(node('summary','작업 근거'),node('small','작업 ID: '+task.id),timestamp({recordedAt:task.observedAt||task.recordedAt}));
-      if(task.evidenceId)details.append(node('small','최근 관측 근거: '+task.evidenceId));
-      if(task.status==='done'&&(task.resultEvidenceId||task.evidenceId))details.append(node('small','완료 판단 근거: '+(task.resultEvidenceId||task.evidenceId)));
-      if(task.result||task.evidence)details.append(node('p',task.result||task.evidence));
-      copy.append(details);
-      layout.append(check,copy);row.append(layout);list.append(row);
-    });section.append(list);root.append(section);
-  });
-}
-function renderHandoffs(records){
-  const root=byId('handoffs');
-  if(!records.length){root.append(node('p','단계를 넘길 때 완료 결과와 다음 작업을 이곳에 기록합니다. 아직 저장된 인수인계가 없습니다.','empty'));return}
-  const transitions={'planning-to-implementation':'계획 → 구현','implementation-to-verification':'구현 → 검증','verification-to-fixes':'검증 → 수정·복구','fixes-to-verification':'수정 → 재검증','completion':'최종 마무리'};
-  const outcomes={ready:'인계 준비됨',BLOCKED:'진행 보류',cancelled:'취소됨'};
-  chronological(records).forEach(record=>{
-    const details=node('details',undefined,'handoff');details.id='handoff-'+record.id;
-    const summary=node('summary',(transitions[record.transition]||record.transition)+' · '+record.round+'회차 · '+(outcomes[record.outcome]||record.outcome));summary.append(timestamp(record));
-    details.append(summary,node('p',record.summary),node('small','기록: '+record.id+' · 대상 버전: '+record.revision));
-    const fields=node('dl',undefined,'details');
-    [['확인 근거',record.evidence],['다음 작업',record.next],['미해결·재개할 일',record.pending]].forEach(([label,items])=>{const group=node('div');group.append(node('dt',label),node('dd',items.length?items.join('\n'):'없음'));fields.append(group)});
-    details.append(fields);root.append(details);
-  });
-}
+const data = JSON.parse(document.getElementById('data').textContent);
+const $ = id => document.getElementById(id);
+const el = (tag, text, cls) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
+$('title').textContent = data.title || '진행판'; document.title = data.title || document.title;
+$('updated').textContent = data.updated || '-'; $('path').textContent = data.path || location.pathname;
+$('stage').textContent = data.stage || '-'; $('summary').textContent = data.summary || '-'; $('blockers').textContent = data.blockers || '-';
+if (data.blockers && data.blockers !== '없음') $('blockerBox').classList.add('blocker');
+const tasks = data.tasks || [];
+const count = s => tasks.filter(t => t.status === s).length;
+$('counts').textContent = tasks.length ? `완료 ${count('완료')} · 진행중 ${count('진행중')} · 대기중 ${count('대기중')}` : '아직 없음';
 
-const tooltip=byId('agent-tooltip'),dialog=byId('agent-dialog');
-let graphLinks=[],graphButtons=new Map(),graphRecords=[],explicitGraph=false,modalTrigger=null,tooltipAnchor=null,tooltipTimer;
-function hideTooltip(){clearTimeout(tooltipTimer);tooltip.hidden=true;tooltipAnchor?.removeAttribute('aria-describedby');tooltipAnchor=null;clearRelations()}
-function positionTooltip(button){
-  const rect=button.getBoundingClientRect();const width=tooltip.offsetWidth,height=tooltip.offsetHeight;
-  tooltip.style.left=Math.max(12,Math.min(rect.left,innerWidth-width-12))+'px';
-  tooltip.style.top=Math.max(12,rect.top-height-10>=12?rect.top-height-10:Math.min(rect.bottom+10,innerHeight-height-12))+'px';
+const lanes = [['plan','계획'],['build','구현'],['review','리뷰'],['fix','수정'],['finish','마무리']];
+const graph = $('graph'), cards = {};
+for (const [key, label] of lanes) {
+  const lane = el('div', null, 'lane'); lane.append(el('h3', label));
+  const mine = tasks.filter(t => t.lane === key);
+  if (!mine.length) lane.append(el('div', '-', 'empty'));
+  for (const t of mine) {
+    const card = el('div', null, 'card'); card.dataset.s = t.status;
+    card.append(el('span', t.status, 'badge'), el('strong', t.title || t.id), el('small', `${t.id}${t.owner ? ' · ' + t.owner : ''}`));
+    if (t.note) card.append(el('small', t.note));
+    if ((t.after || []).length) card.append(el('small', '선행: ' + t.after.join(', ')));
+    lane.append(card); cards[t.id] = card;
+  }
+  graph.append(lane);
 }
-function showTooltip(button,agent){
-  const summary=value=>{const text=value.replace(/\s+/g,' ').trim();return text.length>120?text.slice(0,120)+'…':text};
-  hideTooltip();tooltipAnchor=button;tooltip.textContent=summary(agent.result||'최근 보고 없음')+'\n다음: '+summary(agent.next||'아직 보고 없음');tooltip.hidden=false;button.setAttribute('aria-describedby','agent-tooltip');
-  const names=ids=>{const text=ids.map(id=>graphButtons.get(id).querySelector('strong').textContent).join(', ');return text.length>80?text.slice(0,80)+'…':text||'기록 없음'};
-  const predecessors=graphLinks.filter(([,to])=>graphButtons.get(to)===button).map(([from])=>from),successors=graphLinks.filter(([from])=>graphButtons.get(from)===button).map(([,to])=>to);
-  tooltip.textContent+='\n들어오는 관계: '+names(predecessors)+'\n나가는 관계: '+names(successors);positionTooltip(button);highlightRelations(button);
+function drawEdges() {
+  const svg = $('edges'); svg.replaceChildren();
+  const box = graph.getBoundingClientRect();
+  for (const t of tasks) for (const from of t.after || []) {
+    const a = cards[from], b = cards[t.id]; if (!a || !b) continue;
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    const x1 = ra.right - box.left + graph.scrollLeft, y1 = ra.top + ra.height / 2 - box.top;
+    const x2 = rb.left - box.left + graph.scrollLeft, y2 = rb.top + rb.height / 2 - box.top;
+    const mid = (x1 + x2) / 2, path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', x2 > x1 ? `M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}` : `M${ra.left - box.left + ra.width / 2},${ra.bottom - box.top} L${rb.left - box.left + rb.width / 2},${rb.top - box.top}`);
+    svg.append(path);
+  }
 }
-function delayTooltipHide(){tooltipTimer=setTimeout(()=>{if(document.activeElement!==tooltipAnchor)hideTooltip()},120)}
-tooltip.addEventListener('mouseenter',()=>clearTimeout(tooltipTimer));tooltip.addEventListener('mouseleave',delayTooltipHide);
-function openAgent(button,agent,agents){
-  hideTooltip();modalTrigger=button;byId('agent-title').textContent=agent.name;byId('agent-subtitle').textContent=agent.role+' · '+agent.area;
-  byId('agent-status').replaceChildren(badge(agent.status,agent.tone));
-  const dependencies=Array.isArray(agent.dependsOn)?agent.dependsOn:[];
-  const names=dependencies.map(id=>agents.find(item=>item.id===id)?.name||id);
-  const fields=agent.fields||[['담당 작업·파일',agent.owned],['완료·최근 보고',agent.result],['다음 행동',agent.next],['막힌 일',agent.blocker||'보고 없음'],['모델·추론 설정',agent.model||'미확인'],['실제 설정 관찰',agent.observation],['기록 시각',recordedTime(agent)],['마지막 보고',agent.reported],['선행 에이전트',names.join(', ')||'기록 없음']];
-  byId('agent-details').replaceChildren(...fields.map(([label,value])=>{const group=node('div');group.append(node('dt',label),node('dd',value||'아직 보고 없음'));return group}));dialog.showModal();dialog.scrollTop=0;
-}
-byId('agent-close').addEventListener('click',()=>dialog.close());
-dialog.addEventListener('click',event=>{const rect=dialog.getBoundingClientRect();if(event.target===dialog&&(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom))dialog.close()});
-dialog.addEventListener('close',()=>modalTrigger?.focus());
-document.addEventListener('keydown',event=>{if(event.key==='Escape')hideTooltip()});
-addEventListener('scroll',()=>{if(!tooltip.hidden&&document.activeElement===tooltipAnchor)positionTooltip(tooltipAnchor);else hideTooltip()},true);addEventListener('resize',hideTooltip);
-function renderAgents(agents){
-  if(!agents.length)return;
-  const graph=node('div',undefined,'agentgraph');graph.id='agent-graph';
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('graphedges');svg.setAttribute('aria-hidden','true');svg.innerHTML='<defs><marker id="edge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="edge-arrow-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>';graph.append(svg);
-  const lanes=node('div',undefined,'graphlanes');
-  const stages=[['planning','계획 담당자의 작업'],['implementation','구현·문서 담당자의 작업'],['artifact','검토 대상 변경본'],['review','리뷰 담당자의 작업'],['other','기타 작업']];
-  const stageOf=agent=>stages.some(([key])=>key===agent.stage)?agent.stage:'other';
-  const activeStages=stages.filter(([key])=>agents.some(agent=>stageOf(agent)===key));lanes.style.setProperty('--lanes',activeStages.length);
-  const counts=new Map();agents.forEach(agent=>{if(agent.id)counts.set(agent.id,(counts.get(agent.id)||0)+1)});
-  activeStages.forEach(([key,title])=>{
-    const lane=node('section',undefined,'graphlane');lane.append(node('h3',title));const nodes=node('div',undefined,'graphnodes');
-    chronological(agents.filter(agent=>stageOf(agent)===key)).forEach(agent=>{
-      const button=node('button',undefined,'agentnode'+(agent.stage==='artifact'?' artifactnode':''));button.type='button';button.dataset.tone=tones.has(agent.tone)?agent.tone:'neutral';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','agent-dialog');
-      button.append(badge(agent.status,agent.tone),node('strong',agent.name),node('small',agent.role+' · '+agent.area));
-      if(!explicitGraph)button.append(node('small','모델·추론: '+(agent.model||'미확인'),'nodemodel'),node('small',agent.reported||'아직 보고 없음','nodereport'),timestamp(agent));
-      if(explicitGraph){const related=graphLinks.filter(([from,to])=>from===agent.id||to===agent.id);const kinds=[...new Set(related.map(([, ,record])=>relationLabel(record)))];button.append(node('small',kinds.length?kinds.join(' · '):'기록된 관계 없음','noderelations'))}
-      button.addEventListener('mouseenter',()=>showTooltip(button,agent));button.addEventListener('mouseleave',delayTooltipHide);button.addEventListener('focus',()=>showTooltip(button,agent));button.addEventListener('blur',hideTooltip);button.addEventListener('click',()=>openAgent(button,agent,agents));
-      nodes.append(button);if(agent.id&&counts.get(agent.id)===1)graphButtons.set(agent.id,button);
-    });lane.append(nodes);lanes.append(lane);
-  });graph.append(lanes);byId('agents').append(graph);
-  if(!explicitGraph)agents.forEach(agent=>{if(graphButtons.has(agent.id)&&Array.isArray(agent.dependsOn))new Set(agent.dependsOn).forEach(id=>{if(id!==agent.id&&graphButtons.has(id))graphLinks.push([id,agent.id])})});
-  byId('agents').append(node('p','화살표는 기록된 관계의 방향입니다. 노드를 선택하면 직접 연결만 강조합니다. 연결 자체는 실행 중·전달 확인·검토 완료를 뜻하지 않습니다.','graphnote'));
-  const relations=node('div');relations.id='graph-relations';relations.setAttribute('role','status');byId('agents').append(relations);
-  new ResizeObserver(drawEdges).observe(graph);requestAnimationFrame(drawEdges);
-}
-function clearRelations(){
-  graphButtons.forEach(button=>delete button.dataset.relation);
-  byId('agent-graph')?.querySelectorAll('.graphedge').forEach(edge=>{delete edge.dataset.highlight;edge.querySelector('path').setAttribute('marker-end','url(#edge-arrow)')});
-  byId('graph-relations')?.replaceChildren();
-}
-function highlightRelations(button){
-  const selected=[...graphButtons].find(([,value])=>value===button)?.[0];if(!selected)return;
-  const links=graphLinks.filter(([from,to])=>from===selected||to===selected),related=new Set(links.flatMap(([from,to])=>[from,to]));
-  graphButtons.forEach((node,id)=>node.dataset.relation=id===selected?'selected':related.has(id)?'related':'unrelated');
-  byId('agent-graph').querySelectorAll('.graphedge').forEach(edge=>{
-    const highlighted=edge.dataset.from===selected||edge.dataset.to===selected;edge.dataset.highlight=String(highlighted);
-    edge.querySelector('path').setAttribute('marker-end',highlighted?'url(#edge-arrow-active)':'url(#edge-arrow)');
-  });
-  const list=node('ul',undefined,'relationlist');
-  links.forEach(([from,to,record])=>list.append(node('li',(record?relationLabel(record)+' · ':'선행 관계 · ')+graphButtons.get(from).querySelector('strong').textContent+' → '+graphButtons.get(to).querySelector('strong').textContent)));
-  if(!links.length)list.append(node('li','기록된 연결 관계가 없습니다.'));
-  byId('graph-relations').replaceChildren(list);
-}
-function drawEdges(){
-  const graph=byId('agent-graph');if(!graph||graph.offsetWidth===0)return;
-  const svg=graph.querySelector('svg');svg.querySelectorAll('.graphedge').forEach(edge=>edge.remove());const bounds=graph.getBoundingClientRect();
-  const vertical=matchMedia('(max-width:760px)').matches,buttons=[...graph.querySelectorAll('.agentnode')];
-  graphLinks.forEach(([from,to,record],index)=>{
-    const source=graphButtons.get(from),target=graphButtons.get(to),a=source.getBoundingClientRect(),b=target.getBoundingClientRect();
-    const sameLane=source.closest('.graphlane')===target.closest('.graphlane');
-    const outgoing=graphLinks.filter(([id])=>id===from),incoming=graphLinks.filter(([,id])=>id===to);
-    const offset=(links,predicate)=>{const i=links.findIndex(predicate);return (i-(links.length-1)/2)*Math.min(12,60/links.length)};
-    const outOffset=offset(outgoing,([,id])=>id===to),inOffset=offset(incoming,([id])=>id===from);
-    let start,end,points,arrival;
-    if(sameLane||vertical){
-      const forward=b.top>a.top;
-      arrival=[0,forward?1:-1];
-      start=[a.left+a.width/2-bounds.left+outOffset,(forward?a.bottom+4:a.top-4)-bounds.top];
-      end=[b.left+b.width/2-bounds.left+inOffset,(forward?b.top-4:b.bottom+4)-bounds.top];
-      const adjacent=buttons.indexOf(target)===buttons.indexOf(source)+1;
-      if(adjacent){const middle=(start[1]+end[1])/2;points=[start,[start[0],middle],[end[0],middle],end]}
-      else{const gutter=Math.max(a.right,b.right)-bounds.left+8+(index%4)*2;
-        const exit=start[1]+(forward?12:-12),entry=end[1]+(forward?-12:12);
-        points=[start,[start[0],exit],[gutter,exit],[gutter,entry],[end[0],entry],end]}
-    }else{
-      const forward=b.left>a.left;
-      arrival=[forward?1:-1,0];
-      start=[(forward?a.right+4:a.left-4)-bounds.left,a.top+a.height/2-bounds.top+outOffset];
-      end=[(forward?b.left-4:b.right+4)-bounds.left,b.top+b.height/2-bounds.top+inOffset];
-      const laneDistance=Math.abs([...graph.querySelectorAll('.graphlane')].indexOf(source.closest('.graphlane'))-[...graph.querySelectorAll('.graphlane')].indexOf(target.closest('.graphlane')));
-      if(laneDistance===1){const gutter=start[0]+(end[0]-start[0])*(.25+.5*(index%5)/4);points=[start,[gutter,start[1]],[gutter,end[1]],end]}
-      else{const direction=forward?1:-1,exit=start[0]+direction*12,entry=end[0]-direction*12;
-        const bottom=Math.max(...buttons.map(button=>button.getBoundingClientRect().bottom))-bounds.top+16+(index%4)*4;
-        points=[start,[exit,start[1]],[exit,bottom],[entry,bottom],[entry,end[1]],end]}
-    }
-    points[points.length-1]=[end[0]-arrival[0]*6,end[1]-arrival[1]*6];
-    const create=tag=>document.createElementNS('http://www.w3.org/2000/svg',tag),edge=create('g'),path=create('path');
-    edge.classList.add('graphedge');edge.dataset.from=from;edge.dataset.to=to;if(record){edge.dataset.kind=record.kind;edge.dataset.id=record.id;const title=create('title');title.textContent=relationLabel(record);edge.append(title)}
-    path.setAttribute('d',points.map(([x,y],i)=>(i?'L':'M')+' '+x+' '+y).join(' '));path.setAttribute('stroke-linejoin','round');
-    path.setAttribute('marker-end','url(#edge-arrow)');edge.append(path);
-    [start,end].forEach(([x,y],i)=>{const port=create('circle');port.setAttribute('cx',x);port.setAttribute('cy',y);port.setAttribute('r','3');port.dataset.end=String(i===1);edge.append(port)});svg.append(edge);
-  });
-  if(tooltipAnchor)highlightRelations(tooltipAnchor);
-}
+drawEdges(); addEventListener('resize', drawEdges);
 
-
-const relationNames={prerequisite:'선행 조건 · 계획',contributes:'산출물 기여 · 보고',review_assignment:'리뷰 배정 · 호출 수락',delivery:'전달 기록'};
-function relationLabel(record){if(record.kind==='delivery')return record.deliveryState==='acknowledged'?'수신 확인 · 보고':record.deliveryState==='sent'?'전송 수락 · 수신 미확인':'전달 · 상태 미확인';return relationNames[record.kind]||'관계 미확인'}
-function evidenceFields(data,id){
-  const record=(data.evidence||[]).find(item=>item.id===id);
-  if(!record)return [['근거','미확인']];
-  const sourceNames={host_response:'호스트 응답',child_report:'에이전트 보고',command_result:'명령 결과',leader_record:'리더 기록'};
-  return [['근거 ID',id],['근거 출처',sourceNames[record.source]||record.source],['원본 참조',record.sourceRef||'미확인'],['관측 시각',record.observedAt||'미확인'],['캡처된 내용',record.captured===undefined?record.artifact||record.path||'별도 산출물':typeof record.captured==='string'?record.captured:JSON.stringify(record.captured,null,2)]];
+const reviews = data.reviews || [];
+if (!reviews.length) $('reviews').append(el('div', '아직 리뷰 전입니다.', 'empty'));
+else {
+  const table = el('table'), head = el('tr');
+  for (const h of ['라운드', '리뷰어', '결과', '메모']) head.append(el('th', h));
+  table.append(head);
+  for (const r of reviews) { const row = el('tr'); for (const v of [r.round, r.reviewer, r.verdict || '-', r.note || '']) row.append(el('td', v)); table.append(row); }
+  $('reviews').append(table);
 }
-function addDetails(root,fields){
-  const dl=node('dl',undefined,'details');
-  fields.forEach(([label,value])=>{const group=node('div');group.append(node('dt',label),node('dd',value||'미확인'));dl.append(group)});root.append(dl);
-}
-function renderEvidence(data){
-  const view=data._view||{},problems=view.problems||[],target=data.gates?.reviewTarget;
-  const roster=byId('agent-roster'),agentViews=new Map((view.agents||[]).map(item=>[item.id,item]));
-  const heading=node('div',undefined,'panelhead');heading.append(node('h2','담당자'),node('p','등록된 담당자 '+data.agents.length+'명 · 현재 작업 '+currentTasks(data).length+'개'));roster.append(heading);
-  const people=node('ul',undefined,'stack surface');
-  data.agents.forEach(agent=>{
-    const row=node('li'),layout=node('div',undefined,'todo-row'),[status,tone]=taskStates[agentViews.get(agent.id)?.status]||taskStates.pending;
-    layout.append(badge(status,tone),node('span',agent.name+' · '+agent.role));row.append(layout);people.append(row);
-  });
-  if(data.agents.length)roster.append(people);else roster.append(node('p','아직 등록된 담당자가 없습니다.','empty'));
-  roster.append(node('p','담당자는 한 번씩 표시합니다. 아래 그래프는 작업 단위이며, 같은 담당자의 구현·검증·수정 작업이 여러 노드로 표시될 수 있습니다.','graphnote'));
-  const notice=node('div',undefined,'notice snapshot-note');notice.append(node('strong','마지막으로 확인해 저장한 기록'),node('p','근거 확인: '+(view.verifiedAt||'미확인')+'\n파일 저장: '+data.updated+'\n실시간 상태가 아닙니다. 이후의 파일 변경이나 에이전트 활동은 이 화면에서 자동 확인되지 않습니다.'));
-  if(problems.length){const ul=node('ul');problems.forEach(problem=>ul.append(node('li',problem)));notice.append(ul)}byId('agents').append(notice);
-  const legend=node('div',undefined,'graphlegend');Object.values(relationNames).forEach(label=>legend.append(node('span',label)));byId('agents').append(legend);
-  const taskViews=new Map((view.tasks||[]).map(item=>[item.id,item]));
-  const agentMap=new Map((data.agents||[]).map(item=>[item.id,item]));
-  const assignments=data.assignments||[],tasks=data.tasks||[];
-  const nodes=tasks.filter(task=>(task.owner!=='main'||assignments.some(item=>item.taskId===task.id))&&taskViews.get(task.id)?.applicable!==false).map(task=>{
-    const saved=taskViews.get(task.id)||{};
-    const assignment=assignments.find(item=>item.id===(saved.assignmentId||saved.assignmentIds?.[0]));
-    const agent=agentMap.get(assignment?.agentId)||agentMap.get(task.owner)||{};
-    const [status,tone]=taskStates[saved.status]||taskStates.pending;
-    const related=(saved.assignmentIds||[saved.assignmentId]).map(id=>assignments.find(item=>item.id===id)).filter(Boolean);
-    const owners=related.map(item=>agentMap.get(item.agentId)?.name||item.agentId).join(', ')||agent.name||task.owner;
-    const fields=related.flatMap(item=>{const observation=data._view?.assignments?.find(row=>row.id===item.id);return [['배정 · '+(agentMap.get(item.agentId)?.name||item.agentId),item.id],...(observation?evidenceFields(data,observation.evidenceId):[])]});
-    return {id:'task:'+task.id,name:task.title,role:owners,area:task.id,stage:agent.stage||'other',status,tone,model:agent.model,reported:'관측: '+(saved.observedAt||'미확인'),recordedAt:task.recordedAt,result:saved.result||status,next:saved.blocker||'작업 목록에서 남은 일을 확인하세요.',fields:[['작업',task.title+' · '+task.id],['기록 시각',recordedTime(task)],['최근 관측',saved.observedAt||'미확인'],['담당 에이전트',owners],['배정 ID',saved.assignmentId],['실제 호스트 에이전트',saved.hostAgentId||'미확인'],['모델·추론',agent.model||'미확인'],['모델 실제 관측',agent.observation||'미확인'],...fields,...evidenceFields(data,saved.evidenceId),...(saved.resultEvidenceId&&saved.resultEvidenceId!==saved.evidenceId?evidenceFields(data,saved.resultEvidenceId).map(([label,value])=>['작업 결과 · '+label,value]):[])]};
-  });
-  const artifacts=(data.artifacts||[]).filter(item=>item.id===target);
-  artifacts.forEach(artifact=>nodes.push({id:'artifact:'+artifact.id,artifactId:artifact.id,name:artifact.id,role:'동결 변경본',area:'검토 입력',stage:'artifact',status:Object.keys(view.verdicts||{}).length&&!problems.length?'완료':'진행중',tone:'neutral',result:'리뷰 배정과 결과는 이 변경본을 기준으로 확인합니다.',reported:'확인: '+(view.verifiedAt||'미확인'),fields:[['변경본',artifact.id],['내용 해시',artifact.digest],['현재 상태',problems.join('\n')||'저장 시점의 근거 기록'],...evidenceFields(data,artifact.manifestEvidence)]}));
-  const nodeIds=new Set(nodes.map(item=>item.id));
-  graphRecords=(view.relations||[]).filter(record=>nodeIds.has(record.from.type+':'+record.from.id)&&nodeIds.has(record.to.type+':'+record.to.id));
-  graphLinks=graphRecords.map(record=>[record.from.type+':'+record.from.id,record.to.type+':'+record.to.id,record]);explicitGraph=true;
-  if(nodes.length)renderAgents(nodes);else byId('agents').append(node('p','배정된 작업과 근거가 없습니다. 확인되지 않은 연결은 표시하지 않습니다.','empty'));
-  const records=node('section',undefined,'relationrecords');records.append(node('h3','관계별 근거'));
-  if(!graphRecords.length)records.append(node('p','기록된 관계가 없습니다. 같은 단계에 있다는 이유로 연결하지 않습니다.','empty'));
-  graphRecords.forEach(record=>{
-    const details=node('details',undefined,'handoff'),from=nodes.find(item=>item.id===record.from.type+':'+record.from.id),to=nodes.find(item=>item.id===record.to.type+':'+record.to.id);
-    details.dataset.relationId=record.id;details.append(node('summary',relationLabel(record)+' · '+from.name+' → '+to.name));
-    addDetails(details,[['관계 ID',record.id],['시작',record.from.type+' · '+record.from.id],['대상',record.to.type+' · '+record.to.id],['의미',record.kind==='review_assignment'?'검토를 배정한 기록입니다. 검토 완료나 전체 파일 확인을 뜻하지 않습니다.':record.kind==='delivery'?'전송 수락은 수신 확인과 다릅니다. 아래 원본의 수신 응답 유무를 확인하세요.':record.kind==='prerequisite'?'계획상 선행 조건입니다. 실제 전달이나 작업 완료를 뜻하지 않습니다.':'해당 작업이 이 변경본에 기여했다는 보고입니다.'],...evidenceFields(data,record.evidenceId)]);records.append(details);
-  });byId('agents').append(records);
-  byId('review-notice').textContent='검토 대상: '+(target||'아직 미정')+' · 배정과 결과는 별도입니다. 검토 범위는 리뷰어가 보고한 범위이며, 필요한 보고가 모두 모인 뒤 함께 공개합니다.';
-  const verdicts=view.verdicts||{},labels={PASS:'통과 보고',CHANGES_REQUIRED:'수정 필요 보고',BLOCKED:'확인 보류 보고'};
-  if(!Object.keys(verdicts).length)byId('reviews').append(node('p','현재 변경본의 전체 리뷰 결과가 아직 없습니다. 배정·보고 수신만으로 통과를 표시하지 않습니다.','empty'));
-  Object.entries(verdicts).forEach(([reviewer,report])=>{
-    const details=node('details',undefined,'handoff');details.append(node('summary',(agentMap.get(reviewer)?.name||reviewer)+' · '+(labels[report.verdict]||'판정 미확인')));
-    const assignment=assignments.find(item=>item.id===report.assignmentId);
-    const excluded=(assignment?.criteria||[]).filter(item=>item.applicable===false);
-    addDetails(details,[['사전에 제외한 검토 범위',excluded.length?excluded.map(item=>item.id+' · '+item.target+' · 제외 이유: '+item.reason).join('\n'):'없음']]);
-    addDetails(details,[['검토 버전',report.revision||target],['배정 ID',report.assignmentId],['보고된 검토 범위',(report.reportedScope||[]).join('\n')],['미확인 범위',(report.uncheckedScope||[]).join('\n')||'보고상 없음'],['항목별 결과',JSON.stringify(report.criteria||[],null,2)],['발견 사항',JSON.stringify(report.findings||[],null,2)],...evidenceFields(data,report.reportEvidence)]);byId('reviews').append(details);
-  });
-  const rounds=data.reviewRounds||[];
-  if(rounds.length){const history=node('details',undefined,'handoff');history.append(node('summary','저장된 검토 차수 · '+rounds.length+'건 (현재 판정과 별도)'));rounds.forEach(round=>addDetails(history,[['차수',round.id],['대상 변경본',round.artifactId],['배정과 보고 참조',JSON.stringify(round.reports,null,2)]]));byId('reviews').append(history)}
-}
-
-try{
-const data=JSON.parse(byId('progress-data').textContent);
-['goal','summary','stage','updated','reviewNotice'].forEach(key=>byId(key==='reviewNotice'?'review-notice':key).textContent=data[key]);
-document.title=data.goal+' · Basic Team';
-const displayPath=data.path||decodeURI(location.pathname);byId('path').textContent=displayPath;
-byId('blockers').textContent=data.blockers.text;byId('blockers').dataset.tone=tones.has(data.blockers.tone)?data.blockers.tone:'neutral';
-if(data._progress?.schemaVersion<4||!data._progress)data.flow.forEach((step,i)=>{if(i){const arrow=node('span',undefined,'connector');arrow.textContent='→';arrow.setAttribute('aria-hidden','true');byId('flow').append(arrow)}const el=node('div',undefined,'flowstep');el.append(node('strong',step.title),node('small',step.body),timestamp(step));byId('flow').append(el)});
-list('plan',data.plan,'Planner의 계획이 도착하면 작업 배정·의존성·완료 기준을 여기에 표시합니다.');
-renderTasks(data);
-if(data._progress?.schemaVersion<4||!data._progress)list('reviews',data.reviews,'아직 리뷰 보고가 없습니다. 미실행 검증은 통과로 표시하지 않습니다.');
-list('decisions',data.decisions,'결정이나 막힌 일이 보고되면 선택한 이유와 다음 행동을 여기에 기록합니다.');
-renderHandoffs(data.handoffs||[]);
-const warnings=data._progress?.schemaVersion>=4?[]:data._progress?.graph_warnings;
-if(Array.isArray(warnings)&&warnings.length){const box=node('div',undefined,'notice');box.append(node('strong','그래프 연결 점검: 선이 빠졌을 수 있습니다.'));const ul=node('ul');warnings.forEach(text=>ul.append(node('li',String(text))));box.append(ul);byId('agents').append(box)}
-if(data._progress?.schemaVersion>=4){
-  renderOverview(data);renderEvidence(data);
-}else{
-  byId('agents').append(node('p','이전 형식의 저장된 기록입니다. 연결은 선행 관계이며 실행·리뷰 범위를 증명하지 않습니다.','notice'));
-  if(!data.agents.length)byId('agents').append(node('p','아직 배정된 에이전트가 없습니다. 배정 후 최근 회신이 여기에 표시됩니다.','empty'));renderAgents(data.agents);
-}
-byId('agent-evidence').addEventListener('toggle',()=>requestAnimationFrame(drawEdges));
-byId('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(displayPath);byId('copy-status').textContent='복사했습니다.'}catch{byId('copy-status').textContent='자동 복사가 허용되지 않았습니다. 표시된 경로를 선택해 복사하세요.'}});
-}catch(error){byId('plan').append(node('p','진행 데이터를 표시할 수 없습니다. Main Session에서 progress-data JSON을 확인해 다시 저장하세요.','error'));byId('copy').disabled=true}
-const tabs=[...document.querySelectorAll('[role="tab"]')];
-const storageKey='basic-team-progress:'+location.pathname;
-function selectTab(index){hideTooltip();tabs.forEach((tab,i)=>{tab.setAttribute('aria-selected',String(i===index));tab.tabIndex=i===index?0:-1;byId(tab.getAttribute('aria-controls')).hidden=i!==index});try{localStorage.setItem(storageKey,String(index))}catch{}requestAnimationFrame(drawEdges)}
-tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>selectTab(i));tab.addEventListener('keydown',event=>{let index;if(event.key==='ArrowRight')index=(i+1)%tabs.length;if(event.key==='ArrowLeft')index=(i+tabs.length-1)%tabs.length;if(event.key==='Home')index=0;if(event.key==='End')index=tabs.length-1;if(index!==undefined){event.preventDefault();selectTab(index);tabs[index].focus()}})});
-try{const saved=localStorage.getItem(storageKey);const index=saved===null?0:Number(saved);if(Number.isInteger(index)&&index>=0&&index<tabs.length)selectTab(index)}catch{}
-function showLinkedHandoff(){
-  let id;try{id=decodeURIComponent(location.hash.slice(1))}catch{return}
-  const record=byId(id);if(!record?.classList.contains('handoff'))return;
-  selectTab(tabs.findIndex(tab=>tab.id==='tab-handoffs'));record.open=true;record.scrollIntoView();
-}
-addEventListener('hashchange',showLinkedHandoff);showLinkedHandoff();
+const decisions = data.decisions || [];
+if (!decisions.length) $('decisions').append(el('div', '아직 기록된 결정이 없습니다.', 'empty'));
+else { const table = el('table'); for (const d of decisions) { const row = el('tr'); row.append(el('td', d.title), el('td', d.body || '')); table.append(row); } $('decisions').append(table); }
 </script>
 </body>
 </html>

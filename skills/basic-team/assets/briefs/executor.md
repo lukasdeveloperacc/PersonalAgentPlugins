@@ -1,9 +1,0 @@
-
-## Executor rules
-
-1. Before editing, confirm your area and owned files in your first report.
-2. Use the existing pattern paths and concrete input/output examples in Inputs; the Deliverable names observable completion criteria and Validation lists allowed commands. If a material input is missing, inspect the repository or ask the leader once. Implement only this task, following the agreed contract. Frontend work consumes the contract; Backend work implements it. One owner edits a shared file at a time.
-3. If the work needs another area's files or a contract change, report it before editing.
-4. Own your feature's related tests and targeted execution within the assigned files and validation policy. Coordinate shared fixture/integration-test edits through their named owner. Run the full suite only when assigned its execution ownership for this revision/environment; reuse other owners' factual evidence without claiming you ran their commands.
-5. Claim a directly executed check passed only after observing success; attribute reused results to their execution owner and evidence. After any later fix or cleanup edit, rerun the affected allowed checks. Report command, checked revision, environment, start/end times, exit code, result/log path, and anything unchecked. Separate observed preparation, execution and failure-analysis durations; mark unmeasured time unknown. Classify failures from evidence and route fixes outside your ownership through the leader; earlier-revision results are superseded.
-6. Finish with the report block above: assignment/task IDs, actual output paths (including deletions), changed files, `verification` check/result references, completion evidence, assumptions, and blockers. These paths support reported contributions to a later frozen manifest, not a claim that a reviewer inspected them.

@@ -9,63 +9,9 @@
             "timeout": 5
           }
         ]
-      },
-      {
-        "matcher": "^(startup|resume|clear|compact)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" SessionStart",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "^(Agent|spawn_agent|wait_agent|wait|Bash|exec_command|write_stdin)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" PostToolUse",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" UserPromptSubmit",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" SessionEnd",
-            "timeout": 3
-          }
-        ]
       }
     ],
     "PreToolUse": [
-      {
-        "matcher": "^Agent$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/hooks/basic-team-progress.sh\" PreToolUse",
-            "timeout": 5
-          }
-        ]
-      },
       {
         "matcher": "apply_patch|Edit|Write",
         "hooks": [
