@@ -305,3 +305,10 @@ if [ "$ACTION" = remove ]; then
     npm uninstall -g @colbymchenry/codegraph
   fi
 fi
+
+if [ "$ACTION" = install ] || [ "$ACTION" = reload ]; then
+  # MCP servers stay off by default (Claude Code cannot list plugin servers as disabled), so show what exists.
+  echo
+  echo "MCP servers (off by default; turn on with the mcp-setup skill, e.g. \"notion MCP 켜줘\"):"
+  "$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh" "$TOOL" list
+fi

@@ -27,6 +27,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
 
 - `install` : 이 원격저장소의 plugin 설치
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
+  - MCP 서버(notion, glitchtip, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
   - Node.js 20 이상과 npm 필요. npm 전역 설치 경로가 `PATH`에 있어야 합니다.
   - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. Basic Team용 Agent Teams 환경 변수도 Claude 사용자 설정에 설정
   - Codex: `omx`가 없으면 공식 npm 패키지 설치 후 사용자 범위의 plugin 모드로 setup. 사용자 `AGENTS.md`가 있으면 병합하고, 없으면 생성
