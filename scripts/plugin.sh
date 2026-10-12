@@ -66,11 +66,27 @@ trust_codex_hooks() {
     "$root/$hooks_rel" "$id:$hooks_rel" "${CODEX_HOME:-$HOME/.codex}/config.toml"
 }
 
+# A marketplace root left in ~/.codex/.tmp/marketplaces without its config entry makes
+# `marketplace add` fail with "already added from a different source"; drop it and add again.
+add_codex_marketplace() {
+  local name="$1" src="$2" out
+  if out="$(codex plugin marketplace add "$src" --json 2>&1)"; then
+    echo "$out"
+    return 0
+  fi
+  if ! grep -q 'already added from a different source' <<<"$out"; then
+    echo "$out" >&2
+    return 1
+  fi
+  codex plugin marketplace remove "$name"
+  codex plugin marketplace add "$src" --json
+}
+
 install_codex_deps() {
   local dep id src out refresh="${1:-}"
   for dep in "${CODEX_DEPS[@]}"; do
     read -r id src <<<"$dep"
-    codex plugin marketplace add "$src" --json
+    add_codex_marketplace "${id#*@}" "$src"
     if [ "$refresh" = "--refresh" ]; then
       codex plugin marketplace upgrade "${id#*@}" --json
       codex plugin remove "$id" --json
@@ -216,7 +232,7 @@ case "$TOOL" in
   codex)
     case "$ACTION" in
       install)
-        codex plugin marketplace add "$ROOT_DIR" --json
+        add_codex_marketplace "$MARKETPLACE_NAME" "$ROOT_DIR"
         codex plugin add "$PLUGIN_ID" --json
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps
@@ -233,7 +249,7 @@ case "$TOOL" in
         npm install -g oh-my-codex@latest
         codex plugin remove "$PLUGIN_ID" --json
         rm -rf "${CODEX_HOME:-$HOME/.codex}/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
-        codex plugin marketplace add "$ROOT_DIR" --json
+        add_codex_marketplace "$MARKETPLACE_NAME" "$ROOT_DIR"
         codex plugin add "$PLUGIN_ID" --json
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps --refresh

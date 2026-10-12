@@ -43,6 +43,11 @@ if [[ "$name" == claude && "\$1 \$2" == "plugin uninstall" && -n "\${CLAUDE_REMO
   echo "{\"failureCode\":\"\$CLAUDE_REMOVE_ERROR\"}"
   exit 1
 fi
+if [[ "$name" == codex && "\$*" == "plugin marketplace add \${CODEX_MARKETPLACE_CONFLICT:-} --json" && ! -e "$SANDBOX/conflict-cleared" ]]; then
+  echo "Error: marketplace 'ponytail' is already added from a different source; remove it before adding this source" >&2
+  exit 1
+fi
+[[ "\$*" == "plugin marketplace remove ponytail" ]] && touch "$SANDBOX/conflict-cleared"
 [[ "\$*" == *"plugin list"* ]] && echo "$PLUGIN_NAME"
 [[ "\$1 \$2" == "plugin add" ]] && echo "{\"installedPath\":\"$INSTALLED/\${3%@*}\"}"
 exit 0
@@ -164,6 +169,13 @@ expect_calls \
 [[ "$(cat "$FAKE_HOME/.codex/AGENTS.md")" == 'Keep my user guidance' ]]
 [[ "$(trust_count "$PLUGIN_ID")" == 2 ]]
 [[ "$(trust_count "$DEP_ID")" == 1 ]]
+
+# An orphaned marketplace root is removed and re-added instead of failing the install.
+: > "$CALL_LOG"
+CODEX_MARKETPLACE_CONFLICT="$DEP_SRC" run codex install >/dev/null 2>&1
+grep -qx "codex plugin marketplace remove ponytail" "$CALL_LOG"
+[[ "$(grep -cx "codex plugin marketplace add $DEP_SRC --json" "$CALL_LOG")" == 2 ]]
+grep -qx "codex plugin add $DEP_ID --json" "$CALL_LOG"
 
 # A custom Codex home must not remove the default home's plugin cache.
 CUSTOM_CODEX_HOME="$SANDBOX/custom-codex"
