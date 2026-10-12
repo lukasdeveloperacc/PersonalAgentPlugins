@@ -3,6 +3,7 @@
 # dependencies = []
 # ///
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -58,6 +59,16 @@ class ProgressTests(unittest.TestCase):
         self.cli("update", str(self.page), "--input", "-", stdin=json.dumps({"summary": "</script><b>x</b>"}))
         self.assertEqual(self.data()["summary"], "</script><b>x</b>")
         self.assertEqual(self.page.read_text().count("</script>"), 2)
+
+    def test_reference_example_patches_apply_in_order(self):
+        example = (SCRIPT.parents[1] / "references" / "progress-example.md").read_text()
+        patches = re.findall(r"```json\n(.*?)```", example, re.S)
+        self.assertEqual(len(patches), 5)
+        self.cli("init", str(self.page))
+        for patch in patches:
+            result = self.cli("update", str(self.page), "--input", "-", stdin=patch)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual({t["status"] for t in self.data()["tasks"]}, {"완료"})
 
     def test_runs_on_declared_python_floor_with_uv(self):
         result = subprocess.run(["uv", "run", "--no-project", "--python", "3.10", "python", str(SCRIPT), "init", str(self.page)],

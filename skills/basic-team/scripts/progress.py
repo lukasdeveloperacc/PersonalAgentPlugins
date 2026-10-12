@@ -73,6 +73,9 @@ def apply(data, patch):
             fail(f"task {task['id']}: status must be one of {', '.join(STATUSES)}")
         if "after" in task and (not isinstance(task["after"], list) or not all(isinstance(a, str) for a in task["after"])):
             fail(f"task {task['id']}: after must be a list of task ids")
+        for field in ("title", "owner", "note", "model", "effort"):
+            if field in task and not isinstance(task[field], str):
+                fail(f"task {task['id']}: {field} must be a string")
     for decision in patch.get("decisions", []):
         if not isinstance(decision, dict) or not isinstance(decision.get("title"), str):
             fail("each decision needs a string title")

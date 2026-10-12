@@ -11,13 +11,13 @@ Follow the user's scope and permissions. This workflow grants no commits, pushes
 
 ## Models
 
-Pass both values as real spawn arguments on every creating call (Claude `Agent`: `model`, `effort`; Codex `spawn_agent`: `model`, `reasoning_effort`). Never use `subagent_type: "fork"`, which ignores them.
+Pass both values as real spawn arguments on every creating call (Claude `Agent`: `model` alias and `effort`; Codex `spawn_agent`: `model`, `reasoning_effort`). The Claude alias selects the model ID shown in parentheses; if the host reports a different ID, use the reported one. Never use `subagent_type: "fork"`, which ignores them.
 
 | Role | Claude | Codex |
 | --- | --- | --- |
-| Executor | `haiku`, `max` | `gpt-6-luna`, `max` |
-| Documentation executor (only for docs tasks) | `sonnet`, `medium` | `gpt-6.1-sol`, `medium` |
-| Reviewer | `sonnet`, `high` | `gpt-6.1-sol`, `medium` |
+| Executor | `haiku` (`claude-haiku-5-5`), `max` | `gpt-6-luna`, `max` |
+| Documentation executor (only for docs tasks) | `sonnet` (`claude-sonnet-5-5`), `medium` | `gpt-6.1-sol`, `medium` |
+| Reviewer | `sonnet` (`claude-sonnet-5-5`), `high` | `gpt-6.1-sol`, `medium` |
 
 On Claude, named `Agent` calls become teammates when agent teams are enabled; message them by name with `SendMessage`. On Codex, use native collaboration (`spawn_agent`, `send_input`, `wait`). If the host cannot set a model or effort, tell the user once and continue.
 
@@ -59,6 +59,6 @@ JSON
 uv run "<skill-dir>/scripts/progress.py" status "<page>"
 ```
 
-Send only what changed: `tasks` merge by `id`, `decisions` by `title`, `reviews` by `round` + `reviewer` (`{"round": 1, "reviewer": "Karpathy Agent", "verdict": "PASS", "note": "..."}`). `lane` is `plan`, `build`, `review`, `fix` or `finish`; `status` is `대기중`, `진행중` or `완료`. Run every Python command in this skill with `uv run`, never `python` directly.
+[references/progress-example.md](references/progress-example.md) shows a full run's patches at each checkpoint (split, blocker, review round, fix round, finish); follow its conventions. Send only what changed: `tasks` merge by `id`, `decisions` by `title`, `reviews` by `round` + `reviewer` (`{"round": 1, "reviewer": "Karpathy Agent", "verdict": "PASS", "note": "..."}`). `lane` is `plan`, `build`, `review`, `fix` or `finish`; `status` is `대기중`, `진행중` or `완료`. Give agent tasks the full model ID and effort from the table, not the alias (for example `"model": "claude-haiku-5-5", "effort": "max"`); the card shows them as the requested model, not a host-confirmed one. Run every Python command in this skill with `uv run`, never `python` directly.
 
 Brief the user at plan approval, after each review round, on a blocker and at the end: current stage, done, remaining, blocker, and the page link.

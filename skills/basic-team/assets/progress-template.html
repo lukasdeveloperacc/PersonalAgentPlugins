@@ -18,7 +18,7 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 10px}
 .lane h3{font-size:13px;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
 .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--wait);border-radius:6px;padding:8px 10px;margin-bottom:10px}
 .card[data-s="진행중"]{border-left-color:var(--run)}.card[data-s="완료"]{border-left-color:var(--done)}
-.card strong{display:block;font-size:14px}.card small{display:block;color:var(--muted);font-size:12px}
+.card strong{display:block;font-size:14px}.model{display:inline-block;margin:4px 0 2px;font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;padding:1px 6px;border-radius:4px;background:var(--line);color:var(--text)}.card small{display:block;color:var(--muted);font-size:12px}
 .badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:9px;border:1px solid currentColor;color:var(--wait)}
 .card[data-s="진행중"] .badge{color:var(--run)}.card[data-s="완료"] .badge{color:var(--done)}
 svg#edges{position:absolute;inset:0;pointer-events:none;overflow:visible}svg#edges path{fill:none;stroke:var(--muted);stroke-width:1.5;opacity:.7}
@@ -67,7 +67,8 @@ for (const [key, label] of lanes) {
   if (!mine.length) lane.append(el('div', '-', 'empty'));
   for (const t of mine) {
     const card = el('div', null, 'card'); card.dataset.s = t.status;
-    card.append(el('span', t.status, 'badge'), el('strong', t.title || t.id), el('small', `${t.id}${t.owner ? ' · ' + t.owner : ''}`));
+    card.append(el('span', t.status, 'badge'), el('strong', t.title || t.id), el('small', [t.id, t.owner].filter(Boolean).join(' · ')));
+    if (t.model) { const m = el('span', t.effort ? `${t.model} · ${t.effort}` : t.model, 'model'); m.title = '요청한 모델 · effort'; card.append(m); }
     if (t.note) card.append(el('small', t.note));
     if ((t.after || []).length) card.append(el('small', '선행: ' + t.after.join(', ')));
     lane.append(card); cards[t.id] = card;
