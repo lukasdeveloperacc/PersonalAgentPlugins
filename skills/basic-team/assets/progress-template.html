@@ -13,18 +13,19 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 10px}
 .meta{color:var(--muted);font-size:13px}.meta code{word-break:break-all}
 .top{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:16px}
 .box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}.box b{display:block;font-size:12px;color:var(--muted);font-weight:600}
-.blocker{border-color:var(--warn)}
-#graph{position:relative;display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:28px;overflow-x:auto;padding-bottom:8px}
+.alert{border-color:var(--warn)}#summary,#todo,#blockers{white-space:pre-line}
+#graph{position:relative;display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:28px;overflow-x:auto;padding:0 0 8px 14px}
 .lane h3{font-size:13px;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
 .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--wait);border-radius:6px;padding:8px 10px;margin-bottom:10px}
 .card[data-s="진행중"]{border-left-color:var(--run)}.card[data-s="완료"]{border-left-color:var(--done)}
+.card[data-s="중단"]{border-left-style:dashed}.card[data-s="중단"]>*{opacity:.6}.card[data-s="중단"] strong{text-decoration:line-through}
 .card strong{display:block;font-size:14px}.model{display:inline-block;margin:4px 0 2px;font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;padding:1px 6px;border-radius:4px;background:var(--line);color:var(--text)}.card small{display:block;color:var(--muted);font-size:12px}
 .badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:9px;border:1px solid currentColor;color:var(--wait)}
 .card[data-s="진행중"] .badge{color:var(--run)}.card[data-s="완료"] .badge{color:var(--done)}
-svg#edges{position:absolute;inset:0;pointer-events:none;overflow:visible}svg#edges path{fill:none;stroke:var(--muted);stroke-width:1.5;opacity:.7}
+svg#edges{position:absolute;inset:0;pointer-events:none;overflow:visible;color:var(--muted)}svg#edges>path{fill:none;stroke:var(--muted);stroke-width:1.5;opacity:.7}
 table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}th{font-size:12px;color:var(--muted)}
 .empty{color:var(--muted);font-size:14px}
-@media (max-width:720px){#graph{grid-template-columns:1fr}svg#edges{display:none}}
+@media (max-width:720px){#graph{grid-template-columns:1fr;padding-left:0}svg#edges{display:none}}
 </style>
 </head>
 <body>
@@ -34,7 +35,8 @@ table{width:100%;border-collapse:collapse;background:var(--card);border:1px soli
 <div class="top">
   <div class="box"><b>현재 단계</b><span id="stage"></span></div>
   <div class="box"><b>요약</b><span id="summary"></span></div>
-  <div class="box" id="blockerBox"><b>막힌 일</b><span id="blockers"></span></div>
+  <div class="box"><b>사용자 할 일</b><span id="todo"></span></div>
+  <div class="box"><b>막힌 일</b><span id="blockers"></span></div>
   <div class="box"><b>작업</b><span id="counts"></span></div>
 </div>
 <h2>작업 흐름</h2>
@@ -51,43 +53,60 @@ table{width:100%;border-collapse:collapse;background:var(--card);border:1px soli
 const data = JSON.parse(document.getElementById('data').textContent);
 const $ = id => document.getElementById(id);
 const el = (tag, text, cls) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
+const dur = ms => { const m = Math.floor(ms / 60000); return m < 1 ? '1분 미만' : m < 60 ? `${m}분` : m < 1440 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${Math.floor(m / 1440)}일 ${Math.floor(m % 1440 / 60)}시간`; };
+const live = !['완료', '중단'].includes((data.stage || '').split(' ')[0]), gx = 'gx:' + location.pathname;
+// the reload would reset the graph's horizontal scroll, so carry it over; blocked storage must not break the page
+if (live) setTimeout(() => { try { sessionStorage.setItem(gx, $('graph').scrollLeft); } catch {} location.reload(); }, 30000);
 $('title').textContent = data.title || '진행판'; document.title = data.title || document.title;
-$('updated').textContent = data.updated || '-'; $('path').textContent = data.path || location.pathname;
-$('stage').textContent = data.stage || '-'; $('summary').textContent = data.summary || '-'; $('blockers').textContent = data.blockers || '-';
-if (data.blockers && data.blockers !== '없음') $('blockerBox').classList.add('blocker');
+const saved = new Date(data.updated), age = Date.now() - saved, pad = n => String(n).padStart(2, '0');
+$('updated').textContent = (isNaN(age) ? data.updated || '-' : `${saved.getMonth() + 1}월 ${saved.getDate()}일 ${pad(saved.getHours())}:${pad(saved.getMinutes())} (${age < 60000 ? '방금' : dur(age) + ' 전'})`) + (live ? ' · 30초마다 새로고침' : '');
+$('path').textContent = data.path || location.pathname;
+$('stage').textContent = data.stage || '-'; $('summary').textContent = data.summary || '-';
+for (const k of ['todo', 'blockers']) { $(k).textContent = data[k] || '-'; if (data[k] && data[k] !== '없음') $(k).parentNode.classList.add('alert'); }
 const tasks = data.tasks || [];
 const count = s => tasks.filter(t => t.status === s).length;
-$('counts').textContent = tasks.length ? `완료 ${count('완료')} · 진행중 ${count('진행중')} · 대기중 ${count('대기중')}` : '아직 없음';
+$('counts').textContent = tasks.length ? `완료 ${count('완료')} · 진행중 ${count('진행중')} · 대기중 ${count('대기중')}${count('중단') ? ` · 중단 ${count('중단')}` : ''}` : '아직 없음';
 
 const lanes = [['plan','계획'],['build','구현'],['review','리뷰'],['fix','수정'],['finish','마무리']];
+// depth = 1 + deepest prerequisite; at most tasks.length passes, so a cyclic `after` cannot hang the page
+const depth = new Map(tasks.map(t => [t.id, 0]));
+for (let i = 0; i < tasks.length; i++) for (const t of tasks) depth.set(t.id, Math.max(0, ...(t.after || []).map(a => (depth.get(a) ?? 0) + 1)));
 const graph = $('graph'), cards = {};
 for (const [key, label] of lanes) {
   const lane = el('div', null, 'lane'); lane.append(el('h3', label));
-  const mine = tasks.filter(t => t.lane === key);
+  const mine = tasks.filter(t => t.lane === key).sort((a, b) => depth.get(a.id) - depth.get(b.id));
   if (!mine.length) lane.append(el('div', '-', 'empty'));
   for (const t of mine) {
     const card = el('div', null, 'card'); card.dataset.s = t.status;
     card.append(el('span', t.status, 'badge'), el('strong', t.title || t.id), el('small', [t.id, t.owner].filter(Boolean).join(' · ')));
     if (t.model) { const m = el('span', t.effort ? `${t.model} · ${t.effort}` : t.model, 'model'); m.title = '요청한 모델 · effort'; card.append(m); }
     if (t.note) card.append(el('small', t.note));
+    const running = Date.now() - Date.parse(t.started), took = Date.parse(t.finished) - Date.parse(t.started);
+    if (t.status === '진행중' && !isNaN(running)) card.append(el('small', running < 60000 ? '방금 시작' : `진행 ${dur(running)}째`));
+    if ((t.status === '완료' || t.status === '중단') && !isNaN(took)) card.append(el('small', `걸린 시간 ${dur(took)}`));
     if ((t.after || []).length) card.append(el('small', '선행: ' + t.after.join(', ')));
     lane.append(card); cards[t.id] = card;
   }
   graph.append(lane);
 }
 function drawEdges() {
-  const svg = $('edges'); svg.replaceChildren();
-  const box = graph.getBoundingClientRect();
+  const svg = $('edges'), box = graph.getBoundingClientRect(), gap = parseFloat(getComputedStyle(graph).columnGap) || 28;
+  svg.innerHTML = '<defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0L10,5L0,10z" fill="currentColor"/></marker></defs>';
   for (const t of tasks) for (const from of t.after || []) {
     const a = cards[from], b = cards[t.id]; if (!a || !b) continue;
-    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-    const x1 = ra.right - box.left + graph.scrollLeft, y1 = ra.top + ra.height / 2 - box.top;
-    const x2 = rb.left - box.left + graph.scrollLeft, y2 = rb.top + rb.height / 2 - box.top;
-    const mid = (x1 + x2) / 2, path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', x2 > x1 ? `M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}` : `M${ra.left - box.left + ra.width / 2},${ra.bottom - box.top} L${rb.left - box.left + rb.width / 2},${rb.top - box.top}`);
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), same = rb.left < ra.right && rb.right > ra.left, dir = rb.left >= ra.right ? 1 : -1;
+    // forward: right edge → left edge; backward (a fix → the next review round): left edge → right edge; same lane: loop out on the left
+    const [x1, x2] = (same ? [ra.left, rb.left] : dir > 0 ? [ra.right, rb.left] : [ra.left, rb.right]).map(x => x - box.left + graph.scrollLeft);
+    // leave below the middle and arrive above it, so an edge leaving a card never starts where another one ends
+    const y1 = ra.top + ra.height / 2 + 8 - box.top, y2 = rb.top + rb.height / 2 - 8 - box.top, bend = same ? x2 - 12 : x2 - dir * gap / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    // an edge that skips a lane (last review → finish) stays level until the gap before its target, so it never seems to leave a card it passes behind
+    path.setAttribute('d', same ? `M${x1},${y1} C${x1 - 12},${y1} ${bend},${y2} ${x2},${y2}` : `M${x1},${y1} H${x2 - dir * gap} C${bend},${y1} ${bend},${y2} ${x2},${y2}`);
+    path.setAttribute('marker-end', 'url(#arrow)');
     svg.append(path);
   }
 }
+try { graph.scrollLeft = sessionStorage.getItem(gx) || 0; } catch {}
 drawEdges(); addEventListener('resize', drawEdges);
 
 const reviews = data.reviews || [];

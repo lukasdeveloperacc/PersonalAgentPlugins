@@ -24,8 +24,17 @@ class ProgressTests(unittest.TestCase):
     def cli(self, *args, stdin=None):
         return subprocess.run([sys.executable, str(SCRIPT), *args], input=stdin, text=True, capture_output=True)
 
+    def update(self, patch):
+        return self.cli("update", str(self.page), "--input", "-", stdin=json.dumps(patch))
+
     def data(self):
         return progress.read(self.page)[2]
+
+    def edit(self, change):
+        """Change the stored data directly, as an older page or an earlier update would have left it."""
+        html, match, data = progress.read(self.page)
+        change(data)
+        progress.write(self.page, html, match, data)
 
     def test_init_update_merge_and_status(self):
         self.assertEqual(self.cli("init", str(self.page), "--title", "목록 API").returncode, 0)
@@ -47,7 +56,9 @@ class ProgressTests(unittest.TestCase):
         self.cli("init", str(self.page))
         before = self.page.read_bytes()
         for patch in ({"tasks": [{"id": "A", "after": ["missing"]}]}, {"tasks": [{"id": "A", "status": "done"}]},
-                      {"tasks": [{"id": "A", "lane": "구현"}]}, {"verdicts": {}}, {"reviews": [{"reviewer": "K"}]}):
+                      {"tasks": [{"id": "A", "lane": "구현"}]}, {"verdicts": {}}, {"reviews": [{"reviewer": "K"}]},
+                      {"stage": "done"}, {"stage": "수정(1라운드)"}, {"stage": "완료", "tasks": [{"id": "A"}]},
+                      {"reviews": [{"round": 1, "reviewer": "Karpathy"}]}, {"tasks": None}):
             result = self.cli("update", str(self.page), "--input", "-", stdin=json.dumps(patch))
             self.assertEqual(result.returncode, 2, patch)
             self.assertNotIn("Traceback", result.stderr)
@@ -63,12 +74,126 @@ class ProgressTests(unittest.TestCase):
     def test_reference_example_patches_apply_in_order(self):
         example = (SCRIPT.parents[1] / "references" / "progress-example.md").read_text()
         patches = re.findall(r"```json\n(.*?)```", example, re.S)
-        self.assertEqual(len(patches), 5)
+        self.assertEqual(len(patches), 7)
         self.cli("init", str(self.page))
         for patch in patches:
             result = self.cli("update", str(self.page), "--input", "-", stdin=patch)
             self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual({t["status"] for t in self.data()["tasks"]}, {"완료"})
+        self.assertEqual(self.data()["stage"], "완료")
+
+    def test_todo_starts_as_none_and_is_reported(self):
+        self.cli("init", str(self.page))
+        self.assertEqual(self.data()["todo"], "없음")
+        result = self.update({"todo": "커밋·push 여부 결정"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.data()["todo"], "커밋·push 여부 결정")
+        self.assertEqual(json.loads(self.cli("status", str(self.page)).stdout)["todo"], "커밋·push 여부 결정")
+
+    def test_task_times_are_stamped_when_the_status_changes(self):
+        self.cli("init", str(self.page))
+        self.update({"tasks": [{"id": "A"}]})
+        self.assertFalse({"started", "finished"} & set(self.data()["tasks"][0]))
+        self.update({"tasks": [{"id": "A", "status": "진행중"}]})
+        data = self.data()
+        self.assertEqual(data["tasks"][0]["started"], data["updated"])
+        old = "2000-01-01T00:00:00+00:00"
+        self.edit(lambda d: d["tasks"][0].update(started=old))
+        self.update({"tasks": [{"id": "A", "status": "진행중", "note": "재시도"}]})
+        self.assertEqual(self.data()["tasks"][0]["started"], old)  # resending 진행중 keeps the start
+        self.update({"tasks": [{"id": "A", "status": "완료"}]})
+        data = self.data()
+        self.assertEqual((data["tasks"][0]["started"], data["tasks"][0]["finished"]), (old, data["updated"]))
+        self.edit(lambda d: d["tasks"][0].update(finished=old))
+        self.update({"tasks": [{"id": "A", "status": "중단"}]})
+        self.assertEqual(self.data()["tasks"][0]["finished"], old)  # 완료 → 중단 keeps the first end time
+        self.update({"tasks": [{"id": "A", "status": "진행중"}]})  # reopened by a fix
+        task = self.data()["tasks"][0]
+        self.assertNotEqual(task["started"], old)
+        self.assertNotIn("finished", task)
+
+    def test_stage_detail_and_auto_finish(self):
+        self.cli("init", str(self.page))
+        self.assertIn("수정 (2라운드)", self.update({"stage": "done"}).stderr)
+        result = self.update({"stage": "수정 (1라운드)", "tasks": [{"id": "BE", "status": "완료"}, {"id": "DONE", "lane": "finish", "after": ["BE"]}]})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.data()["stage"], "수정 (1라운드)")
+        result = self.update({"stage": "완료"})
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("DONE", result.stderr)
+        self.update({"tasks": [{"id": "DONE", "status": "완료"}]})
+        self.assertEqual(self.data()["stage"], "완료")
+        self.update({"stage": "수정 (3라운드)"})
+        self.assertEqual(self.data()["stage"], "수정 (3라운드)")  # only the patch that closes the finish task ends the run
+
+    def test_a_reopened_run_keeps_the_leaders_stage(self):
+        self.cli("init", str(self.page))
+        self.update({"tasks": [{"id": "BE", "status": "완료"}, {"id": "DONE", "lane": "finish", "status": "완료", "after": ["BE"]}]})
+        self.assertEqual(self.data()["stage"], "완료")
+        self.update({"stage": "수정 (2라운드)", "tasks": [{"id": "FIX-2", "lane": "fix", "status": "진행중"}]})
+        self.update({"tasks": [{"id": "FIX-2", "status": "완료"}]})  # DONE is still 완료, but this patch did not close it
+        self.assertEqual(self.data()["stage"], "수정 (2라운드)")
+
+    def test_dropped_finish_task_or_abandoned_run_is_not_finished(self):
+        self.cli("init", str(self.page))
+        self.update({"stage": "마무리", "tasks": [{"id": "BE", "status": "완료"}, {"id": "DONE", "lane": "finish", "status": "진행중"}]})
+        result = self.update({"tasks": [{"id": "DONE", "status": "중단"}]})
+        self.assertEqual(json.loads(result.stdout)["tasks"]["중단"], ["DONE"])
+        self.assertEqual(self.data()["stage"], "마무리")
+        self.update({"stage": "중단", "tasks": [{"id": "DONE", "status": "완료"}]})
+        self.assertEqual(self.data()["stage"], "중단")  # an abandoned run stays 중단 even when its finish task closes
+
+    def test_closing_the_last_finish_task_needs_every_task_closed(self):
+        self.cli("init", str(self.page))
+        self.update({"stage": "마무리", "tasks": [{"id": "BE-9", "status": "대기중"}, {"id": "DONE", "lane": "finish", "status": "중단"},
+                                                  {"id": "DONE-2", "lane": "finish", "status": "진행중"},
+                                                  {"id": "DONE-3", "lane": "finish", "status": "진행중"}]})
+        result = self.update({"tasks": [{"id": "DONE-3", "status": "완료"}]})
+        self.assertEqual(result.returncode, 0, result.stderr)  # DONE-2 is still open, so the run simply goes on
+        self.assertEqual(self.data()["stage"], "마무리")
+        before = self.page.read_bytes()
+        result = self.update({"tasks": [{"id": "DONE-2", "status": "완료"}]})
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("BE-9", result.stderr)
+        self.assertEqual(self.page.read_bytes(), before)
+        result = self.update({"tasks": [{"id": "BE-9", "status": "완료"}, {"id": "DONE-2", "status": "완료"}]})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.data()["stage"], "완료")  # DONE stays 중단; closing DONE-2 ends the run
+
+    def test_dropping_the_last_finish_task_also_ends_the_run(self):
+        self.cli("init", str(self.page))
+        self.update({"stage": "마무리", "tasks": [{"id": "R1-E", "lane": "review", "status": "대기중"},
+                                                  {"id": "CHECK", "lane": "finish", "status": "완료"},
+                                                  {"id": "PR", "lane": "finish", "status": "진행중"}]})
+        before = self.page.read_bytes()
+        result = self.update({"tasks": [{"id": "PR", "status": "중단"}]})  # the user opens the PR; a forgotten card is still open
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("R1-E", result.stderr)
+        self.assertEqual(self.page.read_bytes(), before)
+        result = self.update({"tasks": [{"id": "R1-E", "status": "중단"}, {"id": "PR", "status": "중단"}]})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.data()["stage"], "완료")  # CHECK finished the run's work even though PR was dropped
+
+    def test_update_gives_an_older_page_the_current_template(self):
+        self.cli("init", str(self.page))
+        self.update({"summary": "이전 요약", "tasks": [{"id": "A"}]})
+        box = '<div class="box"><b>사용자 할 일</b><span id="todo"></span></div>'
+        html = self.page.read_text(encoding="utf-8")
+        self.assertIn(box, html)
+        self.page.write_text(html.replace(box, ""), encoding="utf-8")  # a page made before the box existed
+        result = self.update({"blockers": "없음"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('id="todo"', self.page.read_text(encoding="utf-8"))
+        data = self.data()
+        self.assertEqual((data["summary"], [t["id"] for t in data["tasks"]]), ("이전 요약", ["A"]))
+
+    def test_reviewer_names_are_checked_on_new_rows_only(self):
+        self.cli("init", str(self.page))
+        self.assertIn("Karpathy Agent, Ponytail Agent, Impeccable Agent, E2E Agent",
+                      self.update({"reviews": [{"round": 1, "reviewer": "Karpathy"}]}).stderr)
+        self.edit(lambda d: d.update(reviews=[{"round": 1, "reviewer": "Karpathy", "verdict": "PASS"}]))
+        result = self.update({"reviews": [{"round": 2, "reviewer": "Karpathy Agent", "verdict": "PASS"}]})
+        self.assertEqual(result.returncode, 0, result.stderr)  # an older page keeps working
 
     def test_runs_on_declared_python_floor_with_uv(self):
         result = subprocess.run(["uv", "run", "--no-project", "--python", "3.10", "python", str(SCRIPT), "init", str(self.page)],

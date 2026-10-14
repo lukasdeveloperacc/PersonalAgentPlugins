@@ -47,18 +47,27 @@ When something blocks a task: read the error and the relevant code once, try the
 
 ## Progress page
 
-One standalone HTML page per run at `<project>/docs/inprogress/<task-slug>-<YYYYMMDD-HHmm>.html`. It shows the stage, a task graph (lanes Plan → Build → Review → Fix → Finish, cards colored 대기중 / 진행중 / 완료, arrows for prerequisites), review results, blockers and decisions. Update it when something changes, not on a timer. Write user-facing text in plain Korean.
+One standalone HTML page per run at `<project>/docs/inprogress/<task-slug>-<YYYYMMDD-HHmm>.html`. It shows the stage, the user's to-dos, a task graph (lanes Plan → Build → Review → Fix → Finish, cards 대기중 / 진행중 / 완료 / 중단 with elapsed time, arrows for prerequisites), review results, blockers and decisions, and reloads itself every 30 seconds until the run is done. Update it when something changes, not on a timer. Write user-facing text in plain Korean.
 
 ```sh
 uv run "<skill-dir>/scripts/progress.py" init "<page>" --title "<작업 이름>"
 uv run "<skill-dir>/scripts/progress.py" update "<page>" --input - <<'JSON'
-{"stage": "구현", "summary": "백엔드 API 구현 중", "blockers": "없음",
+{"stage": "구현", "summary": "백엔드 API 구현 중", "todo": "없음", "blockers": "없음",
  "tasks": [{"id": "BE-1", "title": "목록 API 페이지네이션", "owner": "backend-1", "lane": "build", "status": "진행중", "after": ["PLAN"]}],
  "decisions": [{"title": "E2E 리뷰 생략", "body": "화면 하나만 바뀌고 서버 흐름은 그대로"}]}
 JSON
 uv run "<skill-dir>/scripts/progress.py" status "<page>"
 ```
 
-[references/progress-example.md](references/progress-example.md) shows a full run's patches at each checkpoint (split, blocker, review round, fix round, finish); follow its conventions. Send only what changed: `tasks` merge by `id`, `decisions` by `title`, `reviews` by `round` + `reviewer` (`{"round": 1, "reviewer": "Karpathy Agent", "verdict": "PASS", "note": "..."}`). `lane` is `plan`, `build`, `review`, `fix` or `finish`; `status` is `대기중`, `진행중` or `완료`. Give agent tasks the full model ID and effort from the table, not the alias (for example `"model": "claude-haiku-5-5", "effort": "max"`); the card shows them as the requested model, not a host-confirmed one. Run every Python command in this skill with `uv run`, never `python` directly.
+[references/progress-example.md](references/progress-example.md) shows a full run's patches at each checkpoint (split, blocker, each review round dispatched and returned, fix, finish); follow its conventions. Send only what changed:
+- `tasks` merge by `id`, `decisions` by `title`, `reviews` by `round` + `reviewer` (`{"round": 1, "reviewer": "Karpathy Agent", "verdict": "PASS", "note": "..."}`).
+- `stage` starts with `계획`, `구현`, `리뷰`, `수정`, `마무리`, `완료` or `중단`; detail may follow after a space (`수정 (2라운드)`). `중단` means the run is abandoned (the user cancelled or it cannot continue). While waiting for the user's answer, keep the current stage and put the question in `todo` (or `blockers` if it stops the run).
+- `lane` is the kind of work, not when it happened: `plan`, `build`, `review`, `fix` or `finish` (see the example's conventions).
+- `status` is `대기중`, `진행중`, `완료` or `중단` (dropped or replaced work).
+- `reviewer` is exactly one of the four agent names in step 4.
+- `todo` is what the user must do or decide (`없음` when nothing).
+- The script stamps task times, and sets stage `완료` itself when the last finish task closes (at least one finish task `완료`) with nothing else open.
+- Give agent tasks the full model ID and effort from the table, not the alias (for example `"model": "claude-haiku-5-5", "effort": "max"`); the card shows them as the requested model, not a host-confirmed one.
+- Run every Python command in this skill with `uv run`, never `python` directly.
 
-Brief the user at plan approval, after each review round, on a blocker and at the end: current stage, done, remaining, blocker, and the page link.
+Brief the user at plan approval, after each review round, on a blocker and at the end: current stage, done, remaining, the user's to-dos (`todo`), blocker, and the page link.

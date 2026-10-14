@@ -16,8 +16,11 @@ from pathlib import Path
 TEMPLATE = Path(__file__).resolve().parents[1] / "assets" / "progress-template.html"
 DATA = re.compile(r'(<script type="application/json" id="data">)(.*?)(</script>)', re.S)
 LANES = ("plan", "build", "review", "fix", "finish")
-STATUSES = ("대기중", "진행중", "완료")
-TEXT = ("title", "stage", "summary", "blockers")
+STATUSES = ("대기중", "진행중", "완료", "중단")
+CLOSED = ("완료", "중단")
+STAGES = ("계획", "구현", "리뷰", "수정", "마무리", "완료", "중단")
+REVIEWERS = ("Karpathy Agent", "Ponytail Agent", "Impeccable Agent", "E2E Agent")
+TEXT = ("title", "stage", "summary", "todo", "blockers")
 
 
 def fail(message):
@@ -59,11 +62,16 @@ def apply(data, patch):
     unknown = set(patch) - set(TEXT) - {"tasks", "decisions", "reviews"}
     if unknown:
         fail(f"unknown fields: {', '.join(sorted(unknown))}; allowed: {', '.join(TEXT)}, tasks, decisions, reviews")
+    for key in ("tasks", "decisions", "reviews"):
+        if key in patch and not isinstance(patch[key], list):
+            fail(f"{key} must be a list")
     for field in TEXT:
         if field in patch:
             if not isinstance(patch[field], str):
                 fail(f"{field} must be a string")
             data[field] = patch[field]
+    if "stage" in patch and patch["stage"].partition(" ")[0] not in STAGES:
+        fail(f"stage must start with one of {', '.join(STAGES)}; detail may follow after a space, e.g. 수정 (2라운드)")
     for task in patch.get("tasks", []):
         if not isinstance(task, dict) or not isinstance(task.get("id"), str) or not task["id"]:
             fail("each task needs a string id")
@@ -82,24 +90,49 @@ def apply(data, patch):
     for review in patch.get("reviews", []):
         if not isinstance(review, dict) or not isinstance(review.get("reviewer"), str) or type(review.get("round")) is not int:
             fail("each review needs an integer round and a string reviewer")
+        if review["reviewer"] not in REVIEWERS:
+            fail(f"reviewer {review['reviewer']!r} must be exactly one of: {', '.join(REVIEWERS)}")
+    now = datetime.now().astimezone().isoformat(timespec="seconds")
+    before = {t["id"]: t.get("status") for t in data.get("tasks", [])}
     data["tasks"] = merge(data.get("tasks", []), patch.get("tasks", []), lambda t: t.get("id"))
     for task in data["tasks"]:
         task.setdefault("lane", "build")
         task.setdefault("status", "대기중")
         task.setdefault("title", task["id"])
+        was = before.get(task["id"])  # stamp real changes only: a resent status, or 완료 ↔ 중단, keeps its time
+        if task["status"] == "진행중" and was != "진행중":
+            task["started"] = now
+            task.pop("finished", None)
+        elif task["status"] in CLOSED and was not in CLOSED:
+            task["finished"] = now
     data["decisions"] = merge(data.get("decisions", []), patch.get("decisions", []), lambda d: d.get("title", "").strip())
     data["reviews"] = merge(data.get("reviews", []), patch.get("reviews", []), lambda r: (r.get("round"), r.get("reviewer")))
     ids = {t["id"] for t in data["tasks"]}
     dangling = sorted({a for t in data["tasks"] for a in t.get("after", []) if a not in ids})
     if dangling:
         fail(f"after refers to unknown task ids: {', '.join(dangling)}")
-    data["updated"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    still_open = [t["id"] for t in data["tasks"] if t["status"] not in CLOSED]
+    finish = [t for t in data["tasks"] if t["lane"] == "finish"]
+    word = data.get("stage", "").partition(" ")[0]
+    if word == "완료" and still_open:
+        fail(f"stage 완료 but tasks are still open: {', '.join(still_open)}; set them to 완료 or 중단, "
+             "or send the current stage instead (e.g. 수정)")
+    # only the patch that closes the last finish task ends the run, so a later stage change (a reopened run) is kept
+    closing = any(t["status"] in CLOSED and t["status"] != before.get(t["id"]) for t in finish)
+    if word != "중단" and closing and all(t["status"] in CLOSED for t in finish) and any(t["status"] == "완료" for t in finish):
+        if still_open:
+            fail(f"closing the finish task ends the run, but these tasks are still open: {', '.join(still_open)}; "
+                 "set them to 완료 or 중단 first")
+        if word != "완료":
+            data["stage"] = "완료"
+    data["updated"] = now
     return data
 
 
 def status(data, path):
     tasks = data.get("tasks", [])
-    return {"page": str(path), "updated": data.get("updated"), "stage": data.get("stage"), "blockers": data.get("blockers"),
+    return {"page": str(path), "updated": data.get("updated"), "stage": data.get("stage"),
+            "todo": data.get("todo"), "blockers": data.get("blockers"),
             "tasks": {s: [t["id"] for t in tasks if t["status"] == s] for s in STATUSES},
             "reviews": [f"R{r['round']} {r['reviewer']}: {r.get('verdict', '?')}" for r in data.get("reviews", [])]}
 
@@ -118,16 +151,17 @@ def main():
                 fail(f"{path} already exists; use update")
             path.parent.mkdir(parents=True, exist_ok=True)
             html = TEMPLATE.read_text(encoding="utf-8")
-            data = apply({"path": str(path)}, {"title": args.title or path.stem, "stage": "계획", "summary": "", "blockers": "없음"})
+            data = apply({"path": str(path)}, {"title": args.title or path.stem, "stage": "계획", "summary": "", "todo": "없음", "blockers": "없음"})
             write(path, html, DATA.search(html), data)
         else:
-            html, match, data = read(path)
+            data = read(path)[2]
             if args.command == "update":
                 if not args.input:
                     fail("update needs --input")
                 raw = sys.stdin.read() if args.input == "-" else Path(args.input).read_text(encoding="utf-8")
                 data = apply(data, json.loads(raw))
-                write(path, html, match, data)
+                html = TEMPLATE.read_text(encoding="utf-8")  # a page made by an older version gets the current UI
+                write(path, html, DATA.search(html), data)
         print(json.dumps(status(data, path), ensure_ascii=False))
         return 0
     except (OSError, ValueError) as error:  # json.JSONDecodeError is a ValueError
