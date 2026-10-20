@@ -7,7 +7,7 @@ description: TheGame variant of basic-team. Runs the full basic-team workflow (r
 
 This is basic-team with one addition: the run's task list also lives as one Task page in TheGame's Notion Task Board, so teammates can follow it without opening the progress page.
 
-Resolve `<bt>` as the sibling `basic-team` skill directory (`<this skill's directory>/../basic-team`). Read `<bt>/SKILL.md` and follow it completely; its links and `<skill-dir>/scripts/progress.py` commands resolve against `<bt>`. The progress page stays the source of truth. Notion mirrors it for people: it never decides what runs next, and a Notion failure never blocks product work. A request to inspect or edit this skill is not a request to run it.
+Resolve `<bt>` as the sibling `basic-team` skill directory (`<this skill's directory>/../basic-team`). Read `<bt>/SKILL.md` and follow it completely; its links and `<skill-dir>/scripts/progress.py` commands resolve against `<bt>`. The progress page stays the source of truth. Notion mirrors it for people: it never decides what runs next, and a Notion failure never blocks product work. A request to inspect or edit this skill is not a request to run it. In basic-team's Office mode, "progress page" below means the Office run: its updates are `report` calls, its decisions go in a `report`, and the path line holds the Office URL.
 
 ## Notion target
 

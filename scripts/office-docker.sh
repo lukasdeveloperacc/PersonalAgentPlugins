@@ -4,7 +4,8 @@
 set -euo pipefail
 NAME=lukas-office
 IMAGE="${OFFICE_IMAGE:-ghcr.io/lukasdeveloperacc/taskreporter:latest}"
-WORKSPACE_ROOT="${WORKSPACE_ROOT:-$HOME/orca}"
+# Default $HOME so plan docs of any repo under it are readable (read-only, localhost only).
+WORKSPACE_ROOT="${WORKSPACE_ROOT:-$HOME}"
 # Same volume name TaskReporter's docker compose creates, so both share one office DB.
 VOLUME=taskreporter_office-data
 
