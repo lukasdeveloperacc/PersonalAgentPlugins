@@ -1,0 +1,4 @@
+interface:
+  display_name: "Basic Backend Team"
+  short_description: "Build and verify APIs with a focused backend team"
+  default_prompt: "Use $basic-backend-team to implement this backend change with owned workers, Karpathy and Ponytail guidance, and independent reviews."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Basic Docs Team"
+  short_description: "Write and verify docs against implementation evidence"
+  default_prompt: "Use $basic-docs-team to update these documents against the implementation and verify them with independent reviews."

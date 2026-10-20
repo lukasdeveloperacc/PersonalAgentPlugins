@@ -1,4 +1,4 @@
 interface:
   display_name: "Basic Team"
-  short_description: "Plan with ralplan, build in parallel, review, fix until reviewers pass"
-  default_prompt: "Use $basic-team to plan this task with ralplan, split it into Frontend/Backend executor tasks, have Karpathy and Ponytail reviewers (plus Impeccable or E2E when needed) review the same revision, fix required findings until they pass, and keep the progress page updated."
+  short_description: "Coordinate specialist teams, reviews and summarized progress"
+  default_prompt: "Use $basic-team to plan and coordinate the needed specialist teams, verify independent reviews, and report team progress through Office when ready or HTML when Office is absent."

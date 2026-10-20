@@ -1,0 +1,4 @@
+interface:
+  display_name: "Basic Frontend Team"
+  short_description: "Build and verify UI with a focused frontend team"
+  default_prompt: "Use $basic-frontend-team to implement this UI change with owned workers, Karpathy and Ponytail guidance, and independent reviews."

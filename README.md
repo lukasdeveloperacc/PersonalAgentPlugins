@@ -45,3 +45,22 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - Codex: `codex update`, OMX npm 최신 안정 버전 설치, Ponytail·ELI5 마켓플레이스 갱신 및 재설치, Impeccable 최신 CLI로 스킬 강제 갱신
   - Claude: `claude update`, OMC npm 최신 안정 버전 설치, Ponytail·ELI5·Impeccable·OMC 마켓플레이스 및 플러그인 업데이트
   - 마지막에 OMC/OMX setup을 다시 실행. 명령이 실패하면 종료하고 다음 단계는 실행하지 않음
+
+# Team Skills
+
+팀장은 동급으로 협의하고, 각 팀의 worker는 자기 팀장에게만 보고합니다. 사용자는 팀별 진행·막힘·리뷰 결과를 확인합니다.
+
+| 스킬 | 사용 목적 |
+| --- | --- |
+| `$basic-team` | 필요한 팀을 골라 계획·구현·리뷰·통합을 조율 |
+| `$basic-plan-team` | Karpathy 지침을 기본 적용하고 기존 ralplan harness로 계획 작성·검토; 계획만 요청하면 구현 없이 종료 |
+| `$basic-frontend-team` | UI·상태·접근성·API 사용 작업 또는 도메인 리뷰 |
+| `$basic-backend-team` | API·권한·데이터 계약 작업 또는 도메인 리뷰 |
+| `$basic-docs-team` | 근거에 맞춘 문서 작업 또는 문서 리뷰 |
+| `$basic-reviewer-team` | Karpathy·Ponytail, 필요한 Impeccable·E2E 리뷰; 제품 수정은 원 담당 팀에 반환 |
+| `$thegame-basic-team` | basic-team의 공개 작업을 한 Notion Task의 체크리스트로 동기화 |
+
+예: `$basic-frontend-team 로그인 폼의 오류 상태를 개선해줘`, `$basic-team 가져오기 API와 UI를 함께 수정해줘`.
+Frontend·Backend 팀장과 구현 worker는 Karpathy·Ponytail 지침을 기본 적용하고, 별도의 독립 외부 리뷰도 유지합니다. 단독 구현 팀도 필요한 외부 리뷰를 거칩니다. 팀 계층·peer 통신 지원은 실행 호스트에서 확인하며, 미지원이면 구체적 제약을 보고합니다.
+
+진행 보고는 root가 시작할 때 한 번 선택합니다. Office `report`·`ask`가 사용 가능하고 초기 보고가 성공하면 Office를 사용하며 HTML을 만들지 않습니다. Office가 명시적으로 없거나 꺼져 있으면 기존 progress HTML을 사용합니다. 활성화됐지만 연결이 깨진 경우와 설정이 불명확한 경우는 별도로 진단하며, 실행 중 장애가 나도 자동으로 다른 보고 방식으로 바꾸지 않습니다. 재개 시에도 같은 run과 보고 방식을 유지합니다.

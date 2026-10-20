@@ -79,8 +79,96 @@ class ProgressTests(unittest.TestCase):
         for patch in patches:
             result = self.cli("update", str(self.page), "--input", "-", stdin=patch)
             self.assertEqual(result.returncode, 0, result.stderr)
+            tasks = {task["id"]: task for task in self.data()["tasks"]}
+            for change in json.loads(patch).get("tasks", []):
+                if change.get("status") == "진행중":
+                    for prerequisite in tasks[change["id"]].get("after", []):
+                        self.assertEqual(tasks[prerequisite]["status"], "완료",
+                                         f"{change['id']} starts before {prerequisite} completes")
         self.assertEqual({t["status"] for t in self.data()["tasks"]}, {"완료"})
         self.assertEqual(self.data()["stage"], "완료")
+
+    def test_team_summary_and_domain_review_preserve_history_on_resume(self):
+        self.cli("init", str(self.page))
+        patch = {
+            "tasks": [
+                {"id": "FE", "owner": "frontend-lead", "status": "완료", "note": "2/2 완료 · evidence/frontend.md"},
+                {"id": "BE", "owner": "backend-lead", "status": "완료", "note": "1/1 완료 · evidence/backend.md"},
+                {"id": "DOC", "owner": "docs-lead", "status": "완료", "after": ["BE"]},
+                {"id": "DOMAIN", "owner": "backend-review-lead", "lane": "review", "status": "진행중",
+                 "after": ["FE", "BE", "DOC"], "note": "r1 · BLOCKED · 권한 검사 대기"},
+            ],
+            "reviews": [{"round": 1, "reviewer": reviewer, "verdict": "PASS", "note": "r1"}
+                        for reviewer in progress.REVIEWERS],
+            "decisions": [{"title": "API-1", "body": "양측 확인 · BE 소유"}],
+        }
+        result = self.update(patch)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        first = self.data()
+        # Each CLI call reads the persisted page anew, like a resumed coordinator.
+        result = self.cli("status", str(self.page))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["tasks"]["진행중"], ["DOMAIN"])
+        result = self.update(patch)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        replay = self.data()
+        for key in ("tasks", "reviews", "decisions"):
+            self.assertEqual(replay[key], first[key], key)
+        result = self.update({
+            "tasks": [{"id": "DOMAIN", "status": "완료", "note": "r2 · PASS · evidence/domain.md"}],
+            "reviews": [{"round": 2, "reviewer": reviewer, "verdict": "PASS", "note": "r2"}
+                        for reviewer in progress.REVIEWERS],
+        })
+        self.assertEqual(result.returncode, 0, result.stderr)
+        resumed = self.data()
+        self.assertEqual(resumed["tasks"][:3], first["tasks"][:3])
+        self.assertEqual(resumed["tasks"][3]["after"], ["FE", "BE", "DOC"])
+        self.assertEqual(resumed["tasks"][3]["note"], "r2 · PASS · evidence/domain.md")
+        self.assertEqual(len(resumed["reviews"]), 8)
+        self.assertEqual(resumed["reviews"][:4], first["reviews"])
+        self.assertEqual(resumed["decisions"], first["decisions"])
+
+    def test_unsupported_team_fields_and_domain_review_rows_preserve_bytes(self):
+        self.cli("init", str(self.page))
+        self.update({"tasks": [{"id": "FE", "owner": "frontend-lead", "status": "완료"}]})
+        before = self.page.read_bytes()
+        for invalid in (
+            {"team": "frontend"},
+            {"parent": "root"},
+            {"reviews": [{"round": 1, "reviewer": "frontend-lead", "verdict": "PASS"}]},
+            {"reviews": [{"round": 1, "reviewer": "backend-review-lead", "verdict": "PASS"}]},
+        ):
+            with self.subTest(patch=invalid):
+                # Even a valid change accompanying invalid input must not be persisted.
+                result = self.update({"summary": "must not be saved", **invalid})
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual(self.page.read_bytes(), before)
+
+    def test_finish_rejects_open_team_or_domain_review_even_with_external_passes(self):
+        for task in (
+            {"id": "BE", "owner": "backend-lead", "lane": "build", "status": "진행중",
+             "note": "1/2 완료 · 통합 검사 막힘"},
+            {"id": "DOMAIN", "owner": "backend-review-lead", "lane": "review", "status": "진행중",
+             "note": "r1 · BLOCKED · required evidence 없음"},
+        ):
+            with self.subTest(task=task["id"]):
+                self.page = Path(self.temp.name) / f"{task['id']}.html"
+                self.cli("init", str(self.page))
+                result = self.update({
+                    "tasks": [task, {"id": "DONE", "lane": "finish", "status": "진행중", "after": [task["id"]]}],
+                    "reviews": [{"round": 1, "reviewer": reviewer, "verdict": "PASS"}
+                                for reviewer in progress.REVIEWERS],
+                })
+                self.assertEqual(result.returncode, 0, result.stderr)
+                before = self.page.read_bytes()
+                result = self.update({"tasks": [{"id": "DONE", "status": "완료"}]})
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(task["id"], result.stderr)
+                self.assertEqual(self.page.read_bytes(), before)
+                result = self.update({"tasks": [{"id": task["id"], "status": "완료"},
+                                                {"id": "DONE", "status": "완료"}]})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.data()["stage"], "완료")
 
     def test_todo_starts_as_none_and_is_reported(self):
         self.cli("init", str(self.page))

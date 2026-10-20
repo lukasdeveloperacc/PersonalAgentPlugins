@@ -1,4 +1,4 @@
 interface:
   display_name: "TheGame Basic Team"
   short_description: "Basic Team with the task list kept as a Notion Task"
-  default_prompt: "Use $thegame-basic-team to plan this task with ralplan, build it with parallel executors, have the required reviewers pass the same revision, and keep the task list as one Task in TheGame's Notion Task Board with its checklist ticked off as tasks finish."
+  default_prompt: "Use $thegame-basic-team to plan this task with ralplan, coordinate the needed teams, have the required reviewers pass the same revision, and mirror published tasks as one Task in TheGame's Notion Task Board with its checklist ticked off as tasks finish."

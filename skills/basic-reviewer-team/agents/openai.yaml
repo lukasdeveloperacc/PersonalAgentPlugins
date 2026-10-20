@@ -1,0 +1,4 @@
+interface:
+  display_name: "Basic Reviewer Team"
+  short_description: "Coordinate independent reviews of a frozen revision"
+  default_prompt: "Use $basic-reviewer-team to review this change with Karpathy and Ponytail, plus Impeccable and E2E when applicable, and return findings without editing."

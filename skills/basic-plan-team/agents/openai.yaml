@@ -1,0 +1,4 @@
+interface:
+  display_name: "Basic Plan Team"
+  short_description: "Plan with the installed ralplan harness"
+  default_prompt: "Use $basic-plan-team to produce a reviewed plan and acceptance checks for this request without starting implementation."
