@@ -21,8 +21,8 @@ case "${1:-}" in
     if docker inspect "$NAME" >/dev/null 2>&1; then
       docker start "$NAME" >/dev/null
     else
-      # shortcut: :latest is pulled only when the container is created; disable + enable to update.
-      docker run -d --pull always --name "$NAME" --restart unless-stopped \
+      # shortcut: uses a local image if present (built from TaskReporter), else pulls; `docker pull` + disable/enable to update.
+      docker run -d --name "$NAME" --restart unless-stopped \
         -p 127.0.0.1:4780:4780 \
         -v "$VOLUME:/data" -v "$WORKSPACE_ROOT:$WORKSPACE_ROOT:ro" \
         -e WORKSPACE_ROOT="$WORKSPACE_ROOT" \

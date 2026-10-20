@@ -51,7 +51,7 @@ mcp.sh <claude|codex> disable [server...]   # 이름 없이 쓰면 카탈로그 
 - **aws-api / aws-eks**: `AWS_PROFILE`이 필요하고, aws-eks는 `AWS_REGION`도 필요하다. Codex에서는 이 값들을 실행 환경에서 그대로 물려받는다.
 - **gcloud / observability**: `gcloud auth login`과 `gcloud auth application-default login`이 되어 있어야 한다.
 - **terraform**: docker가 실행 중이어야 한다.
-- **office**: docker가 실행 중이어야 한다. 켜면 `scripts/office-docker.sh`가 `ghcr.io/lukasdeveloperacc/taskreporter:latest`로 `lukas-office` 컨테이너를 `--restart unless-stopped`로 띄운다(포트 `127.0.0.1:4780`, 데이터는 `taskreporter_office-data` 볼륨, `WORKSPACE_ROOT`(기본 `~/orca`)를 같은 경로로 읽기 전용 연결). 이미 4780에서 TaskReporter가 떠 있으면 그대로 쓴다. 결재 대기(295초) 때문에 Claude는 `MCP_TOOL_TIMEOUT=325000 claude`로 시작하고, Codex는 `config.toml`의 `[mcp_servers.office]`에 `tool_timeout_sec = 325`를 추가한다. 사무실 화면: http://127.0.0.1:4780. 최신 이미지로 바꾸려면 끄고 다시 켠다.
+- **office**: docker가 실행 중이어야 한다. 켜면 `scripts/office-docker.sh`가 `ghcr.io/lukasdeveloperacc/taskreporter:latest`로 `lukas-office` 컨테이너를 `--restart unless-stopped`로 띄운다(포트 `127.0.0.1:4780`, 데이터는 `taskreporter_office-data` 볼륨, `WORKSPACE_ROOT`(기본 `~/orca`)를 같은 경로로 읽기 전용 연결). 이미 4780에서 TaskReporter가 떠 있으면 그대로 쓴다. 결재 대기(295초) 때문에 Claude는 `MCP_TOOL_TIMEOUT=325000 claude`로 시작하고, Codex는 `config.toml`의 `[mcp_servers.office]`에 `tool_timeout_sec = 325`를 추가한다. 사무실 화면: http://127.0.0.1:4780. 이미지가 로컬에 있으면 그것을 쓴다. GHCR에 아직 올리지 않았다면 TaskReporter 저장소에서 `docker build -t ghcr.io/lukasdeveloperacc/taskreporter:latest .`로 먼저 만든다. 이미지를 갱신한 뒤에는 끄고 다시 켠다.
 
 ## CodeGraph 자동 준비
 

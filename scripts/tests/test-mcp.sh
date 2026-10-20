@@ -63,7 +63,7 @@ expect_calls 'claude|mcp|add-json|-s|user|context7|{"command":"npx","args":["-y"
 : > "$CALL_LOG"
 run claude enable office
 expect_calls 'claude|mcp|add-json|-s|user|office|{"type":"http","url":"http://127.0.0.1:4780/mcp"}|'
-grep -q -- "run -d --pull always --name lukas-office --restart unless-stopped -p 127.0.0.1:4780:4780 -v taskreporter_office-data:/data -v $SANDBOX/home/orca:$SANDBOX/home/orca:ro" "$DOCKER_LOG"
+grep -q -- "run -d --name lukas-office --restart unless-stopped -p 127.0.0.1:4780:4780 -v taskreporter_office-data:/data -v $SANDBOX/home/orca:$SANDBOX/home/orca:ro" "$DOCKER_LOG"
 grep -q "ghcr.io/lukasdeveloperacc/taskreporter:latest" "$DOCKER_LOG"
 : > "$CALL_LOG"
 run codex enable office
