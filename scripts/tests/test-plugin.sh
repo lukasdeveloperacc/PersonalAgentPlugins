@@ -345,4 +345,16 @@ run codex remove >/dev/null
 kill -0 "$FORWARD_TEST_PID"
 [[ -f "$FAKE_HOME/.local/state/lukas-plugin/glitchtip-forward.pid" ]]
 
+# OMX warns about a stale plugin cache: setup runs the repair it asks for, once.
+cat > "$STUB_BIN/omx" <<STUB
+#!/usr/bin/env bash
+echo "omx \$*" >> "$CALL_LOG"
+[[ "\$*" == *--scope* ]] && echo "warning: local Codex plugin cache is not safe to use as current (run omx setup --plugin --repair-plugin-cache)"
+exit 0
+STUB
+: > "$CALL_LOG"
+run codex reload >/dev/null
+[[ "$(grep -c '^omx setup --plugin --repair-plugin-cache$' "$CALL_LOG")" == 1 ]]
+grep -q "^$OMX_SETUP$" "$CALL_LOG"
+
 echo "ok"

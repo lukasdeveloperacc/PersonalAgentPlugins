@@ -48,11 +48,18 @@ setup_codex_harness() {
     npm install -g oh-my-codex@latest
   fi
   # OMX's merge flag skips initial AGENTS.md creation; use it only for an existing file.
+  local out
+  out="$(mktemp)"
   if [ -e "${CODEX_HOME:-$HOME/.codex}/AGENTS.md" ]; then
-    omx setup --scope user --plugin --merge-agents </dev/null
+    omx setup --scope user --plugin --merge-agents </dev/null 2>&1 | tee "$out"
   else
-    omx setup --scope user --plugin --clear-merge-agents-policy </dev/null
+    omx setup --scope user --plugin --clear-merge-agents-policy </dev/null 2>&1 | tee "$out"
   fi
+  # A stale OMX plugin cache only warns and stays stale on plain setup; repair it when OMX asks.
+  if grep -q -- '--repair-plugin-cache' "$out"; then
+    omx setup --plugin --repair-plugin-cache </dev/null
+  fi
+  rm -f "$out"
 }
 
 # Codex skips plugin hooks until trusted; write the trust hashes it would write after TUI review.
