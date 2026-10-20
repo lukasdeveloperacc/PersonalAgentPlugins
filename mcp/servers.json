@@ -20,6 +20,10 @@
       },
       "bearer_token_env_var": "GLITCHTIP_MCP_TOKEN"
     },
+    "office": {
+      "type": "http",
+      "url": "http://127.0.0.1:4780/mcp"
+    },
     "notion": {
       "type": "http",
       "url": "https://mcp.notion.com/mcp"

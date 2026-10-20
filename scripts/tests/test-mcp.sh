@@ -14,6 +14,12 @@ for name in codex claude; do
   chmod +x "$STUB_BIN/$name"
 done
 
+# docker/curl stubs keep office tests off the real daemon; nothing serves :4780, no container exists yet.
+DOCKER_LOG="$SANDBOX/docker.log"; : > "$DOCKER_LOG"
+printf '#!/usr/bin/env bash\necho "docker $*" >> "%s"\n[ "$1" != inspect ]\n' "$DOCKER_LOG" > "$STUB_BIN/docker"
+printf '#!/usr/bin/env bash\nexit 7\n' > "$STUB_BIN/curl"
+chmod +x "$STUB_BIN/docker" "$STUB_BIN/curl"
+
 run() { HOME="$SANDBOX/home" XDG_STATE_HOME="$SANDBOX/state" PATH="$STUB_BIN:$PATH" "$SCRIPT" "$@"; }
 
 expect_calls() {
@@ -52,6 +58,24 @@ expect_calls 'codex|mcp|add|chrome-devtools|--|npx|-y|chrome-devtools-mcp@latest
 : > "$CALL_LOG"
 run claude enable context7
 expect_calls 'claude|mcp|add-json|-s|user|context7|{"command":"npx","args":["-y","@upstash/context7-mcp"]}|'
+
+# office: HTTP entry, and enable starts the shared container with the persistent volume.
+: > "$CALL_LOG"
+run claude enable office
+expect_calls 'claude|mcp|add-json|-s|user|office|{"type":"http","url":"http://127.0.0.1:4780/mcp"}|'
+grep -q -- "run -d --pull always --name lukas-office --restart unless-stopped -p 127.0.0.1:4780:4780 -v taskreporter_office-data:/data -v $SANDBOX/home/orca:$SANDBOX/home/orca:ro" "$DOCKER_LOG"
+grep -q "ghcr.io/lukasdeveloperacc/taskreporter:latest" "$DOCKER_LOG"
+: > "$CALL_LOG"
+run codex enable office
+expect_calls 'codex|mcp|add|office|--url|http://127.0.0.1:4780/mcp|'
+# Still enabled in Codex: disabling in Claude keeps the container.
+mkdir -p "$SANDBOX/home/.codex" && printf '[mcp_servers.office]\nurl = "x"\n' > "$SANDBOX/home/.codex/config.toml"
+: > "$DOCKER_LOG"
+run claude disable office
+! grep -q "rm -f" "$DOCKER_LOG"
+rm "$SANDBOX/home/.codex/config.toml"
+run claude disable office
+grep -q "docker rm -f lukas-office" "$DOCKER_LOG"
 
 # disable with no names removes every catalog server.
 : > "$CALL_LOG"

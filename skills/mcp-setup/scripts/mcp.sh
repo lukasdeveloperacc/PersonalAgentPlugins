@@ -17,6 +17,7 @@ shift 2
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CATALOG="$ROOT_DIR/mcp/servers.json"
 FORWARD="$ROOT_DIR/scripts/glitchtip-forward.sh"
+OFFICE="$ROOT_DIR/scripts/office-docker.sh"
 
 def() {
   jq -e --arg n "$1" '.mcpServers[$n]' "$CATALOG" || { echo "unknown server: $1 (see: $(basename "$0") $TOOL list)" >&2; exit 1; }
@@ -71,6 +72,7 @@ case "$ACTION" in
     for n in "$@"; do
       "enable_$TOOL" "$n"
       if [ "$n" = glitchtip ]; then "$FORWARD" start; fi
+      if [ "$n" = office ]; then "$OFFICE" start; fi
     done
     ;;
   disable)
@@ -79,6 +81,7 @@ case "$ACTION" in
       disable "$n" >/dev/null 2>&1 || true
       # Keep the tunnel while the other tool still uses it.
       if [ "$n" = glitchtip ] && ! "$FORWARD" enabled; then "$FORWARD" stop; fi
+      if [ "$n" = office ] && ! "$OFFICE" enabled; then "$OFFICE" stop; fi
     done
     ;;
   *) usage ;;

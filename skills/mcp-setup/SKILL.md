@@ -1,6 +1,6 @@
 ---
 name: mcp-setup
-description: lukas-plugin이 제공하는 MCP 서버(chrome-devtools, context7, gcloud, observability, notion, glitchtip, aws-api, aws-docs, aws-eks, terraform, codegraph)를 목록으로 보여주고 켜고 끈다. 이 서버들은 기본으로 꺼져 있어서 /mcp에 보이지 않는다. 사용자가 "MCP 켜줘", "gcloud MCP 쓰고 싶어", "notion 연결해줘", "어떤 MCP 있어?", "glitchtip MCP 꺼줘", "aws mcp 활성화", "codegraph MCP 켜줘", "context7 켜줘", "chrome devtools MCP 켜줘" 라고 하거나, 위 서버의 도구가 필요한데 세션에 없을 때 반드시 이 스킬을 사용한다.
+description: lukas-plugin이 제공하는 MCP 서버(chrome-devtools, context7, gcloud, observability, notion, office, glitchtip, aws-api, aws-docs, aws-eks, terraform, codegraph)를 목록으로 보여주고 켜고 끈다. 이 서버들은 기본으로 꺼져 있어서 /mcp에 보이지 않는다. 사용자가 "MCP 켜줘", "gcloud MCP 쓰고 싶어", "notion 연결해줘", "어떤 MCP 있어?", "glitchtip MCP 꺼줘", "aws mcp 활성화", "codegraph MCP 켜줘", "office MCP 켜줘", "context7 켜줘", "chrome devtools MCP 켜줘" 라고 하거나, 위 서버의 도구가 필요한데 세션에 없을 때 반드시 이 스킬을 사용한다.
 ---
 
 # MCP 켜고 끄기
@@ -36,6 +36,7 @@ mcp.sh <claude|codex> disable [server...]   # 이름 없이 쓰면 카탈로그 
 | gcloud | gcloud CLI 명령 실행 (GCP 리소스 조회와 조작) |
 | observability | GCP Cloud Logging, Monitoring, Trace 조회 |
 | notion | Notion 공식 MCP (`mcp.notion.com`), 자체 OAuth라서 어떤 Notion 계정이든 붙을 수 있다 |
+| office | TaskReporter 사무실 (basic-team 진행 보고·결재). 켜면 Docker 컨테이너가 뜬다 |
 | glitchtip | GlitchTip 이슈와 이벤트 조회 (`glitchtip-issue` 스킬이 사용) |
 | aws-api | AWS CLI 명령 실행 |
 | aws-docs | AWS 공식 문서 검색 |
@@ -50,6 +51,7 @@ mcp.sh <claude|codex> disable [server...]   # 이름 없이 쓰면 카탈로그 
 - **aws-api / aws-eks**: `AWS_PROFILE`이 필요하고, aws-eks는 `AWS_REGION`도 필요하다. Codex에서는 이 값들을 실행 환경에서 그대로 물려받는다.
 - **gcloud / observability**: `gcloud auth login`과 `gcloud auth application-default login`이 되어 있어야 한다.
 - **terraform**: docker가 실행 중이어야 한다.
+- **office**: docker가 실행 중이어야 한다. 켜면 `scripts/office-docker.sh`가 `ghcr.io/lukasdeveloperacc/taskreporter:latest`로 `lukas-office` 컨테이너를 `--restart unless-stopped`로 띄운다(포트 `127.0.0.1:4780`, 데이터는 `taskreporter_office-data` 볼륨, `WORKSPACE_ROOT`(기본 `~/orca`)를 같은 경로로 읽기 전용 연결). 이미 4780에서 TaskReporter가 떠 있으면 그대로 쓴다. 결재 대기(295초) 때문에 Claude는 `MCP_TOOL_TIMEOUT=325000 claude`로 시작하고, Codex는 `config.toml`의 `[mcp_servers.office]`에 `tool_timeout_sec = 325`를 추가한다. 사무실 화면: http://127.0.0.1:4780. 최신 이미지로 바꾸려면 끄고 다시 켠다.
 
 ## CodeGraph 자동 준비
 
@@ -64,4 +66,4 @@ CodeGraph를 켜거나, 이미 켜져 있지만 현재 프로젝트에서 아직
 
 ## 끌 때
 
-`disable`은 사용자 설정에서 서버를 제거한다. 저장돼 있던 OAuth 토큰도 함께 사라질 수 있으니, notion을 끄려 하면 나중에 다시 인증해야 한다고 알려준다. glitchtip은 Claude와 Codex 양쪽에서 모두 꺼졌을 때만 port-forward를 내린다.
+`disable`은 사용자 설정에서 서버를 제거한다. 저장돼 있던 OAuth 토큰도 함께 사라질 수 있으니, notion을 끄려 하면 나중에 다시 인증해야 한다고 알려준다. glitchtip은 Claude와 Codex 양쪽에서 모두 꺼졌을 때만 port-forward를 내린다. office도 양쪽에서 모두 꺼졌을 때만 컨테이너를 지우며, 볼륨의 데이터는 남는다.
