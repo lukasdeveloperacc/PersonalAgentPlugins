@@ -11,6 +11,7 @@ Plan: <path or excerpt of the approved plan relevant to this task>.
 You own these files (edit nothing else): <files>.
 Contract with other lanes: <API shape, errors, or "none">.
 Done when: <acceptance criteria>.
+Acceptance matrix: <viewports, display languages, themes, states/dialogs, or "none">.
 Check with: <exact test command(s)>.
 
 Rules:
@@ -28,6 +29,7 @@ Review revision <digest> = `git diff <base>` in the workdir. Do not review anyth
 Skill to load: <karpathy-guidelines | ponytail (full) | impeccable | none for E2E> at <SKILL.md path>.
 Focus: <persona focus from SKILL.md step 4>. For a fix round: <delta since the last revision and the findings it addresses>.
 Existing check results you may reuse: <commands and results>.
+Already decided (do not raise again unless its premise broke or new evidence shows a correctness or security regression): <decisions and accepted exceptions, or "none">.
 
 Rules:
 - Read-only: do not edit files or fix anything. Do not contact other agents; talk only to the leader.
@@ -43,7 +45,7 @@ Return this JSON block, then any short explanation:
 
 ## E2E
 
-Add to the reviewer brief: the scenarios (main path plus the failure, permission or state cases the change affects), how to start the app, test accounts and fixtures. The E2E Agent checks real observable outcomes, not just that a page loaded or unit tests passed.
+Add to the reviewer brief: the scenarios (main path plus the failure, permission or state cases the change affects), the acceptance matrix from step 2, how to start the app and seed data, test accounts and fixtures. The E2E Agent checks real observable outcomes, not just that a page loaded or unit tests passed.
 
 Browser: in an Orca environment use the Orca browser through the `orca-cli` skill. Otherwise the leader enables Chrome DevTools MCP with the `lukas-plugin:mcp-setup` skill (`mcp.sh <host> enable chrome-devtools`) before dispatch, and disables it again (`mcp.sh <host> disable chrome-devtools`) when browser work is finished or the run stops.
 
@@ -51,4 +53,4 @@ If the browser tool cannot actually perform or confirm a step (for example a cli
 
 ## Impeccable
 
-Add to the reviewer brief: the changed screens and the design intent from the plan. The Impeccable Agent does the whole critique itself (no helper agents), separates required defects from taste, and never claims visual verification without screenshots or browser evidence.
+Add to the reviewer brief: the changed screens, the design intent from the plan, the acceptance matrix from step 2 and how to open each screen. The Impeccable Agent does the whole critique itself (no helper agents), checks every cell of the matrix in round 1, separates required defects from taste, and never claims visual verification without screenshots or browser evidence. Report findings first and keep it short: name only the screenshots that prove a finding, not every capture. List each matrix cell in `checked` or `unchecked`; an unchecked required cell means BLOCKED, not PASS.

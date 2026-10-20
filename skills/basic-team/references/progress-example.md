@@ -3,7 +3,7 @@
 A real-shaped run, saved at the moments SKILL.md asks for. Each block is one `update` patch; send only what changed. The page draws the graph from `lane`, `status` and `after`, so keeping those three right is what matters.
 
 Conventions used here:
-- Lane is the kind of work, not when it happened: planner/architect/critic and user approval → `plan`, executor work (including prototype tweaks) → `build`, every review round → `review`, only fixes → `fix`, final checks/report → `finish`. The page draws the arrow back from a fix to the next round.
+- Lane is the kind of work, not when it happened: planner/architect/critic and any user decision on the plan → `plan`, executor work (including prototype tweaks) → `build`, every review round → `review`, only fixes → `fix`, final checks/report → `finish`. The page draws the arrow back from a fix to the next round.
 - Agent tasks carry the full model ID and effort (not the spawn alias), so the card shows exactly which model version ran each task.
 - If an agent runs on a different model or effort than SKILL.md's table, record why as a decision.
 - One card per piece of work, including each review per round (`R1-K`, `R2-K`) and each fix, so the graph shows the loop.
@@ -27,7 +27,7 @@ uv run "<skill-dir>/scripts/progress.py" init "<project>/docs/inprogress/externa
  "todo": "결정 'Notion 동기화 제외'가 맞는지 확인해 주세요 (요청에 없어 빼는 것으로 가정)",
  "tasks": [
   {"id": "PLAN", "title": "ralplan 계획", "owner": "leader", "lane": "plan", "status": "완료", "note": "plan-r4 승인"},
-  {"id": "C-1", "title": "OpenAPI 계약 갱신 + 타입 재생성", "owner": "backend-1", "model": "claude-haiku-5-5", "effort": "max", "lane": "build", "status": "진행중", "after": ["PLAN"]},
+  {"id": "C-1", "title": "OpenAPI 계약 갱신 + 타입 재생성", "owner": "backend-1", "model": "claude-haiku-5-5", "effort": "max", "lane": "build", "status": "진행중", "after": ["PLAN"], "note": "OpenAPI 스키마 수정 중"},
   {"id": "BE-1", "title": "가져오기 안에서 음성 검증까지 처리", "owner": "backend-1", "model": "claude-haiku-5-5", "effort": "max", "lane": "build", "status": "대기중", "after": ["C-1"]},
   {"id": "BE-2", "title": "외부 작업에 교정 구간 복사·제출 규칙", "owner": "backend-2", "model": "claude-haiku-5-5", "effort": "max", "lane": "build", "status": "대기중", "after": ["C-1"]},
   {"id": "FE-1", "title": "3단계 표시·로딩·잠금, 공개 대기 라벨", "owner": "frontend-1", "model": "claude-haiku-5-5", "effort": "max", "lane": "build", "status": "대기중", "after": ["C-1"]},
@@ -44,7 +44,7 @@ uv run "<skill-dir>/scripts/progress.py" init "<project>/docs/inprogress/externa
 ```json
 {"todo": "없음", "blockers": "BE-1: 로컬 MinIO 버킷이 없어 통합 테스트 실패 — 시드 스크립트로 생성 후 재시도 중",
  "tasks": [
-  {"id": "C-1", "status": "완료"}, {"id": "BE-2", "status": "진행중"}, {"id": "FE-1", "status": "진행중"}, {"id": "FE-2", "status": "진행중"},
+  {"id": "C-1", "status": "완료", "note": "계약 반영, 타입 재생성 완료"}, {"id": "BE-2", "status": "진행중", "note": "교정 구간 복사 규칙 구현 중"}, {"id": "FE-1", "status": "진행중", "note": "3단계 표시·잠금 구현 중"}, {"id": "FE-2", "status": "진행중", "note": "판정 UI 통일 작업 중"},
   {"id": "BE-1", "status": "진행중", "note": "막힘: 테스트 버킷 없음"}],
  "decisions": [{"title": "Notion 동기화 제외", "body": "사용자 확인: 이번 범위에서 빼기로 함"}]}
 ```
@@ -54,12 +54,12 @@ uv run "<skill-dir>/scripts/progress.py" init "<project>/docs/inprogress/externa
 ```json
 {"stage": "리뷰 (1라운드)", "summary": "구현과 전체 검사가 끝나 4명이 같은 revision을 리뷰하고 있습니다", "blockers": "없음",
  "tasks": [
-  {"id": "BE-1", "status": "완료", "note": ""}, {"id": "BE-2", "status": "완료"}, {"id": "FE-1", "status": "완료"}, {"id": "FE-2", "status": "완료"},
+  {"id": "BE-1", "status": "완료", "note": "음성 검증 포함, 테스트 통과"}, {"id": "BE-2", "status": "완료", "note": "복사·제출 규칙 구현, 테스트 통과"}, {"id": "FE-1", "status": "완료", "note": "표시·로딩·잠금 구현, 테스트 통과"}, {"id": "FE-2", "status": "완료", "note": "상세 화면 통일, 테스트 통과"},
   {"id": "CHECK", "status": "완료", "note": "백엔드 392 · 통합 339 · 프론트 1435 통과 (담당자 보고)"},
-  {"id": "R1-K", "title": "Karpathy 리뷰 R1", "owner": "Karpathy Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"]},
-  {"id": "R1-P", "title": "Ponytail 리뷰 R1", "owner": "Ponytail Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"]},
-  {"id": "R1-I", "title": "Impeccable 리뷰 R1", "owner": "Impeccable Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"]},
-  {"id": "R1-E", "title": "E2E 리뷰 R1", "owner": "E2E Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"]}]}
+  {"id": "R1-K", "title": "Karpathy 리뷰 R1", "owner": "Karpathy Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"], "note": "리뷰 진행 중"},
+  {"id": "R1-P", "title": "Ponytail 리뷰 R1", "owner": "Ponytail Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"], "note": "리뷰 진행 중"},
+  {"id": "R1-I", "title": "Impeccable 리뷰 R1", "owner": "Impeccable Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"], "note": "리뷰 진행 중"},
+  {"id": "R1-E", "title": "E2E 리뷰 R1", "owner": "E2E Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["CHECK"], "note": "리뷰 진행 중"}]}
 ```
 
 ## 4. First round finished (end of step 4)
@@ -69,7 +69,7 @@ uv run "<skill-dir>/scripts/progress.py" init "<project>/docs/inprogress/externa
  "tasks": [
   {"id": "R1-K", "status": "완료", "note": "PASS"}, {"id": "R1-P", "status": "완료", "note": "PASS · 권고 2건"},
   {"id": "R1-I", "status": "완료", "note": "수정 필요: 경고 사유 색 대비"}, {"id": "R1-E", "status": "완료", "note": "PASS · 5개 시나리오"},
-  {"id": "FIX-1", "title": "경고 사유 색·대비 수정", "owner": "frontend-1", "model": "claude-haiku-5-5", "effort": "max", "lane": "fix", "status": "진행중", "after": ["R1-I"]}],
+  {"id": "FIX-1", "title": "경고 사유 색·대비 수정", "owner": "frontend-1", "model": "claude-haiku-5-5", "effort": "max", "lane": "fix", "status": "진행중", "after": ["R1-I"], "note": "경고 색 대비 수정 중"}],
  "reviews": [
   {"round": 1, "reviewer": "Karpathy Agent", "verdict": "PASS", "note": "요구사항·계약 범위 이상 없음"},
   {"round": 1, "reviewer": "Ponytail Agent", "verdict": "PASS", "note": "권고: 중복 표시 정리, 재시도 경로 테스트 보강"},
@@ -83,10 +83,10 @@ uv run "<skill-dir>/scripts/progress.py" init "<project>/docs/inprogress/externa
 {"stage": "리뷰 (2라운드)", "summary": "수정이 끝나 4명이 새 revision을 다시 리뷰하고 있습니다",
  "tasks": [
   {"id": "FIX-1", "status": "완료", "note": "대비 4.8:1, 프론트 테스트 통과 (담당자 보고)"},
-  {"id": "R2-K", "title": "Karpathy 리뷰 R2", "owner": "Karpathy Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"]},
-  {"id": "R2-P", "title": "Ponytail 리뷰 R2", "owner": "Ponytail Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"]},
-  {"id": "R2-I", "title": "Impeccable 리뷰 R2", "owner": "Impeccable Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"]},
-  {"id": "R2-E", "title": "E2E 리뷰 R2", "owner": "E2E Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"]}]}
+  {"id": "R2-K", "title": "Karpathy 리뷰 R2", "owner": "Karpathy Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"], "note": "리뷰 진행 중"},
+  {"id": "R2-P", "title": "Ponytail 리뷰 R2", "owner": "Ponytail Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"], "note": "리뷰 진행 중"},
+  {"id": "R2-I", "title": "Impeccable 리뷰 R2", "owner": "Impeccable Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"], "note": "리뷰 진행 중"},
+  {"id": "R2-E", "title": "E2E 리뷰 R2", "owner": "E2E Agent", "model": "claude-sonnet-5-5", "effort": "high", "lane": "review", "status": "진행중", "after": ["FIX-1"], "note": "리뷰 진행 중"}]}
 ```
 
 ## 6. Second round passed (end of step 5)
@@ -96,7 +96,7 @@ uv run "<skill-dir>/scripts/progress.py" init "<project>/docs/inprogress/externa
  "tasks": [
   {"id": "R2-K", "status": "완료", "note": "PASS"}, {"id": "R2-P", "status": "완료", "note": "PASS"},
   {"id": "R2-I", "status": "완료", "note": "PASS"}, {"id": "R2-E", "status": "완료", "note": "PASS"},
-  {"id": "DONE", "title": "최종 검사 · 에이전트 종료 · 보고", "owner": "leader", "lane": "finish", "status": "진행중", "after": ["R2-K", "R2-P", "R2-I", "R2-E"]}],
+  {"id": "DONE", "title": "최종 검사 · 에이전트 종료 · 보고", "owner": "leader", "lane": "finish", "status": "진행중", "after": ["R2-K", "R2-P", "R2-I", "R2-E"], "note": "최종 검사 실행 중"}],
  "reviews": [
   {"round": 2, "reviewer": "Karpathy Agent", "verdict": "PASS"}, {"round": 2, "reviewer": "Ponytail Agent", "verdict": "PASS"},
   {"round": 2, "reviewer": "Impeccable Agent", "verdict": "PASS", "note": "대비 기준 충족"}, {"round": 2, "reviewer": "E2E Agent", "verdict": "PASS"}]}
