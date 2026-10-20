@@ -8,6 +8,8 @@ Dispatch includes: purpose (`execute`, `review` or `plan`), scope/non-goals, abs
 
 Each return includes status (complete/in-progress/blocked), changed files, actual check commands/results, revision, required/advisory findings, unchecked items, next dependencies and evidence paths. Save detailed worker results in run-specific Markdown artifacts; leads verify and aggregate them, preserving failures and gaps.
 
+Include the actor's canonical ID, parent lead, requested model/effort and observed model/effort with its evidence source, or explicitly `unverified`. Leads preserve this information for themselves and their leaves in their summary to root; root uses it for reporting without treating the summary card as a worker.
+
 | Invocation | Root responsibility | Child responsibility |
 | --- | --- | --- |
 | `basic-team` | Select needed teams and report one run | Peer Frontend/Backend/Docs/Reviewer leads own their leaves |
@@ -23,6 +25,8 @@ Standalone skills use this contract directly, never recursively invoke basic-tea
 Leads may message known peer leads to agree contracts and order within scope. Record a decision ID, participating teams, API/error/file agreement, affected tasks and revision. Both leads acknowledge; root records the final decision. Unresolved disagreements or expanded scope go to root; pause only dependent work.
 
 Workers report only to their own lead: no sibling/peer/user messages or direct Office/HTML writes. Put this boundary in every brief and restrict tools when the host supports it. Without tool enforcement it is an instruction boundary, not security isolation. Leads summarize upward; root alone addresses the user and selects/writes reporting.
+
+Workers notify their lead when work starts, finishes, fails or waits on a blocker. Leads promptly summarize those transitions and owner/model corrections to root, including their own status, without waiting for all leaves. These are evidence-backed status notifications, not extra reporting writers or periodic polling loops.
 
 One file has one current owner. A handover requires root's recorded decision and a prerequisite `after` edge; subsequent findings go to the new owner. `after` means dependency, never parent/team membership. Agents are not alone in the worktree: preserve others' edits and escalate ownership conflicts. Leads may do small tasks themselves, but cannot independently approve their own work.
 
@@ -46,6 +50,8 @@ Frontend and Backend leads and implementation workers load and apply the bundled
 
 New leads inherit main's supported model/effort policy. Preserve the existing specialist policy below, subject to higher-priority host instructions. Pass supported settings as real spawn arguments (Claude `model` alias/`effort`; Codex `model`/`reasoning_effort`, using the host's required fork mode). Do not use Claude `subagent_type: fork`, which ignores overrides. If settings cannot be applied, disclose once and use supported inherited settings; never report an unobserved model as confirmed.
 
+Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. If Codex exposes local rollout logs, inspect only the exact returned thread's latest `turn_context` model/effort; inherited `session_meta` or parent history does not establish the child's settings. If that evidence is unavailable, retain the requested values as requested and mark actual values unverified instead of searching unrelated sessions.
+
 | Role | Claude | Codex |
 | --- | --- | --- |
 | Executor | `haiku` (`claude-haiku-5-5`), `max` | `gpt-6-luna`, `max` |
@@ -53,4 +59,4 @@ New leads inherit main's supported model/effort policy. Preserve the existing sp
 | Reviewer | `sonnet` (`claude-sonnet-5-5`), `high` | `gpt-6.1-sol`, `medium` |
 | Planner, Architect, Critic (ralplan) | `opus` (`claude-opus-5-5`), `medium` (`high` for hard plans) | `gpt-6.1-sol`, `medium` (`high` for hard plans) |
 
-Apply harness-role settings only through its supported invocation. Spawn/message names have no spaces (`frontend-lead`, `karpathy-agent`); external reporting labels retain `Karpathy Agent`, `Ponytail Agent`, `Impeccable Agent`, `E2E Agent`. UI YAML describes skills; it does not register native agent types.
+Apply harness-role settings only through its supported invocation. Use host-valid native IDs, such as `frontend_lead` and `karpathy_agent` on hosts that require underscores; never reuse a rejected spelling. Keep native IDs, canonical agent paths and Office display owners distinct. External reporting labels retain `Karpathy Agent`, `Ponytail Agent`, `Impeccable Agent`, `E2E Agent`. UI YAML describes skills; it does not register native agent types.

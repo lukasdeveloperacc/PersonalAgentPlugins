@@ -25,11 +25,17 @@ Verify lead summaries against worker artifacts. A skipped check, partial asserti
 
 ## Review and fix
 
-Freeze the change: no edits while reviewers work. Record base and revision digest using `git add -A -N && git diff <base> | shasum -a 256`; intent-to-add includes new files, so run only in the task's authorized worktree. Give every required domain reviewer and the Reviewer lead this same revision, acceptance matrix and evidence. Reviewers remain read-only and cannot see each other's results; capacity-limited batches are allowed without changing revision.
+Freeze the owned change: no edits to its files while reviewers work. Record the exact base commit, explicit file list and original patch (`git diff --binary --full-index <base> -- <owned-files>`), then hash the saved patch. Include owned new files through scoped intent-to-add or a temporary index; preserve other work's staging and never use repository-wide `git add -A -N` in a shared worktree. Keep freeze artifacts outside the file list. Give every required domain reviewer and the Reviewer lead this same base, file list, patch, digest, acceptance matrix and evidence. Reviewers remain read-only and cannot see each other's results; capacity-limited batches are allowed without changing revision.
+
+The file-scoped command assumes each included diff belongs wholly to this task. If unrelated hunks already share a file, reconcile ownership first and construct only the agreed owned patch in a temporary index or isolated checkout, or obtain explicit agreement to include the broader change. Freeze and review that exact content; merely listing the file does not isolate its hunks. Keep validation tied to the reviewed content and distinguish connected-context inspection from permission to commit external changes.
+
+Recompute the approved diff from the same base and file/hunk selection before accepting reviews and finishing. Unrelated concurrent edits do not broaden the approved scope; assess connected changes for integration risk separately. Changed owned files need a new freeze and review. Preserve the original patch so a later authorized partial commit can be compared against it using the prospective staged diff from the same base, without reverting other work.
 
 Wait for every reviewer, including follow-up measurements, before assigning fixes. Main/root checks all required verdicts and evidence; a tracker closing tasks does not prove review PASS. Missing required evidence is BLOCKED. Route required findings to the current file owner; advisory findings are optional. Resolve contradictory advice using a test, documentation or measurement and record the decision.
 
 After a fix, rerun affected checks, freeze a new revision and resume reviewers with the delta and connected context. Previous PASS does not approve the new revision. Continue until all required reviews PASS on the same revision. After three nonconverging rounds, stop further fixes and present open findings and a recommendation for the user's decision.
+
+Finalize owned product documentation before freezing when possible. If a later delta is documentation-only, reviewers still approve the new revision but may reuse named prior runtime evidence when its code, environment and acceptance criteria remain applicable; explain omitted reruns rather than silently waiving checks.
 
 ## Finish
 

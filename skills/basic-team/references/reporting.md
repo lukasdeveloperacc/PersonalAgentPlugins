@@ -6,15 +6,19 @@ Main/root is the only backend selector and writer for a run, including standalon
 
 Inspect available tools and actual configuration. Missing tools alone do not prove Office absent. When enabled tools are missing, use supported discovery and the installed `lukas-plugin:mcp-setup` diagnostic guidance; do not change global configuration, install or restart shared services merely to choose a backend.
 
+For enabled-but-unexposed tools, actor/seat display problems or payload readback, read [office-operations.md](office-operations.md). It separates transport readiness, saved report data and visible Office behavior.
+
 | Evidence | Action |
 | --- | --- |
-| Office `report` and `ask` callable, initial report succeeds | Select `office`, save returned run ID; create no progress HTML |
+| Supported MCP transport advertises `report` and `ask`, initial report succeeds | Select `office`, save returned run ID; create no progress HTML. Ask execution stays unverified until a real decision |
 | Office explicitly absent or disabled | Select `html`, use existing progress.py; do not require Office enablement |
-| Office configured/enabled/expected but tools missing or initial report fails | NOT READY: diagnose and recover; never reinterpret as absent |
+| Office configured/enabled/expected but no supported transport exposes the required schemas, or initial report fails | NOT READY: diagnose and recover; never reinterpret as absent |
 | Configuration unknown | UNKNOWN: resolve configuration; do not claim a working selected backend |
 | Saved mode on resume | Keep mode and existing run ID/page; never create a replacement run |
 
 There is no automatic mid-run Office↔HTML switch, full local snapshot or migration/merge system. A user-requested switch is separate scope. NOT READY/UNKNOWN or an outage need not stop independent product work: use terminal summaries and explicitly say reporting is unsynchronized.
+
+Native tool exposure is not required if the supported configured HTTP MCP transport has recovered both schemas and a successful report. State reporting synchronization and actual question/answer verification separately; never create a fake question to qualify as ready. A later ask failure blocks only its dependent decision while Office mode is retained.
 
 Keep only minimal reconnection metadata at `<project>/docs/inprogress/<task-slug>.office.json`: `mode`, absolute `project_path`, `run_id`/`url` for Office, `page` for HTML, pending ask IDs and IDs awaiting closure. Preserve old `run_id`/`url` files as Office mode; establish and validate their project identity before a write. No tasks/reviews/decisions/full state belong in this sidecar. Existing plans and worker evidence are separate task artifacts, not a replicated tracker.
 
@@ -32,21 +36,29 @@ Questions requiring the user use `ask(run_id, question, options, recommended)` w
 
 If doc_changes is nonempty, read the diff and explain its impact; hold only affected work and ask whether to replan (`재계획` / `그대로 진행`). Replan through root-owned Plan lifecycle or record the reason to retain the plan. Do not invent approval questions for routine progress.
 
-Report meaningful team state changes. At execution-loop checkpoints after 30 minutes without a change, send a summary heartbeat; do not create a timer daemon. Long ask calls require an appropriate host timeout (server hold is up to 295 seconds; configured Claude MCP_TOOL_TIMEOUT or Codex tool_timeout_sec must exceed it). Diagnose timeout settings without silently modifying global config.
+Report confirmed actor/task start, completion, failure, waiting and owner/model corrections at the next execution checkpoint, before another dependent dispatch or long verification batch. Leads send these concise transitions upward as they happen, rather than waiting for the whole team or review wave; root publishes a small patch and records synchronization success or failure. Do not wait for a user reminder or final reporting. Confirm actual work started before marking it `진행중`; creation alone can leave it `대기중`.
+
+After 30 minutes with no state change, send a summary heartbeat at an execution-loop checkpoint; this is a fallback, not the status-change cadence. Do not create a timer daemon. Long ask calls require an appropriate host timeout (server hold is up to 295 seconds; configured Claude MCP_TOOL_TIMEOUT or Codex tool_timeout_sec must exceed it). Diagnose timeout settings without silently modifying global config.
 
 ## Public payload
 
 Use only the existing schema; see [progress-example.md](progress-example.md). Team tasks summarize meaningful deliverables, with owners such as `frontend-lead`, `backend-lead`, `docs-lead`, `plan-lead`. A short note contains done/total, current work, blocker, next step and detail-artifact path. Paths are evidence references, not guaranteed clickable Office links. Office does not provide a team/worker tree: do not send `team`, `parent` or `report_to` fields.
 
+Before first publishing each actor, resolve its canonical ID, parent lead, host-valid native name, Office owner and requested/observed model/effort from lead evidence. Keep this small mapping in the existing run evidence, not the reconnection sidecar. Include leads as well as leaves when reporting actor settings; do not create placeholder tasks merely to populate seats. A team summary represents its lead, so leaf settings belong in the detail artifact unless an actual leaf deliverable has its own card.
+
 - `tasks` merge by `id`; `decisions` by `title`; `reviews` by `round` + `reviewer`.
+- Decision text is `body`, not `detail`. Compare outgoing keys and values against the advertised schema and examples before sending; server acceptance does not prove an unknown nested field is rendered.
 - Stage begins with `계획`, `구현`, `리뷰`, `수정`, `마무리`, `완료` or `중단`. `중단` means abandoned, not waiting for an answer. Keep current stage while waiting; put the question in todo/blockers.
 - Task lane is work kind: `plan`, `build`, `review`, `fix`, `finish`. Task status is `대기중`, `진행중`, `완료`, `중단`; all nonwaiting tasks carry a one-line note. `after` is dependency only.
 - Domain reviews are normal `lane: review` tasks with frozen revision, verdict and evidence in note. `reviews.reviewer` accepts only `Karpathy Agent`, `Ponytail Agent`, `Impeccable Agent`, `E2E Agent`.
 - `todo` is a user action/decision, or `없음`. Failure/unchecked worker evidence must remain visible in the team summary.
 - Put a model/effort on a card only for the actual agent represented. Preserve full requested model ID vs host-confirmed distinction; do not attach worker models to an aggregate lead card or fabricate observed settings. Root-owned PLAN/DONE cards need no model.
-- Keep required review tasks open until root verifies same-revision acceptable evidence. The reducer only checks task closure; it does not independently establish review PASS. Close a finish task only after real completion.
+- `진행중` describes active execution, not an unresolved approval. A finished review attempt can be `완료` with CHANGES_REQUIRED preserved; the required approval gate remains open until root verifies same-revision PASS. When no represented reviewer is working, the aggregate gate is `대기중` with the completed attempt's verdict in its note; while other reviewers still work, it remains `진행중`. Do not mark a gate complete or abandoned merely to stop a character. Fix tasks depend on completed prerequisites, not their own still-open approval gate.
+- The reducer only checks task closure; it does not independently establish review PASS. Close a finish task only after real completion.
 
 Brief the user at plan conclusion, blockers, review-round outcomes and finish: done, remaining, user actions, blockers and link. At finish distinguish product completion from reporting synchronization and unresolved asks.
+
+Before claiming Office is closed, read only the exact run and check open tasks, required final-revision verdicts and pending questions. After the final report, verify its stage and `ended_at` using the deployed read contract. Audit actor settings as confirmed versus unverified, not simply nonempty fields. If a browser tab disappears, preserve any earlier screen evidence and report the final API result separately; do not claim a fresh screen check.
 
 ## HTML only when selected initially
 

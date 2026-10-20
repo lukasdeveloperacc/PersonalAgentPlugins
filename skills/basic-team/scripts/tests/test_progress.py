@@ -80,6 +80,16 @@ class ProgressTests(unittest.TestCase):
             result = self.cli("update", str(self.page), "--input", "-", stdin=patch)
             self.assertEqual(result.returncode, 0, result.stderr)
             tasks = {task["id"]: task for task in self.data()["tasks"]}
+            if self.data()["stage"] == "수정 (1라운드)":
+                # Finished reviewers should idle while their approval gate stays open.
+                self.assertEqual(tasks["R1-X"]["status"], "대기중")
+                self.assertEqual([t["owner"] for t in tasks.values() if t["status"] == "진행중"],
+                                 ["frontend-lead"])
+                before = self.page.read_bytes()
+                premature_finish = self.update({"stage": "완료", "tasks": [{"id": "FIX", "status": "완료"}]})
+                self.assertEqual(premature_finish.returncode, 2)
+                self.assertIn("R1-X", premature_finish.stderr)
+                self.assertEqual(self.page.read_bytes(), before)
             for change in json.loads(patch).get("tasks", []):
                 if change.get("status") == "진행중":
                     for prerequisite in tasks[change["id"]].get("after", []):
