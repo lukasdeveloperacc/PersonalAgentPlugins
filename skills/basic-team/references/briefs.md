@@ -13,8 +13,9 @@ Checks: <exact commands>. Revision/base: <revision/base>.
 Peers and agreed contracts: <identities/API/errors/dependencies>.
 Acceptance matrix and startup/seed instructions: <matrix or none>.
 Worker budget: <available allocation>. Artifact directory: <path>.
-Identity: <canonical ID>; parent: <root ID>; native name: <host-valid ID>.
-Return your own and each leaf's requested/observed model and effort with evidence;
+Identity: <canonical ID>; parent: <root ID>; native name: <host-valid ID> (root-spawned leads only).
+Return your own and each leaf's requested/observed model and effort with evidence
+(not needed on Claude Code, where root reads them directly);
 mark missing observations unverified. Keep native IDs separate from Office owners.
 For Frontend/Backend implementation: read/apply <resolved karpathy SKILL.md>
 and <resolved ponytail SKILL.md>; preserve <active level>. Pass both exact
@@ -23,6 +24,11 @@ These habits do not replace independent review.
 Reporting: root <identity> owns <mode/run/page>; do not write there.
 You are not alone: preserve others' edits; escalate ownership conflicts.
 Dispatch leaves only within your scope and capacity; they report only to you.
+Dispatch at least one worker per implementation task; if capacity is full, wait or
+tell root instead of editing yourself. Only a trivial fix may be `리드 직접 수행`.
+Pass model and effort on every spawn. On Claude Code spawn leaves without `name`.
+Write your full result to <artifact dir>; your message to root carries only
+the verdict/status summary and that path, so long results are not truncated.
 Promptly summarize your own and leaf start/done/failure/wait transitions to root;
 do not defer these notifications until the whole team finishes.
 Agree scoped contracts with peer leads and report both acknowledgments to root.
@@ -41,7 +47,7 @@ Own only: <files>. Contract/dependencies: <API/errors/after>.
 Done when: <criteria>. Check with: <exact commands>.
 Acceptance matrix: <viewports/languages/themes/states/dialogs or none>.
 Evidence artifact: <path>. Revision: <revision>.
-Return your canonical ID, parent lead and requested/observed model and effort
+Return your canonical ID, parent lead and (off Claude Code) requested/observed model and effort
 with the observation source, or unverified; do not infer them from a policy table.
 For Frontend/Backend implementation: read/apply <resolved karpathy SKILL.md>
 and <resolved ponytail SKILL.md>; preserve <active level>. Report any missing
@@ -80,7 +86,7 @@ Focus: <requirements/contracts | correctness/simplicity | UI | connected flow>.
 Fix-round delta/findings: <delta or none>. Existing check evidence: <results>.
 Accepted decisions: <decisions; revisit only on changed premise/new regression>.
 Read-only: no fixes, peer contact, user messages or direct reporting writes.
-Return your canonical ID, parent lead and requested/observed model and effort
+Return your canonical ID, parent lead and (off Claude Code) requested/observed model and effort
 with evidence, or unverified.
 Keep results private from other reviewers. Report regressions beyond your focus.
 Notify your lead when reviewing starts or ends; returning CHANGES_REQUIRED ends
@@ -104,4 +110,4 @@ In Orca use the `orca-cli` browser skill. Otherwise root arranges Chrome DevTool
 
 ## Impeccable additions
 
-Provide changed screens, design intent, acceptance matrix and how to open every screen. The Impeccable reviewer does the critique itself without helpers, checks all required matrix cells from round one, separates required defects from taste and claims visual verification only with screenshot/browser evidence. List each cell as checked or unchecked; an unchecked required cell is BLOCKED. Cite only captures needed to support findings.
+Provide changed screens, design intent, acceptance matrix and how to open every screen. The Impeccable reviewer does the critique itself without helpers, checks all required matrix cells from round one, separates required defects from taste and claims visual verification only with screenshot/browser evidence. List each cell as checked or unchecked; an unchecked required cell is BLOCKED. Cite only captures needed to support findings. Clean up only this run's seed/test data and close only browser tabs the reviewer opened.

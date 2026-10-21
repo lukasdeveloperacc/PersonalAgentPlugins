@@ -13,7 +13,7 @@ Resume the selected backend and existing run/page. An enabled but broken Office 
 
 Cards show actual team owners, counts, blockers and evidence. A model/effort belongs only to the actual agent represented by that card; do not attribute worker models to a team leader. Evidence notes distinguish `담당자 보고` from `직접 확인`. All paths and revision labels below are illustrative; use actual observations in a real run.
 
-The lead settings below illustrate observed values, not defaults to copy. Keep each lead/leaf's canonical ID, parent, native ID, display owner and observation source in the existing evidence artifact. `backend_lead` may be a native ID while `backend-lead` is its Office owner; canonical root uses display owner `leader`. The observed registry has no dedicated Reviewer lead seat; `reviewer-lead` can appear in temporary seating, never rename it to root's `leader` to force placement. See [office-operations.md](office-operations.md) for display checks.
+The lead settings below illustrate observed values, not defaults to copy. Keep each lead/leaf's canonical ID, parent, native ID, display owner and observation source in the existing evidence artifact. `backend_lead` may be a native ID while `backend-lead` is its Office owner; canonical root uses display owner `leader`. The observed registry has no dedicated Reviewer lead seat, so the aggregate gate (`R1-X`) has an empty owner and each external reviewer gets its own card owned by its exact label; never rename the Reviewer lead to root's `leader` to force placement. See [office-operations.md](office-operations.md) for display checks.
 
 ## 1. Publish the plan and team work
 
@@ -53,7 +53,11 @@ Required approval gates stay open until their evidence supports PASS at the curr
   {"id":"FE","status":"완료","note":"2/2 완료 · 상태·접근성 검사 통과 (담당자 보고)"},
   {"id":"DOC","status":"완료","note":"1/1 완료 · 계약 일치 확인 (담당자 보고)"},
   {"id":"R1-D","title":"Backend 독립 도메인 검토 R1","owner":"backend-review-lead","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 미참여 팀장이 API·권한 검토 중 · 실제 model/effort 미확인 · 근거: docs/inprogress/import-fix-domain.md"},
-  {"id":"R1-X","title":"외부 필수 리뷰 R1","owner":"reviewer-lead","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 0/4 PASS · 팀장 설정 직접 확인 · 전용 좌석 매핑 없음 · 근거: docs/inprogress/import-fix-reviews.md"}]}
+  {"id":"R1-X","title":"외부 필수 리뷰 R1","owner":"","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 0/4 PASS · reviewer-lead 전용 좌석 없음 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"id":"R1-K","title":"Karpathy 리뷰 R1","owner":"Karpathy Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 요구사항·계약 검토 중"},
+  {"id":"R1-P","title":"Ponytail 리뷰 R1","owner":"Ponytail Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 구현·호출부 검토 중"},
+  {"id":"R1-I","title":"Impeccable 리뷰 R1","owner":"Impeccable Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 화면 8칸 캡처 검토 중"},
+  {"id":"R1-E","title":"E2E 리뷰 R1","owner":"E2E Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · API→화면 흐름 실행 중"}]}
 ```
 
 ## 4. Collect all findings, then assign the fix
@@ -64,6 +68,10 @@ A completed review attempt with CHANGES_REQUIRED is not approval. If it has its 
 {"stage":"수정 (1라운드)","summary":"모든 1차 리뷰 결과를 모았습니다. 대비 수정 후 새 revision에서 필수 리뷰를 다시 받습니다",
  "tasks":[
   {"id":"R1-D","status":"완료","note":"r1 · PASS · 권한·422 계약 확인 · 근거: docs/inprogress/import-fix-domain.md"},
+  {"id":"R1-K","status":"완료","note":"r1 · PASS"},
+  {"id":"R1-P","status":"완료","note":"r1 · PASS · 권고 1건"},
+  {"id":"R1-I","status":"완료","note":"r1 · CHANGES_REQUIRED · 경고 사유 대비 부족"},
+  {"id":"R1-E","status":"완료","note":"r1 · PASS"},
   {"id":"R1-X","status":"대기중","note":"r1 검토 수행 종료 · CHANGES_REQUIRED · 3/4 PASS · 승인 gate 미해결 · 대비 수정과 새 revision 검토 대기"},
   {"id":"FIX","title":"경고 사유 대비 수정","owner":"frontend-lead","lane":"fix","status":"진행중","after":["BE","FE","DOC","R1-D"],"note":"R1 근거 전부 수집 · R1-X finding 수정, 승인 gate는 열린 상태 유지 · 근거: docs/inprogress/import-fix-frontend.md"}],
  "reviews":[
@@ -82,7 +90,11 @@ A completed review attempt with CHANGES_REQUIRED is not approval. If it has its 
  "tasks":[
   {"id":"FIX","status":"완료","note":"대비 4.8:1 · 검사 통과 (담당자 보고)"},
   {"id":"R2-D","title":"Backend 독립 도메인 검토 R2","owner":"backend-review-lead","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 재검토 중 · 실제 model/effort 미확인 · 근거: docs/inprogress/import-fix-domain.md"},
-  {"id":"R2-X","title":"외부 필수 리뷰 R2","owner":"reviewer-lead","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 0/4 PASS · 동일 팀장 설정 직접 확인 · 근거: docs/inprogress/import-fix-reviews.md"}]}
+  {"id":"R2-X","title":"외부 필수 리뷰 R2","owner":"","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 0/4 PASS · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"id":"R2-K","title":"Karpathy 리뷰 R2","owner":"Karpathy Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 재검토 중"},
+  {"id":"R2-P","title":"Ponytail 리뷰 R2","owner":"Ponytail Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 재검토 중"},
+  {"id":"R2-I","title":"Impeccable 리뷰 R2","owner":"Impeccable Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 대비 수정 재검토 중"},
+  {"id":"R2-E","title":"E2E 리뷰 R2","owner":"E2E Agent","model":"gpt-6.1-sol","effort":"medium","lane":"review","status":"진행중","after":["FIX"],"note":"r2 · 흐름 재실행 중"}]}
 ```
 
 ## 6. All required evidence passes; perform final checks
@@ -94,6 +106,10 @@ Root checks the required acceptance cells and revision, then resolves the earlie
  "tasks":[
   {"id":"R1-X","status":"완료","note":"r1 finding 해소 · 최종 승인 근거는 r2/R2-X"},
   {"id":"R2-D","status":"완료","note":"r2 · PASS · 근거: docs/inprogress/import-fix-domain.md"},
+  {"id":"R2-K","status":"완료","note":"r2 · PASS"},
+  {"id":"R2-P","status":"완료","note":"r2 · PASS"},
+  {"id":"R2-I","status":"완료","note":"r2 · PASS"},
+  {"id":"R2-E","status":"완료","note":"r2 · PASS"},
   {"id":"R2-X","status":"완료","note":"r2 · 4/4 PASS · required cell 직접 확인 · 근거: docs/inprogress/import-fix-reviews.md"},
   {"id":"DONE","title":"최종 검사·팀 종료·보고","owner":"leader","lane":"finish","status":"진행중","after":["R2-D","R2-X"]}],
  "reviews":[

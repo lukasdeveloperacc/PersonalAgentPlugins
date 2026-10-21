@@ -28,7 +28,7 @@ Workers report only to their own lead: no sibling/peer/user messages or direct O
 
 Workers notify their lead when work starts, finishes, fails or waits on a blocker. Leads promptly summarize those transitions and owner/model corrections to root, including their own status, without waiting for all leaves. These are evidence-backed status notifications, not extra reporting writers or periodic polling loops.
 
-One file has one current owner. A handover requires root's recorded decision and a prerequisite `after` edge; subsequent findings go to the new owner. `after` means dependency, never parent/team membership. Agents are not alone in the worktree: preserve others' edits and escalate ownership conflicts. Leads may do small tasks themselves, but cannot independently approve their own work.
+One file has one current owner. A handover requires root's recorded decision and a prerequisite `after` edge; subsequent findings go to the new owner. `after` means dependency, never parent/team membership. Agents are not alone in the worktree: preserve others' edits and escalate ownership conflicts. Under `basic-team`, a lead dispatches at least one worker for each implementation task and keeps to splitting, verifying and summarizing; the user expects to see the team working. A lead edits directly only for a trivial fix such as a single typo, and says `리드 직접 수행` with the reason in its summary. A lead cannot independently approve its own work.
 
 A lead's own-team check is internal validation. For independent own-domain review, root assigns a fresh uninvolved read-only lead instance. Cross-team review also needs explicit scope and evidence. Domain findings remain separate from the external Karpathy/Ponytail/conditional Impeccable/E2E lineup. All required reviews share the frozen revision, three-round fix limit and final-check rules in [basic-team](../SKILL.md#review-and-fix); standalone implementation roots read and apply those sections without invoking basic-team recursively.
 
@@ -36,7 +36,7 @@ A lead's own-team check is internal validation. For independent own-domain revie
 
 Before dispatch, confirm actual host tools and policies support peer lead creation/messages, lead-to-worker spawning, parent-only leaf return, waiting/resume/termination, depth and available capacity. Use host-supported tool names, not assumed aliases. Select a lead role that permits child spawning; a leaf-guarded role cannot be a lead. Verify the intended path rather than claiming support from API documentation for another host/version.
 
-On Claude, check Agent Teams enablement and interactive operation plus foreground nested-subagent support. A background/noninteractive leaf that returns directly to main violates this reporting structure. On Codex, check actual nested spawn/depth policy and result routing. If unsupported, report the exact limitation and supported separate execution path; do not silently flatten the hierarchy or promise behavior the runtime cannot supply.
+On Claude, check Agent Teams enablement and interactive operation plus foreground nested-subagent support. Claude Code's team roster is flat: only main/root can spawn named teammates, and a lead's own `Agent` call with `name` fails with `team roster is flat`. Leads therefore spawn leaves without `name`; those results return only to that lead. State this in every lead brief. A background/noninteractive leaf that returns directly to main violates this reporting structure. On Codex, check actual nested spawn/depth policy and result routing. If unsupported, report the exact limitation and supported separate execution path; do not silently flatten the hierarchy or promise behavior the runtime cannot supply.
 
 Budget root, live leads, workers, harness roles and external reviewers together. Reserve room for a lead's workers before starting it; launch only ready teams. When capacity is full, wait for a batch and close finished owned agents where supported. Keep parents and required peers alive until dependents finish; never orphan leaves. Review batches must preserve revision and isolation of results. Do not copy a session's slot count into a universal limit.
 
@@ -48,15 +48,23 @@ Frontend and Backend leads and implementation workers load and apply the bundled
 
 ## Model policy
 
-New leads inherit main's supported model/effort policy. Preserve the existing specialist policy below, subject to higher-priority host instructions. Pass supported settings as real spawn arguments (Claude `model` alias/`effort`; Codex `model`/`reasoning_effort`, using the host's required fork mode). Do not use Claude `subagent_type: fork`, which ignores overrides. If settings cannot be applied, disclose once and use supported inherited settings; never report an unobserved model as confirmed.
+This skill explicitly requires model and effort on every spawn, including leads: omitting `effort` leaves nothing to report. Leads get main's model and main's effort (checked as below). Preserve the existing specialist policy below, subject to higher-priority host instructions. Pass supported settings as real spawn arguments (Claude `model` alias/`effort`; Codex `model`/`reasoning_effort`, using the host's required fork mode). Do not use Claude `subagent_type: fork`, which ignores overrides. If settings cannot be applied, disclose once and use supported inherited settings; never report an unobserved model as confirmed.
 
-Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. If Codex exposes local rollout logs, inspect only the exact returned thread's latest `turn_context` model/effort; inherited `session_meta` or parent history does not establish the child's settings. If that evidence is unavailable, retain the requested values as requested and mark actual values unverified instead of searching unrelated sessions.
+Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. On Claude Code root checks every agent's actual model and effort itself; each assistant turn records them, and leaves of leads are in the same session. Do not ask agents to report their own settings:
+
+```sh
+d=$(ls -d ~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID)/subagents
+for m in "$d"/*.meta.json; do printf '%s\t%s\n' "$(jq -r '.name // .description' "$m")" "$(jq -r 'select(.type=="assistant") | "\(.message.model) \(.effort)"' "${m%.meta.json}.jsonl" | tail -1)"; done
+```
+
+Run it after spawning and at every reporting checkpoint, and put those values on the cards. Main's own value is the same `jq` on `~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID.jsonl`. A running agent's effort cannot be changed: if it differs from the policy, give that agent's remaining or follow-up work to a new spawn with the right effort instead of resuming it. If Codex exposes local rollout logs, inspect only the exact returned thread's latest `turn_context` model/effort; inherited `session_meta` or parent history does not establish the child's settings. If that evidence is unavailable, retain the requested values as requested and mark actual values unverified instead of searching unrelated sessions.
 
 | Role | Claude | Codex |
 | --- | --- | --- |
+| Team lead | main's model, main's effort (`high` if unknown) | main's model, main's effort |
 | Executor | `haiku` (`claude-haiku-5-5`), `max` | `gpt-6-luna`, `max` |
 | Documentation executor | `sonnet` (`claude-sonnet-5-5`), `medium` | `gpt-6.1-sol`, `medium` |
 | Reviewer | `sonnet` (`claude-sonnet-5-5`), `high` | `gpt-6.1-sol`, `medium` |
 | Planner, Architect, Critic (ralplan) | `opus` (`claude-opus-5-5`), `medium` (`high` for hard plans) | `gpt-6.1-sol`, `medium` (`high` for hard plans) |
 
-Apply harness-role settings only through its supported invocation. Use host-valid native IDs, such as `frontend_lead` and `karpathy_agent` on hosts that require underscores; never reuse a rejected spelling. Keep native IDs, canonical agent paths and Office display owners distinct. External reporting labels retain `Karpathy Agent`, `Ponytail Agent`, `Impeccable Agent`, `E2E Agent`. UI YAML describes skills; it does not register native agent types.
+Apply harness-role settings only through its supported invocation. Use host-valid native IDs, such as `frontend_lead` and `karpathy_agent` on hosts that require underscores; never reuse a rejected spelling. On Claude Code only root-spawned leads get a native name; a lead's leaves, reviewers included, have none, so identify them by the returned agent ID in evidence and resume them with `SendMessage` to that ID. Keep native IDs, canonical agent paths and Office display owners distinct. External reporting labels retain `Karpathy Agent`, `Ponytail Agent`, `Impeccable Agent`, `E2E Agent`. UI YAML describes skills; it does not register native agent types.
