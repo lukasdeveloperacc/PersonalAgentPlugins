@@ -29,18 +29,18 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
   - MCP 서버(notion, glitchtip, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
   - Node.js 20 이상과 npm 필요. npm 전역 설치 경로가 `PATH`에 있어야 합니다.
-  - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. Basic Team용 Agent Teams 환경 변수도 Claude 사용자 설정에 설정
+  - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. Basic Team용 Agent Teams 환경 변수와 office 결재 대기용 `MCP_TOOL_TIMEOUT=325000`도 Claude 사용자 설정에 설정
   - Codex: `omx`가 없으면 공식 npm 패키지 설치 후 사용자 범위의 plugin 모드로 setup. 사용자 `AGENTS.md`가 있으면 병합하고, 없으면 생성
   - 설치 후 새 세션에서 `omc` 또는 `omx`로 harness 실행 가능
   - Claude/Codex의 마켓플레이스 명령으로 플러그인만 설치하면 npm 설치·setup은 실행되지 않으므로 위 스크립트를 사용해야 합니다.
 - `remove` : plugin 제거
   - CodeGraph MCP 등록을 제거하고 npm CLI를 삭제. 다른 도구에서 CodeGraph MCP가 켜져 있으면 CLI는 유지. 프로젝트의 `.codegraph/` 인덱스는 보존
-  - Agent Teams 값은 설치 스크립트가 설정했고 값이 그대로인 경우에만 이전 값으로 복구
+  - Agent Teams·`MCP_TOOL_TIMEOUT` 값은 설치 스크립트가 설정했고 값이 그대로인 경우에만 이전 값으로 복구
   - 별도로 사용할 수 있는 OMC/OMX npm 패키지와 사용자 설정·실행 기록은 보존
   - 이미 없는 플러그인은 건너뛰며, 다른 도구에서 사용 중인 GlitchTip 터널은 유지
 - `reload` : CLI·harness·의존 플러그인 업데이트 후 plugin 재설치
   - CodeGraph npm CLI를 최신 버전으로 갱신. MCP 활성화 상태는 유지
-  - Claude Agent Teams 설정을 다시 적용
+  - Claude Agent Teams·`MCP_TOOL_TIMEOUT` 설정을 다시 적용
   - 업데이트 후 codex, claude 세션 모두 재실행 필요
   - Codex: `codex update`, OMX npm 최신 안정 버전 설치, Ponytail·ELI5 마켓플레이스 갱신 및 재설치, Impeccable 최신 CLI로 스킬 강제 갱신
   - Claude: `claude update`, OMC npm 최신 안정 버전 설치, Ponytail·ELI5·Impeccable·OMC 마켓플레이스 및 플러그인 업데이트

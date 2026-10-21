@@ -205,7 +205,7 @@ expect_calls \
 
 : > "$CALL_LOG"
 [[ "$(denied_count)" == 1 ]]
-jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1" and .env.MCP_TOOL_TIMEOUT == "325000"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 
 run claude remove >/dev/null
 expect_calls \
@@ -220,14 +220,14 @@ expect_calls \
 : > "$CALL_LOG"
 [[ "$(denied_count)" == 0 ]]
 [[ -x "$STUB_BIN/omc" ]]
-jq -e '.model == "keep" and (has("deniedMcpServers") | not) and ((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not)' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '.model == "keep" and (has("deniedMcpServers") | not) and ((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") or has("MCP_TOOL_TIMEOUT") | not)' "$FAKE_HOME/.claude/settings.json" >/dev/null
 
 # Restore a pre-existing value on removal, but do not claim a setting that was already enabled.
-echo '{"model":"keep","env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"0","OTHER":"keep"}}' > "$FAKE_HOME/.claude/settings.json"
+echo '{"model":"keep","env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"0","MCP_TOOL_TIMEOUT":"60000","OTHER":"keep"}}' > "$FAKE_HOME/.claude/settings.json"
 run claude install >/dev/null
 jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 run claude remove >/dev/null
-jq -e '.model == "keep" and .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '.model == "keep" and .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0" and .env.MCP_TOOL_TIMEOUT == "60000" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 
 echo '{"env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}' > "$FAKE_HOME/.claude/settings.json"
 run claude install >/dev/null
