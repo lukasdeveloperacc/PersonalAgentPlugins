@@ -19,14 +19,14 @@ The interviewed deployment's `web/src/roles.json` maps:
 | Office owner | Display department |
 | --- | --- |
 | `backend-*` / `frontend-*` / `docs-*` | Backend / Frontend / Docs |
-| `Planner`, `Architect`, `Critic` (also `lane: plan`) | Meeting room |
-| `Karpathy Agent`, `Ponytail Agent` | Audit |
+| `Planner`, `Architect`, `Critic`, `plan-*` (newer Office; also `lane: plan`) | Meeting room |
+| `Karpathy Agent`, `Ponytail Agent`, `reviewer-*` (newer Office) | Audit |
 | `Impeccable Agent` / `E2E Agent` | Design / QA |
 | `leader` | Root's manager seat |
 
-For example, canonical `/root/backend_lead/db_core` can have display owner `backend-core`; preserve the canonical ID and parent in its evidence/note. Use one stable display key per actor and do not assign multiple actors the same owner. The observed registry has no dedicated `reviewer-lead` mapping; an owner of `reviewer-lead` lands in temporary seating. Give the aggregate review gate an empty owner (`""`) instead: the card still shows, and no character is seated. Never alias another lead to `leader`. These are version-dependent display rules, not a promise of team/worker seats.
+For example, canonical `/root/backend_lead/db_core` can have display owner `backend-core`; preserve the canonical ID and parent in its evidence/note. Use one stable display key per actor and do not assign multiple actors the same owner. Newer Office maps `reviewer-*` to Audit and `plan-*` to the meeting room, so the aggregate review gate can use owner `reviewer-lead`. Older registries lack these and seat `reviewer-lead` temporarily; there give the gate an empty owner (`""`): the card still shows, and no character is seated. Never alias another lead to `leader`. These are version-dependent display rules, not a promise of team/worker seats.
 
-Create one execution card per external reviewer per round (`R1-K`, `R1-P`, `R1-I`, `R1-E`) when it starts; `reviews[]` alone leaves the Audit/Design/QA rooms empty. Use the exact `reviews[].reviewer` label as its owner, including across rounds for the same reporting role. Record the actual per-round agent IDs in evidence. An internal owner such as `karpathy_agent` plus a review label `Karpathy Agent` can render two characters for one reviewing role; do not create alternate spellings to organize rounds.
+`reviews[]` alone already seats each reviewer in Audit/Design/QA, but a `#/run/<id>` link opens visitor mode, which draws only the room you are in: enter that room before calling reviewers missing. Still create one execution card per external reviewer per round (`R1-K`, `R1-P`, `R1-I`, `R1-E`) when it starts, so its working status and model/effort show. Use the exact `reviews[].reviewer` label as its owner, including across rounds for the same reporting role. Record the actual per-round agent IDs in evidence. An internal owner such as `karpathy_agent` plus a review label `Karpathy Agent` can render two characters for one reviewing role; do not create alternate spellings to organize rounds.
 
 Rank is currently inferred from the model string (`luna`/`haiku` → 신입사원, `sol`/`sonnet` → 대리, `opus` → 과장), independently of execution role. A lead shown as 대리 does not establish the wrong model or hierarchy. Preserve observed settings and explain this product limitation instead of changing model data to force a rank.
 
@@ -36,7 +36,7 @@ The observed UI takes settings from active task cards. If one actor has several 
 
 1. Check patch fields: allowed stage prefix, lane/status, exact external reviewer labels, `decisions[].body` and top-level `close_ask_ids`. Reuse examples rather than inventing nested fields.
 2. Publish observed actor model/effort on that actor's existing deliverable card, including leads. On Claude Code root reads these directly per the team contract. Elsewhere, put requested values and missing-observation explanations in the note/evidence; never present a requested value as confirmed. A missing value stays unverified, not borrowed from another actor. A zero missing-field count does not establish runtime verification; do not populate fields merely to make that count zero.
-3. After the first actor publication or an owner/model/payload correction, use the verified read-only `/api/state` contract and select only the exact project/run to compare the affected fields. Do not dump or save the global snapshot. Routine status patches need no repeated full readback.
+3. After the first actor publication or an owner/model/payload correction, compare the affected fields using the report response's `state` or `get_run` (older Office: the read-only `/api/state` with only the exact project/run). Do not dump or save the global snapshot. Routine status patches need no repeated full readback.
 4. If claiming visible placement or text, verify the affected Office screen with the supported browser. Stored keys and a successful response do not prove rendering. Report data verification and screen verification separately when a browser is unavailable.
 
 Fix malformed decision text using the same decision title with `body`; keep task IDs stable when correcting owner/model fields. Do not create duplicate runs or synthetic build tasks to compensate for a display limitation. Document a required Office product change separately from a skill correction.
