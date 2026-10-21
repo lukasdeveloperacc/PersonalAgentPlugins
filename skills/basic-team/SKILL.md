@@ -12,7 +12,7 @@ Read [team-contract.md](references/team-contract.md) and [reporting.md](referenc
 In Office mode, at every checkpoint:
 
 - Answer every pending `checks` entry of the last `report` response before other reporting, through `check_replies` (see the reporting contract); it is easy to miss after a long `state`.
-- Call `ask` again with each pending `ask_id` until it returns answered. Office does not notify you of the user's answer, and a pending result, backgrounded or not, is not one.
+- Call `ask` again with each pending `ask_id` until it returns answered or, on newer Office, a `report` response's `asks` lists it answered. Office does not notify you of the user's answer, and a pending result, backgrounded or not, is not one.
 - Put actual model/effort on every working card of a real agent from the team-contract actor check, root-owned cards (PLAN, DONE) with root's own; aggregate cards carry none.
 
 ## Plan and publish work

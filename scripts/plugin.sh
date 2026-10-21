@@ -157,7 +157,7 @@ DENIED_CONNECTOR="claude.ai Notion"
 CLAUDE_SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 # Each managed env key keeps its pre-install value in a state file so remove can restore it.
 CLAUDE_ENV_STATE_DIR="$HOME/.local/state/lukas-plugin"
-# Office's ask holds up to 295s; Claude's MCP tool timeout must outlast it.
+# Office's ask holds 100s by default and up to 300s (ASK_WAIT_MS); Claude's MCP tool timeout must outlast it.
 CLAUDE_ENV=("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1 agent-teams.json" "MCP_TOOL_TIMEOUT 325000 mcp-tool-timeout.json")
 
 edit_claude_settings() {
