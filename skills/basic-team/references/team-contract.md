@@ -8,7 +8,7 @@ Dispatch includes: purpose (`execute`, `review` or `plan`), scope/non-goals, abs
 
 Each return includes status (complete/in-progress/blocked), changed files, actual check commands/results, revision, required/advisory findings, unchecked items, next dependencies and evidence paths. Save detailed worker results in run-specific Markdown artifacts; leads verify and aggregate them, preserving failures and gaps.
 
-Include the actor's canonical ID, parent lead, requested model/effort and observed model/effort with its evidence source, or explicitly `unverified`. Leads preserve this information for themselves and their leaves in their summary to root; root uses it for reporting without treating the summary card as a worker.
+Include the actor's canonical ID, parent lead and requested model/effort; root fills observed values from the actor check below. Leads preserve this information for themselves and their leaves in their summary to root; root uses it for reporting without treating the summary card as a worker.
 
 | Invocation | Root responsibility | Child responsibility |
 | --- | --- | --- |
@@ -50,14 +50,25 @@ Frontend and Backend leads and implementation workers load and apply the bundled
 
 This skill explicitly requires model and effort on every spawn, including leads: omitting `effort` leaves nothing to report. Leads get main's model and main's effort (checked as below). Preserve the existing specialist policy below, subject to higher-priority host instructions. Pass supported settings as real spawn arguments (Claude `model` alias/`effort`; Codex `model`/`reasoning_effort`, using the host's required fork mode). Do not use Claude `subagent_type: fork`, which ignores overrides. If settings cannot be applied, disclose once and use supported inherited settings; never report an unobserved model as confirmed.
 
-Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. On Claude Code root checks every agent's actual model and effort itself; each assistant turn records them, and leaves of leads are in the same session. Do not ask agents to report their own settings:
+Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. Root checks every agent's actual model and effort itself, root included: both hosts record them locally for every agent at any depth, so "metadata unavailable" is not an answer until this check found no record for that agent. Do not ask agents to report their own settings. On Claude Code each assistant turn records them, and leaves of leads are in the same session:
 
 ```sh
 d=$(ls -d ~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID)/subagents
 for m in "$d"/*.meta.json; do printf '%s\t%s\n' "$(jq -r '.name // .description' "$m")" "$(jq -r 'select(.type=="assistant") | "\(.message.model) \(.effort)"' "${m%.meta.json}.jsonl" | tail -1)"; done
 ```
 
-Run it after spawning and at every reporting checkpoint, and put those values on the cards. Main's own value is the same `jq` on `~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID.jsonl`. A running agent's effort cannot be changed: if it differs from the policy, give that agent's remaining or follow-up work to a new spawn with the right effort instead of resuming it. If Codex exposes local rollout logs, inspect only the exact returned thread's latest `turn_context` model/effort; inherited `session_meta` or parent history does not establish the child's settings. If that evidence is unavailable, retain the requested values as requested and mark actual values unverified instead of searching unrelated sessions.
+Main's own value is the same `jq` on `~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID.jsonl`. On Codex every thread has a rollout whose first line names its parent thread and `agent_path` (`/root/backend_lead/backend_contract`) and whose latest `turn_context` holds its settings; `CODEX_THREAD_ID` is root's own thread. This prints root and every descendant:
+
+```sh
+root=$CODEX_THREAD_ID  # rollout names start with their creation time, so parents sort before children
+find ~/.codex/sessions -name 'rollout-*.jsonl' | awk -F/ '{print $NF "\t" $0}' | sort | awk -F'\t' -v r="$root" 'index($1, r) {on=1} on {print $2}' | while read -r f; do
+  head -1 "$f" | jq -r --arg f "$f" '.payload | ((.source | objects | .subagent.thread_spawn) // {}) as $s | [.id, $s.parent_thread_id // "", $s.agent_path // "/root", $f] | @tsv'
+done | awk -F'\t' -v r="$root" '$1 == r || $2 in ids { ids[$1]; print $3 "\t" $4 }' | while IFS=$'\t' read -r agent f; do
+  printf '%s\t%s\n' "$agent" "$(grep '"type":"turn_context"' "$f" | tail -1 | jq -r '.payload | "\(.model) \(.effort)"')"
+done
+```
+
+Until an agent's first turn its rollout shows inherited or no settings, so use it only after that turn; an empty value means no record yet. Run it after spawning and at every reporting checkpoint, and put those values on the cards. A running agent's effort cannot be changed: if it differs from the policy, give that agent's remaining or follow-up work to a new spawn with the right effort instead of resuming it. If an agent has no record, retain the requested values as requested and mark actual values unverified, naming the missing file, instead of searching unrelated sessions.
 
 | Role | Claude | Codex |
 | --- | --- | --- |

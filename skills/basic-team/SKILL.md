@@ -7,7 +7,13 @@ description: Orchestrate peer Frontend, Backend, Docs and Reviewer team leads wi
 
 Main/root coordinates the teams, integrates their evidence and owns final verification and user reporting. It delegates product edits to team leads and their workers. Select only teams the request needs; do not create every team by default. Follow the user's scope and permissions; this workflow grants no commits, pushes, deployments or global configuration changes.
 
-Read [team-contract.md](references/team-contract.md) and [reporting.md](references/reporting.md) before dispatch. Use [briefs.md](references/briefs.md) for assignments and [progress-example.md](references/progress-example.md) for public patches. These contracts also govern standalone team skills.
+Read [team-contract.md](references/team-contract.md) and [reporting.md](references/reporting.md) in full before dispatch, never cut short with `head`. Use [briefs.md](references/briefs.md) for assignments and [progress-example.md](references/progress-example.md) for public patches; read [office-operations.md](references/office-operations.md) in Office mode. These contracts also govern standalone team skills.
+
+In Office mode, at every checkpoint:
+
+- Answer every pending `checks` entry of the last `report` response before other reporting, through `check_replies` (see the reporting contract); it is easy to miss after a long `state`.
+- Call `ask` again with each pending `ask_id` until it returns answered. Office does not notify you of the user's answer, and a pending result, backgrounded or not, is not one.
+- Put actual model/effort on every working card of a real agent from the team-contract actor check, root-owned cards (PLAN, DONE) with root's own; aggregate cards carry none.
 
 ## Plan and publish work
 

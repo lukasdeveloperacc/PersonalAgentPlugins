@@ -14,9 +14,8 @@ Peers and agreed contracts: <identities/API/errors/dependencies>.
 Acceptance matrix and startup/seed instructions: <matrix or none>.
 Worker budget: <available allocation>. Artifact directory: <path>.
 Identity: <canonical ID>; parent: <root ID>; native name: <host-valid ID> (root-spawned leads only).
-Return your own and each leaf's requested/observed model and effort with evidence
-(not needed on Claude Code, where root reads them directly);
-mark missing observations unverified. Keep native IDs separate from Office owners.
+Return each leaf's canonical ID and requested model and effort; root reads the actual
+values from local records. Keep native IDs separate from Office owners.
 For Frontend/Backend implementation: read/apply <resolved karpathy SKILL.md>
 and <resolved ponytail SKILL.md>; preserve <active level>. Pass both exact
 paths to each implementation worker and report missing skills to root.
@@ -51,8 +50,7 @@ Own only: <files>. Contract/dependencies: <API/errors/after>.
 Done when: <criteria>. Check with: <exact commands>.
 Acceptance matrix: <viewports/languages/themes/states/dialogs or none>.
 Evidence artifact: <path>. Revision: <revision>.
-Return your canonical ID, parent lead and (off Claude Code) requested/observed model and effort
-with the observation source, or unverified; do not infer them from a policy table.
+Return your canonical ID and parent lead; root reads your actual model and effort.
 For Frontend/Backend implementation: read/apply <resolved karpathy SKILL.md>
 and <resolved ponytail SKILL.md>; preserve <active level>. Report any missing
 skill to your lead. These habits do not replace independent review.
@@ -93,8 +91,7 @@ Focus: <requirements/contracts | correctness/simplicity | UI | connected flow>.
 Fix-round delta/findings: <delta or none>. Existing check evidence: <results>.
 Accepted decisions: <decisions; revisit only on changed premise/new regression>.
 Read-only: no fixes, peer contact, user messages or direct reporting writes.
-Return your canonical ID, parent lead and (off Claude Code) requested/observed model and effort
-with evidence, or unverified.
+Return your canonical ID and parent lead; root reads your actual model and effort.
 Keep results private from other reviewers. Report regressions beyond your focus.
 Notify your lead when reviewing starts or ends; returning CHANGES_REQUIRED ends
 the attempt, not the product's required approval gate.
