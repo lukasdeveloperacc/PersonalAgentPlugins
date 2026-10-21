@@ -57,8 +57,18 @@ setup_codex_harness() {
   fi
   # A stale OMX plugin cache only warns and stays stale on plain setup; repair it when OMX asks.
   if grep -q -- '--repair-plugin-cache' "$out"; then
-    omx setup --plugin --repair-plugin-cache </dev/null
+    omx setup --plugin --repair-plugin-cache </dev/null 2>&1 | tee "$out"
   fi
+  # A same-version cache Codex copied itself lacks OMX's markers, so OMX refuses to replace it;
+  # it is a disposable copy of the npm package, so remove it and let OMX publish a managed one.
+  local cache
+  cache="$(sed -n 's/.*same-version cache at \(.*\) is not a verified managed OMX snapshot.*/\1/p' "$out" | head -1)"
+  case "$cache" in
+    "${CODEX_HOME:-$HOME/.codex}"/plugins/cache/oh-my-codex-local/oh-my-codex/*)
+      rm -rf "$cache"
+      omx setup --plugin --repair-plugin-cache </dev/null
+      ;;
+  esac
   rm -f "$out"
 }
 
