@@ -144,6 +144,16 @@ def apply(data, patch):
                  "set them to 완료 or 중단 first")
         if word != "완료":
             data["stage"] = "완료"
+    # same rule and messages as TaskReporter server/progress.ts: a missing done counts as unfinished
+    unfinished = []
+    for task in data["tasks"]:
+        todos = [d["id"] for d in task.get("todos", []) if d.get("done") is not True]
+        if todos and task["status"] == "완료":
+            fail(f"task {task['id']}: unfinished TODOs: {', '.join(todos)}")
+        if todos:
+            unfinished.append(f"{task['id']}: {', '.join(todos)}")
+    if data.get("stage", "").partition(" ")[0] == "완료" and unfinished:
+        fail(f"run stage 완료 has unfinished TODOs: {'; '.join(unfinished)}; resolve them or interrupt the run")
     data["updated"] = now
     return data
 

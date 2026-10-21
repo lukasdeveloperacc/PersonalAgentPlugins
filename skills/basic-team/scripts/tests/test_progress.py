@@ -62,6 +62,21 @@ class ProgressTests(unittest.TestCase):
                          [{"id": "FE-1", "text": "조건 수정", "phase": "구현", "done": True},
                           {"id": "FE-2", "phase": "검증", "detail": "vitest", "text": "FE-2"}])
 
+    def test_unfinished_todos_block_success_but_not_interruption(self):
+        self.cli("init", str(self.page))
+        self.update({"tasks": [{"id": "FE", "status": "진행중", "todos": [{"id": "FE-1", "done": True}, {"id": "FE-2"}]},
+                               {"id": "OLD", "status": "중단", "todos": [{"id": "OLD-1", "done": False}]},
+                               {"id": "DONE", "lane": "finish"}]})
+        before = self.page.read_bytes()
+        result = self.update({"tasks": [{"id": "FE", "status": "완료"}]})
+        self.assertIn("task FE: unfinished TODOs: FE-2", result.stderr)
+        result = self.update({"tasks": [{"id": "FE", "status": "완료", "todos": [{"id": "FE-2", "done": True}]},
+                                        {"id": "DONE", "status": "완료"}]})  # an interrupted task's TODOs count too
+        self.assertIn("run stage 완료 has unfinished TODOs: OLD: OLD-1; resolve them or interrupt the run", result.stderr)
+        self.assertEqual(self.page.read_bytes(), before)
+        result = self.update({"stage": "중단", "tasks": [{"id": "FE", "status": "완료", "todos": [{"id": "FE-2", "done": True}]}]})
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_bad_input_is_rejected_without_touching_the_page(self):
         self.cli("init", str(self.page))
         before = self.page.read_bytes()

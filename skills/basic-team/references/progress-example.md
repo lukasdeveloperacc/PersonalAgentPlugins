@@ -46,6 +46,8 @@ Workers report to their own leaders; leaders agree on the contract and root reco
  "decisions":[{"title":"API-1","body":"Frontend·Backend 양측 확인: POST /imports, 422 검증 실패, backend가 API 파일 소유. API task 완료로 BE/FE/DOC 착수; 통합 검증은 BE에서 수행. 영향: FE/DOC, 계약 revision c1"}]}
 ```
 
+Office only, when the schema advertises it: if this response's `checks` holds a pending check for `BE` (30 minutes unchanged), root asks backend-lead and sends the answer beside the next patch as a top-level argument, never inside `patch`: `"check_replies":[{"check_id":"<checks[].id>","answer":"<backend-lead가 확인한 실제 상태·막힘·남은 todo·다음 단계>"}]`. Cards below that work without observed settings (`R1-D`, `R2-D`, the aggregate `R1-X`/`R2-X`) get an immediate check on newer Office; answer it with that reason instead of filling values.
+
 ## 3. Freeze the revision and dispatch independent reviews
 
 Required approval gates stay open until their evidence supports PASS at the current frozen revision. `진행중` means someone is actively reviewing; a gate awaiting fixes is `대기중`. Domain review is an ordinary `review` task. Only the four external names go in `reviews`.
@@ -78,7 +80,7 @@ A completed review attempt with CHANGES_REQUIRED is not approval. If it has its 
   {"id":"R1-I","status":"완료","note":"r1 · CHANGES_REQUIRED · 경고 사유 대비 부족"},
   {"id":"R1-E","status":"완료","note":"r1 · PASS"},
   {"id":"R1-X","status":"대기중","note":"r1 검토 수행 종료 · CHANGES_REQUIRED · 3/4 PASS · 승인 gate 미해결 · 대비 수정과 새 revision 검토 대기"},
-  {"id":"FIX","title":"경고 사유 대비 수정","owner":"frontend-lead","lane":"fix","status":"진행중","after":["BE","FE","DOC","R1-D"],"note":"R1 근거 전부 수집 · R1-X finding 수정, 승인 gate는 열린 상태 유지 · 근거: docs/inprogress/import-fix-frontend.md"}],
+  {"id":"FIX","title":"경고 사유 대비 수정","owner":"frontend-lead","model":"gpt-6.1-sol","effort":"medium","lane":"fix","status":"진행중","after":["BE","FE","DOC","R1-D"],"note":"R1 근거 전부 수집 · R1-X finding 수정, 승인 gate는 열린 상태 유지 · 근거: docs/inprogress/import-fix-frontend.md"}],
  "reviews":[
   {"round":1,"reviewer":"Karpathy Agent","verdict":"PASS","note":"r1 · 범위·계약 확인"},
   {"round":1,"reviewer":"Ponytail Agent","verdict":"PASS","note":"r1 · 권고: 중복 문구 정리"},
@@ -116,7 +118,7 @@ Root checks the required acceptance cells and revision, then resolves the earlie
   {"id":"R2-I","status":"완료","note":"r2 · PASS"},
   {"id":"R2-E","status":"완료","note":"r2 · PASS"},
   {"id":"R2-X","status":"완료","note":"r2 · 4/4 PASS · required cell 직접 확인 · 근거: docs/inprogress/import-fix-reviews.md"},
-  {"id":"DONE","title":"최종 검사·팀 종료·보고","owner":"leader","lane":"finish","status":"진행중","after":["R2-D","R2-X"]}],
+  {"id":"DONE","title":"최종 검사·팀 종료·보고","owner":"leader","model":"gpt-6.1-sol","effort":"medium","lane":"finish","status":"진행중","after":["R2-D","R2-X"]}],
  "reviews":[
   {"round":2,"reviewer":"Karpathy Agent","verdict":"PASS","note":"r2"},
   {"round":2,"reviewer":"Ponytail Agent","verdict":"PASS","note":"r2"},

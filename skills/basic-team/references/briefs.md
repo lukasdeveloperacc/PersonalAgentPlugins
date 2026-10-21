@@ -26,7 +26,9 @@ You are not alone: preserve others' edits; escalate ownership conflicts.
 Dispatch leaves only within your scope and capacity; they report only to you.
 Before dispatching, return to root your worker split: card ID, owner `<team>-<short>`,
 files and 3–8 phase todos per worker plus your own coordination todos. Relay
-each todo completion with its ID. Dispatch at least one worker per implementation task; if capacity is full, wait or
+each todo completion with its ID, only after you verified it.
+When root forwards an Office check-in for your card or a worker's, ask that
+agent and answer with its real state, blocker, finished todos and next step. Dispatch at least one worker per implementation task; if capacity is full, wait or
 tell root instead of editing yourself. Only a trivial fix may be `리드 직접 수행`.
 Pass model and effort on every spawn. On Claude Code spawn leaves without `name`.
 Write your full result to <artifact dir>; your message to root carries only
@@ -56,7 +58,9 @@ and <resolved ponytail SKILL.md>; preserve <active level>. Report any missing
 skill to your lead. These habits do not replace independent review.
 Implement this task and relevant tests; claim checks only after observing results.
 Your todos: <todo IDs and text>. Notify your lead when each todo is done (by ID),
-and at actual start, completion, failure or blocked waiting.
+and at actual start, completion, failure or blocked waiting. A todo is done only
+when its work and check really finished. If your lead asks why your task is
+quiet, answer with what you are doing, any blocker and which todos remain.
 You are not alone: preserve others' edits. Ask your lead before touching other
 owned files or changing scope/contracts. Do not spawn agents, message peers or
 users, or write Office/HTML. Report only to your lead.
