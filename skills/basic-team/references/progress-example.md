@@ -23,7 +23,10 @@ The lead settings below illustrate observed values, not defaults to copy. Keep e
   {"id":"PLAN","title":"ralplan 계획","owner":"leader","lane":"plan","status":"완료","note":"설치된 harness 계획 종료·실행 권한 확인"},
   {"id":"API","title":"가져오기 API 계약 합의","owner":"backend-lead","model":"gpt-6.1-sol","effort":"medium","lane":"build","status":"진행중","after":["PLAN"],"note":"Frontend·Backend 계약 확인 중 · 팀장 설정 직접 확인 · 근거: docs/inprogress/import-fix-backend.md"},
   {"id":"BE","title":"가져오기 API·검증","owner":"backend-lead","model":"gpt-6.1-sol","effort":"medium","lane":"build","status":"대기중","after":["API"],"note":"0/2 완료 · 계약 합의 대기 · 팀장 설정 직접 확인 · 근거: docs/inprogress/import-fix-backend.md"},
-  {"id":"FE","title":"가져오기 UI 상태","owner":"frontend-lead","model":"gpt-6.1-sol","effort":"medium","lane":"build","status":"대기중","after":["API"],"note":"0/2 완료 · API 계약 대기 · 팀장 설정 직접 확인 · 근거: docs/inprogress/import-fix-frontend.md"},
+  {"id":"FE","title":"가져오기 UI 상태","owner":"frontend-lead","model":"gpt-6.1-sol","effort":"medium","lane":"build","status":"대기중","after":["API"],"note":"API 계약 대기\n근거: docs/inprogress/import-fix-frontend.md",
+   "todos":[{"id":"FE-a","phase":"준비","text":"작업자 분배·acceptance matrix 공유"},{"id":"FE-b","phase":"검증","text":"작업자 결과·호출부 확인"},{"id":"FE-c","phase":"보고","text":"root에 요약"}]},
+  {"id":"FE-1","title":"로딩·실패 상태 UI","owner":"frontend-state","model":"gpt-6-luna","effort":"max","lane":"build","status":"대기중","after":["API"],"note":"API 계약 대기",
+   "todos":[{"id":"FE-1a","phase":"구현","text":"로딩 상태"},{"id":"FE-1b","phase":"구현","text":"422 실패 메시지"},{"id":"FE-1c","phase":"검증","text":"상태별 테스트","detail":"npx vitest run src/import"}]},
   {"id":"DOC","title":"가져오기 계약 문서","owner":"docs-lead","model":"gpt-6.1-sol","effort":"medium","lane":"build","status":"대기중","after":["API"],"note":"0/1 완료 · API 계약 대기 · 팀장 설정 직접 확인 · 근거: docs/inprogress/import-fix-docs.md"}],
  "decisions":[{"title":"리뷰 범위","body":"Karpathy·Ponytail 필수, UI 변경으로 Impeccable, API→화면 흐름 변경으로 E2E 포함. 독립 Backend domain review도 필요"}]}
 ```
@@ -37,7 +40,8 @@ Workers report to their own leaders; leaders agree on the contract and root reco
  "tasks":[
   {"id":"API","status":"완료","note":"API-1 양측 확인 · 계약 revision c1"},
   {"id":"BE","status":"진행중","note":"1/2 완료 · 막힘: 테스트 버킷 없음 · 다음: 시드 후 검증 · 근거: docs/inprogress/import-fix-backend.md"},
-  {"id":"FE","status":"진행중","note":"1/2 완료 · 로딩·실패 상태 구현 · 근거: docs/inprogress/import-fix-frontend.md"},
+  {"id":"FE","status":"진행중","note":"FE-1 진행 중","todos":[{"id":"FE-a","done":true}]},
+  {"id":"FE-1","status":"진행중","note":"실패 메시지 작업 중","todos":[{"id":"FE-1a","done":true}]},
   {"id":"DOC","status":"진행중","note":"0/1 완료 · 합의한 응답 코드 문서화"}],
  "decisions":[{"title":"API-1","body":"Frontend·Backend 양측 확인: POST /imports, 422 검증 실패, backend가 API 파일 소유. API task 완료로 BE/FE/DOC 착수; 통합 검증은 BE에서 수행. 영향: FE/DOC, 계약 revision c1"}]}
 ```
@@ -50,7 +54,8 @@ Required approval gates stay open until their evidence supports PASS at the curr
 {"stage":"리뷰 (1라운드)","summary":"팀 작업과 검사가 끝났습니다. r1을 고정하고 외부 리뷰와 독립 도메인 검토를 진행합니다","blockers":"없음",
  "tasks":[
   {"id":"BE","status":"완료","note":"2/2 완료 · 통합 검사 통과 (담당자 보고)"},
-  {"id":"FE","status":"완료","note":"2/2 완료 · 상태·접근성 검사 통과 (담당자 보고)"},
+  {"id":"FE","status":"완료","note":"상태·접근성 검사 통과 (담당자 보고)","todos":[{"id":"FE-b","done":true},{"id":"FE-c","done":true}]},
+  {"id":"FE-1","status":"완료","note":"vitest 통과 (담당자 보고)","todos":[{"id":"FE-1b","done":true},{"id":"FE-1c","done":true}]},
   {"id":"DOC","status":"완료","note":"1/1 완료 · 계약 일치 확인 (담당자 보고)"},
   {"id":"R1-D","title":"Backend 독립 도메인 검토 R1","owner":"backend-review-lead","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 미참여 팀장이 API·권한 검토 중 · 실제 model/effort 미확인 · 근거: docs/inprogress/import-fix-domain.md"},
   {"id":"R1-X","title":"외부 필수 리뷰 R1","owner":"","lane":"review","status":"진행중","after":["BE","FE","DOC"],"note":"r1 · 0/4 PASS · reviewer-lead 전용 좌석 없음 · 근거: docs/inprogress/import-fix-reviews.md"},

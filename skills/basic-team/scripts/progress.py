@@ -21,6 +21,7 @@ CLOSED = ("완료", "중단")
 STAGES = ("계획", "구현", "리뷰", "수정", "마무리", "완료", "중단")
 REVIEWERS = ("Karpathy Agent", "Ponytail Agent", "Impeccable Agent", "E2E Agent")
 TEXT = ("title", "stage", "summary", "todo", "blockers")
+TODO_KEYS = ("id", "text", "phase", "done", "detail")
 
 
 def fail(message):
@@ -84,6 +85,16 @@ def apply(data, patch):
         for field in ("title", "owner", "note", "model", "effort"):
             if field in task and not isinstance(task[field], str):
                 fail(f"task {task['id']}: {field} must be a string")
+        if not isinstance(task.get("todos", []), list):
+            fail(f"task {task['id']}: todos must be a list")
+        for todo in task.get("todos", []):
+            if not isinstance(todo, dict) or not isinstance(todo.get("id"), str) or not todo["id"]:
+                fail(f"task {task['id']}: each todo needs a string id")
+            extra = set(todo) - set(TODO_KEYS)
+            if extra:
+                fail(f"task {task['id']} todo {todo['id']}: unknown fields: {', '.join(sorted(extra))}; allowed: {', '.join(TODO_KEYS)}")
+            if any(f in todo and not isinstance(todo[f], str) for f in ("text", "phase", "detail")) or ("done" in todo and type(todo["done"]) is not bool):
+                fail(f"task {task['id']} todo {todo['id']}: text/phase/detail must be strings and done a boolean")
     for decision in patch.get("decisions", []):
         if not isinstance(decision, dict) or not isinstance(decision.get("title"), str):
             fail("each decision needs a string title")
@@ -94,8 +105,16 @@ def apply(data, patch):
             fail(f"reviewer {review['reviewer']!r} must be exactly one of: {', '.join(REVIEWERS)}")
     now = datetime.now().astimezone().isoformat(timespec="seconds")
     before = {t["id"]: t.get("status") for t in data.get("tasks", [])}
-    data["tasks"] = merge(data.get("tasks", []), patch.get("tasks", []), lambda t: t.get("id"))
+    tasks = data.get("tasks", [])
+    for item in patch.get("tasks", []):  # todos merge by id inside their task, so ticking one sends only {id, done}
+        if "todos" in item:
+            old = next((t.get("todos", []) for t in tasks if t.get("id") == item["id"]), [])
+            item = {**item, "todos": merge(old, item["todos"], lambda d: d["id"])}
+        tasks = merge(tasks, [item], lambda t: t.get("id"))
+    data["tasks"] = tasks
     for task in data["tasks"]:
+        for todo in task.get("todos", []):
+            todo.setdefault("text", todo["id"])
         task.setdefault("lane", "build")
         task.setdefault("status", "대기중")
         task.setdefault("title", task["id"])

@@ -52,13 +52,26 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual([d["title"] for d in data["decisions"]], ["E2E", "Notion"])  # earlier decisions are never dropped
         self.assertEqual(json.loads(result.stdout)["tasks"]["완료"], ["PLAN", "BE-1"])
 
+    def test_todos_merge_by_id_inside_their_task(self):
+        self.cli("init", str(self.page))
+        self.update({"tasks": [{"id": "FE", "todos": [{"id": "FE-1", "text": "조건 수정", "phase": "구현"},
+                                                     {"id": "FE-2", "phase": "검증", "detail": "vitest"}]}]})
+        result = self.update({"tasks": [{"id": "FE", "status": "진행중", "todos": [{"id": "FE-1", "done": True}]}]})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.data()["tasks"][0]["todos"],
+                         [{"id": "FE-1", "text": "조건 수정", "phase": "구현", "done": True},
+                          {"id": "FE-2", "phase": "검증", "detail": "vitest", "text": "FE-2"}])
+
     def test_bad_input_is_rejected_without_touching_the_page(self):
         self.cli("init", str(self.page))
         before = self.page.read_bytes()
         for patch in ({"tasks": [{"id": "A", "after": ["missing"]}]}, {"tasks": [{"id": "A", "status": "done"}]},
                       {"tasks": [{"id": "A", "lane": "구현"}]}, {"verdicts": {}}, {"reviews": [{"reviewer": "K"}]},
                       {"stage": "done"}, {"stage": "수정(1라운드)"}, {"stage": "완료", "tasks": [{"id": "A"}]},
-                      {"reviews": [{"round": 1, "reviewer": "Karpathy"}]}, {"tasks": None}):
+                      {"reviews": [{"round": 1, "reviewer": "Karpathy"}]}, {"tasks": None},
+                      {"tasks": [{"id": "A", "todos": {}}]}, {"tasks": [{"id": "A", "todos": [{"text": "no id"}]}]},
+                      {"tasks": [{"id": "A", "todos": [{"id": "A-1", "done": "yes"}]}]},
+                      {"tasks": [{"id": "A", "todos": [{"id": "A-1", "status": "완료"}]}]}):
             result = self.cli("update", str(self.page), "--input", "-", stdin=json.dumps(patch))
             self.assertEqual(result.returncode, 2, patch)
             self.assertNotIn("Traceback", result.stderr)

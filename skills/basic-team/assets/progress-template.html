@@ -25,6 +25,7 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 10px}
 svg#edges{position:absolute;inset:0;pointer-events:none;overflow:visible;color:var(--muted)}svg#edges>path{fill:none;stroke:var(--muted);stroke-width:1.5;opacity:.7}
 table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}th{font-size:12px;color:var(--muted)}
 .empty{color:var(--muted);font-size:14px}
+.card small.note{white-space:pre-line}.todos{margin-top:6px;font-size:12px}.todos summary{cursor:pointer;font-weight:600}.todos progress{width:100%;height:6px}.todos b{display:block;margin-top:6px;color:var(--muted);font-size:11px}.todos ul{list-style:none;margin:2px 0;padding:0}.todos li{padding:1px 0}.todos li.done{color:var(--muted)}.todos li details{display:inline}
 @media (max-width:720px){#graph{grid-template-columns:1fr;padding-left:0}svg#edges{display:none}}
 </style>
 </head>
@@ -80,7 +81,26 @@ for (const [key, label] of lanes) {
     const card = el('div', null, 'card'); card.dataset.s = t.status;
     card.append(el('span', t.status, 'badge'), el('strong', t.title || t.id), el('small', [t.id, t.owner].filter(Boolean).join(' · ')));
     if (t.model) { const m = el('span', t.effort ? `${t.model} · ${t.effort}` : t.model, 'model'); m.title = '요청한 모델 · effort'; card.append(m); }
-    if (t.note) card.append(el('small', t.note));
+    if (t.note) card.append(el('small', t.note.split(' · ').join('\n'), 'note'));
+    const todos = t.todos || [];
+    if (todos.length) {
+      const done = todos.filter(d => d.done).length, box = el('details', null, 'todos'), bar = el('progress');
+      bar.max = todos.length; bar.value = done; box.open = t.status === '진행중';
+      box.append(el('summary', `할 일 ${done}/${todos.length}`), bar);
+      const phases = new Map();  // phase groups keep first-appearance order
+      for (const d of todos) { const k = d.phase || ''; if (!phases.has(k)) phases.set(k, []); phases.get(k).push(d); }
+      for (const [phase, list] of phases) {
+        if (phase) box.append(el('b', phase));
+        const ul = el('ul');
+        for (const d of list) {
+          const li = el('li', null, d.done ? 'done' : ''), mark = (d.done ? '☑ ' : '☐ ') + d.text;
+          if (d.detail) { const more = el('details'); more.append(el('summary', mark), el('small', d.detail, 'note')); li.append(more); } else li.textContent = mark;
+          ul.append(li);
+        }
+        box.append(ul);
+      }
+      card.append(box);
+    }
     const running = Date.now() - Date.parse(t.started), took = Date.parse(t.finished) - Date.parse(t.started);
     if (t.status === '진행중' && !isNaN(running)) card.append(el('small', running < 60000 ? '방금 시작' : `진행 ${dur(running)}째`));
     if ((t.status === '완료' || t.status === '중단') && !isNaN(took)) card.append(el('small', `걸린 시간 ${dur(took)}`));
