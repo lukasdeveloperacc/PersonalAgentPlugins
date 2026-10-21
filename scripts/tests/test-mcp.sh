@@ -66,10 +66,13 @@ expect_calls 'claude|mcp|add-json|-s|user|office|{"type":"http","url":"http://12
 grep -q -- "run -d --name lukas-office --restart unless-stopped -p 127.0.0.1:4780:4780 -v taskreporter_office-data:/data -v $SANDBOX/home:$SANDBOX/home:ro" "$DOCKER_LOG"
 grep -q "ghcr.io/lukasdeveloperacc/taskreporter:latest" "$DOCKER_LOG"
 : > "$CALL_LOG"
+# The codex stub writes nothing, so seed the section `codex mcp add` would write.
+mkdir -p "$SANDBOX/home/.codex" && printf '[mcp_servers.office]\nurl = "x"\n' > "$SANDBOX/home/.codex/config.toml"
 run codex enable office
 expect_calls 'codex|mcp|add|office|--url|http://127.0.0.1:4780/mcp|'
+# Codex gets the ask-length timeout that `codex mcp add` cannot set.
+[[ "$(sed -n 2p "$SANDBOX/home/.codex/config.toml")" == "tool_timeout_sec = 325" ]]
 # Still enabled in Codex: disabling in Claude keeps the container.
-mkdir -p "$SANDBOX/home/.codex" && printf '[mcp_servers.office]\nurl = "x"\n' > "$SANDBOX/home/.codex/config.toml"
 : > "$DOCKER_LOG"
 run claude disable office
 ! grep -q "rm -f" "$DOCKER_LOG"

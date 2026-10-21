@@ -27,7 +27,8 @@ enable_claude() {
   local d
   d="$(def "$1")" || return
   # bearer_token_env_var is the Codex spelling of the same token; Claude uses headers.
-  claude mcp add-json -s user "$1" "$(jq -c 'del(.bearer_token_env_var)' <<<"$d")"
+  # tool_timeout_sec is Codex-only; Claude's MCP_TOOL_TIMEOUT is set by plugin.sh.
+  claude mcp add-json -s user "$1" "$(jq -c 'del(.bearer_token_env_var, .tool_timeout_sec)' <<<"$d")"
 }
 
 enable_codex() {
@@ -43,6 +44,13 @@ enable_codex() {
     while IFS= read -r a; do args+=("$a"); done < <(jq -r '.args // [] | .[]' <<<"$d")
   fi
   codex mcp add "$1" "${args[@]}"
+  # `codex mcp add` has no timeout flag and rewrites the section, so add the key under its header.
+  if jq -e '.tool_timeout_sec' <<<"$d" >/dev/null; then
+    local config="${CODEX_HOME:-$HOME/.codex}/config.toml" tmp
+    tmp="$(mktemp)"
+    awk -v h="[mcp_servers.$1]" -v t="tool_timeout_sec = $(jq -r '.tool_timeout_sec' <<<"$d")" \
+      '{ print } $0 == h { print t }' "$config" > "$tmp" && mv "$tmp" "$config"
+  fi
 }
 
 is_enabled() {

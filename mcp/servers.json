@@ -22,7 +22,8 @@
     },
     "office": {
       "type": "http",
-      "url": "http://127.0.0.1:4780/mcp"
+      "url": "http://127.0.0.1:4780/mcp",
+      "tool_timeout_sec": 325
     },
     "notion": {
       "type": "http",
