@@ -11,9 +11,9 @@ Read [team-contract.md](references/team-contract.md) and [reporting.md](referenc
 
 In Office mode, at every checkpoint:
 
-- Answer every pending `checks` entry of the last `report` response before other reporting, through `check_replies` (see the reporting contract); it is easy to miss after a long `state`.
+- Answer every pending `checks` entry of the last `report` response that no reporting lead owns before other reporting, through `check_replies` (see the reporting contract); it is easy to miss after a long `state`.
 - Call `ask` again with each pending `ask_id` until it returns answered or, on newer Office, a `report` response's `asks` lists it answered. Office does not notify you of the user's answer, and a pending result, backgrounded or not, is not one.
-- Put actual model/effort on every working card of a real agent from the team-contract actor check, root-owned cards (PLAN, DONE) with root's own; aggregate cards carry none.
+- Put actual model/effort on every working card of a real agent from the team-contract actor check, root-owned cards (PLAN, DONE) with root's own; a reporting lead fills its team's; aggregate cards carry none.
 
 ## Plan and publish work
 
@@ -28,7 +28,7 @@ In Office mode, at every checkpoint:
 
 Spawn ready leads as peers under main/root; each lead owns its leaves. Allocate worker slots across the whole tree. Start dependent work only when its prerequisite evidence is accepted. Leads agree cross-team contracts and report confirmed decisions upward. Reuse idle owners for follow-ups in their scope.
 
-Verify lead summaries against worker artifacts. A skipped check, partial assertion or unexpected behavior is an open finding, never silently a completed task. Resolve it before review or expose it as blocked. When builds finish, assign one owner the project's required full checks. Save each check's full output to `<artifact-dir>/checks-<revision>.log` and show only the summary; never pipe it through `tail` alone. On any failure, record the failing test names and first error line before rerunning. Do not run full checks while agents are editing or heavy startup is in progress. Where supported, tick the todos each lead result names in `끝낸 TODO` in the next report (`{"id":"FE","todos":[{"id":"FE-2","done":true}]}`), never saved up for the task's completion, and add newly found work as new todos rather than note text. Office check-ins in a `report` response go to that task's owner through its lead; reply with the real state through `check_replies` (see the reporting contract). Publish meaningful changes through the **status changed** checkpoint; do not relay raw worker messages to the user.
+Verify lead summaries against worker artifacts. A skipped check, partial assertion or unexpected behavior is an open finding, never silently a completed task. Resolve it before review or expose it as blocked. When builds finish, assign one owner the project's required full checks. Save each check's full output to `<artifact-dir>/checks-<revision>.log` and show only the summary; never pipe it through `tail` alone. On any failure, record the failing test names and first error line before rerunning. Do not run full checks while agents are editing or heavy startup is in progress. Where supported and the lead did not already report them, tick the todos each lead result names in `끝낸 TODO` in the next report (`{"id":"FE","todos":[{"id":"FE-2","done":true}]}`), never saved up for the task's completion, and add newly found work as new todos rather than note text. Office check-ins in a `report` response go to that task's owner through its lead; reply with the real state through `check_replies` (see the reporting contract). Publish meaningful changes through the **status changed** checkpoint; do not relay raw worker messages to the user.
 
 ## Review and fix
 

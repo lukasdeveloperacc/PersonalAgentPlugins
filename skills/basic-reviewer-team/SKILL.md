@@ -12,7 +12,7 @@ Read the [team contract](../basic-team/references/team-contract.md) for invocati
 ## Entry mode
 
 - **Standalone:** main/root establishes review scope, comparison base, revision and acceptance criteria, reads [reporting](../basic-team/references/reporting.md), then creates the Reviewer lead. Return the review result without starting implementation.
-- **Delegated:** the Reviewer lead receives the frozen scope and worker budget from root, dispatches only the external reviewers below, verifies their evidence and returns the aggregate. Never create another Reviewer team or select/write a reporting backend.
+- **Delegated:** the Reviewer lead receives the frozen scope and worker budget from root, dispatches only the external reviewers below, verifies their evidence and returns the aggregate. Never create another Reviewer team or select a reporting backend; in Office mode report reviewer cards per the reporting contract's Lead reports.
 
 Frontend, Backend, Docs and Plan leads can perform separately assigned domain reviews. They are peers coordinated by root, not additional personas in this team's lineup. Their findings use the common domain-review contract, not Office's external `reviews.reviewer` field.
 
@@ -31,4 +31,4 @@ Frontend, Backend, Docs and Plan leads can perform separately assigned domain re
 
 ## Return
 
-Use the common result contract and each reviewer's JSON verdict from the brief. Notify root promptly when each review starts or finishes. A completed attempt with CHANGES_REQUIRED or BLOCKED is not product approval: report the transition and verdict to root; root closes any execution-only card with its verdict preserved and keeps the aggregate required approval gate open. When no represented reviewer is working, that gate is `대기중`; while other reviewers still work it remains `진행중`. If one card represents both, record the completed attempt's verdict without implying approval. Required approval gates close only with accepted same-revision PASS evidence. A standalone review can finish with CHANGES_REQUIRED or BLOCKED as its result; that does not approve the product change.
+Use the common result contract and each reviewer's JSON verdict from the brief. Notify root promptly when each review starts or finishes. A completed attempt with CHANGES_REQUIRED or BLOCKED is not product approval: report the transition and verdict to root; the Reviewer lead (root, when the lead cannot report to Office) closes any execution-only card with its verdict preserved, and root keeps the aggregate required approval gate open. When no represented reviewer is working, that gate is `대기중`; while other reviewers still work it remains `진행중`. If one card represents both, record the completed attempt's verdict without implying approval. Required approval gates close only with accepted same-revision PASS evidence. A standalone review can finish with CHANGES_REQUIRED or BLOCKED as its result; that does not approve the product change.

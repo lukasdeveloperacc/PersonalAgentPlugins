@@ -46,7 +46,7 @@ Workers report to their own leaders; leaders agree on the contract and root reco
  "decisions":[{"title":"API-1","body":"Frontend·Backend 양측 확인: POST /imports, 422 검증 실패, backend가 API 파일 소유. API task 완료로 BE/FE/DOC 착수; 통합 검증은 BE에서 수행. 영향: FE/DOC, 계약 revision c1"}]}
 ```
 
-Office only, when the schema advertises it: if this response's `checks` holds a pending check for `BE` (30 minutes unchanged), root asks backend-lead and sends the answer beside the next patch as a top-level argument, never inside `patch`: `"check_replies":[{"check_id":"<checks[].id>","answer":"<backend-lead가 확인한 실제 상태·막힘·남은 todo·다음 단계>"}]`. Cards below that work without observed settings (`R1-D`, `R2-D`, the aggregate `R1-X`/`R2-X`) get an immediate check on newer Office; answer it with that reason instead of filling values.
+Office only, when the schema advertises it: if this response's `checks` holds a pending check for `BE` (30 minutes unchanged), root asks backend-lead and sends the answer (a reporting backend-lead answers it itself) beside the next patch as a top-level argument, never inside `patch`: `"check_replies":[{"check_id":"<checks[].id>","answer":"<backend-lead가 확인한 실제 상태·막힘·남은 todo·다음 단계>"}]`. Cards below that work without observed settings (`R1-D`, `R2-D`, the aggregate `R1-X`/`R2-X`) get an immediate check on newer Office; answer it with that reason instead of filling values.
 
 ## 3. Freeze the revision and dispatch independent reviews
 

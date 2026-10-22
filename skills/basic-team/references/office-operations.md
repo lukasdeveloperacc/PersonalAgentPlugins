@@ -1,6 +1,6 @@
 # Office transport and display checks
 
-Use this reference when configured Office tools are missing, actor settings are being published, or a successful report looks wrong. Root remains the only reporter; the reporting contract owns backend selection and recovery limits.
+Use this reference when configured Office tools are missing, actor settings are being published, or a successful report looks wrong. Root owns the run and leads report only their team's cards; the reporting contract owns backend selection and recovery limits.
 
 ## Configured but tools are unavailable
 
@@ -35,7 +35,7 @@ The observed UI takes settings from active task cards. If one actor has several 
 ## Verify the report at the right level
 
 1. Check patch fields: allowed stage prefix, lane/status, exact external reviewer labels, `decisions[].body` and top-level `close_ask_ids`. Reuse examples rather than inventing nested fields.
-2. Publish observed actor model/effort on that actor's existing deliverable card, including leads. Root reads these directly with the team-contract actor check (Claude Code or Codex); only an agent with no record stays unverified, with the missing record named in the note. Never present a requested value as confirmed. A missing value stays unverified, not borrowed from another actor. A zero missing-field count does not establish runtime verification; do not populate fields merely to make that count zero. Newer Office (`f2faf2c`+) turns a missing value on a `진행중` card into a check-in: answer it per the reporting contract with the observed value or the reason it is unknown.
+2. Publish observed actor model/effort on that actor's existing deliverable card, including leads. The writer reads these directly with the team-contract actor check (Claude Code or Codex); only an agent with no record stays unverified, with the missing record named in the note. Never present a requested value as confirmed. A missing value stays unverified, not borrowed from another actor. A zero missing-field count does not establish runtime verification; do not populate fields merely to make that count zero. Newer Office (`f2faf2c`+) turns a missing value on a `진행중` card into a check-in: answer it per the reporting contract with the observed value or the reason it is unknown.
 3. After the first actor publication or an owner/model/payload correction, compare the affected fields using `get_run` (or the report response's `state` when you did not send `include_state: false`; older Office: the read-only `/api/state` with only the exact project/run). Do not dump or save the global snapshot. Routine status patches need no repeated full readback, but read the `checks` in every response.
 4. If claiming visible placement or text, verify the affected Office screen with the supported browser. Stored keys and a successful response do not prove rendering. Report data verification and screen verification separately when a browser is unavailable.
 

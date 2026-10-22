@@ -1,6 +1,6 @@
 # Briefs
 
-Fill placeholders; link files instead of pasting whole logs. Read [team-contract.md](team-contract.md) first. Only root writes Office/HTML and addresses the user.
+Fill placeholders; link files instead of pasting whole logs. Read [team-contract.md](team-contract.md) first. Only root addresses the user and writes Office/HTML, apart from leads' own-team Office reports.
 
 ## Team lead
 
@@ -20,13 +20,16 @@ For Frontend/Backend implementation: read/apply <resolved karpathy SKILL.md>
 and <resolved ponytail SKILL.md>; preserve <active level>. Pass both exact
 paths to each implementation worker and report missing skills to root.
 These habits do not replace independent review.
-Reporting: root <identity> owns <mode/run/page>; do not write there.
+Reporting: root <identity> owns <mode/run/page>. Office: run_id <id>, project_path
+<path>; report your team's cards yourself per the reporting contract's Lead reports.
+HTML: do not write there.
 You are not alone: preserve others' edits; escalate ownership conflicts.
 Dispatch leaves only within your scope and capacity; they report only to you.
 Before dispatching, return to root your worker split: card ID, owner `<team>-<short>`,
-files and 3–8 phase todos in work order per worker plus your own coordination todos. Relay
-each todo completion by ID, only after you verified it, as `끝낸 TODO` below.
-When root forwards an Office check-in for your card or a worker's, ask that
+files and 3–8 phase todos in work order per worker plus your own coordination todos. Tick
+each todo only after you verified it and list it in `끝낸 TODO` below.
+For an Office check-in on your card or a worker's (in your report response or
+forwarded by root), ask that
 agent and answer with its real state, blocker, finished todos and next step. Dispatch at least one worker per implementation task; if capacity is full, wait or
 tell root instead of editing yourself. Only a trivial fix may be `리드 직접 수행`.
 Pass model and effort on every spawn. On Claude Code spawn leaves without `name`.

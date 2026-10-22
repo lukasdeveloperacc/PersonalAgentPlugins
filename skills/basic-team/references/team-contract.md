@@ -8,7 +8,7 @@ Dispatch includes: purpose (`execute`, `review` or `plan`), scope/non-goals, abs
 
 Each return includes status (complete/in-progress/blocked), changed files, actual check commands/results, revision, required/advisory findings, unchecked items, next dependencies and evidence paths. Save detailed worker results in run-specific Markdown artifacts; leads verify and aggregate them, preserving failures and gaps.
 
-Include the actor's canonical ID, parent lead and requested model/effort; root fills observed values from the actor check below. Leads preserve this information for themselves and their leaves in their summary to root; root uses it for reporting without treating the summary card as a worker.
+Include the actor's canonical ID, parent lead and requested model/effort; root, or a reporting lead for its team, fills observed values from the actor check below. Leads preserve this information for themselves and their leaves in their summary to root; root uses it for reporting without treating the summary card as a worker.
 
 | Invocation | Root responsibility | Child responsibility |
 | --- | --- | --- |
@@ -24,9 +24,9 @@ Standalone skills use this contract directly, never recursively invoke basic-tea
 
 Leads may message known peer leads to agree contracts and order within scope. Record a decision ID, participating teams, API/error/file agreement, affected tasks and revision. Both leads acknowledge; root records the final decision. Unresolved disagreements or expanded scope go to root; pause only dependent work.
 
-Workers report only to their own lead: no sibling/peer/user messages or direct Office/HTML writes. Put this boundary in every brief and restrict tools when the host supports it. Without tool enforcement it is an instruction boundary, not security isolation. Leads summarize upward; root alone addresses the user and selects/writes reporting.
+Workers report only to their own lead: no sibling/peer/user messages or direct Office/HTML writes. Put this boundary in every brief and restrict tools when the host supports it. Without tool enforcement it is an instruction boundary, not security isolation. Leads summarize upward; root alone addresses the user, selects reporting and owns the run, while leads write only their team's Office cards (see the reporting contract).
 
-Workers notify their lead when work starts, finishes, fails or waits on a blocker. Leads promptly summarize those transitions and owner/model corrections to root, including their own status, without waiting for all leaves. These are evidence-backed status notifications, not extra reporting writers or periodic polling loops.
+Workers notify their lead when work starts, finishes, fails or waits on a blocker. Leads promptly summarize those transitions and owner/model corrections to root, including their own status, without waiting for all leaves. These are evidence-backed status notifications, not periodic polling loops.
 
 One file has one current owner. A handover requires root's recorded decision and a prerequisite `after` edge; subsequent findings go to the new owner. `after` means dependency, never parent/team membership. Agents are not alone in the worktree: preserve others' edits and escalate ownership conflicts. Under `basic-team`, a lead dispatches at least one worker for each implementation task and keeps to splitting, verifying and summarizing; the user expects to see the team working. A lead edits directly only for a trivial fix such as a single typo, and says `리드 직접 수행` with the reason in its summary. A lead cannot independently approve its own work.
 
@@ -50,7 +50,7 @@ Frontend and Backend leads and implementation workers load and apply the bundled
 
 This skill explicitly requires model and effort on every spawn, including leads: omitting `effort` leaves nothing to report. Leads get main's model and main's effort (checked as below). Preserve the existing specialist policy below, subject to higher-priority host instructions. Pass supported settings as real spawn arguments (Claude `model` alias/`effort`; Codex `model`/`reasoning_effort`, using the host's required fork mode). Do not use Claude `subagent_type: fork`, which ignores overrides. If settings cannot be applied, disclose once and use supported inherited settings; never report an unobserved model as confirmed.
 
-Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. Root checks every agent's actual model and effort itself, root included: both hosts record them locally for every agent at any depth, so "metadata unavailable" is not an answer until this check found no record for that agent. Do not ask agents to report their own settings. On Claude Code each assistant turn records them, and leaves of leads are in the same session:
+Role-fixed host settings can override or reject requested values. Verify the actual actor through supported runtime metadata; a policy table or spawn request is not observation. Root checks every agent's actual model and effort itself, root included (a reporting lead may run the same check for its team): both hosts record them locally for every agent at any depth, so "metadata unavailable" is not an answer until this check found no record for that agent. Do not ask agents to report their own settings. On Claude Code each assistant turn records them, and leaves of leads are in the same session:
 
 ```sh
 d=$(ls -d ~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID)/subagents
