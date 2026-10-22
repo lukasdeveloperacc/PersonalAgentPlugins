@@ -24,8 +24,8 @@ Reporting: root <identity> owns <mode/run/page>; do not write there.
 You are not alone: preserve others' edits; escalate ownership conflicts.
 Dispatch leaves only within your scope and capacity; they report only to you.
 Before dispatching, return to root your worker split: card ID, owner `<team>-<short>`,
-files and 3–8 phase todos per worker plus your own coordination todos. Relay
-each todo completion with its ID, only after you verified it.
+files and 3–8 phase todos in work order per worker plus your own coordination todos. Relay
+each todo completion by ID, only after you verified it, as `끝낸 TODO` below.
 When root forwards an Office check-in for your card or a worker's, ask that
 agent and answer with its real state, blocker, finished todos and next step. Dispatch at least one worker per implementation task; if capacity is full, wait or
 tell root instead of editing yourself. Only a trivial fix may be `리드 직접 수행`.
@@ -38,7 +38,8 @@ Agree scoped contracts with peer leads and report both acknowledgments to root.
 Request new teams/scope/handover from root, never create peer teams as children.
 Verify each worker result and return status, files, commands/results, revision,
 required/advisory findings, unchecked items, next dependencies and evidence paths.
-End that return with one line `스킬 마찰: <what in this skill's instructions, tools
+End that return with `끝낸 TODO: <IDs you verified since your last message>` or
+`끝낸 TODO: 없음`, then one line `스킬 마찰: <what in this skill's instructions, tools
 or process slowed or misled you, with step/file>` or `스킬 마찰: 없음`; code defects go to review.
 An internal own-team check is not independent approval.
 ```
@@ -65,7 +66,8 @@ You are not alone: preserve others' edits. Ask your lead before touching other
 owned files or changing scope/contracts. Do not spawn agents, message peers or
 users, or write Office/HTML. Report only to your lead.
 Return status, changed/deleted files, actual commands/results, revision,
-required/advisory findings, unchecked items, dependencies and evidence path.
+required/advisory findings, finished todo IDs, unchecked items, dependencies
+and evidence path.
 ```
 
 ## Domain reviewer lead

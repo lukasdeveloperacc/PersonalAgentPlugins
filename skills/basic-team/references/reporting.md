@@ -34,13 +34,15 @@ Detect features from the advertised `report` input schema in `tools/list` (or th
 
 ### Check-ins
 
-When the response has `checks`, read every pending one after each `report`; Office repeats it in each response until answered, and delivery is not an answer. A check asks one `진행중` task (`task_id`, owner snapshot) why it has not changed for 30 minutes and/or for its missing model/effort, and lists that task's unfinished todo IDs at creation; reread current todos with `get_run`. For each check:
+When the response has `checks`, read every pending one after each `report`; Office repeats it in each response until answered, and delivery is not an answer. A check asks one `진행중` task (`task_id`, owner snapshot) why it has not changed for 30 minutes, why its status/note changed without a todo tick for 15 minutes (newer Office) and/or for its missing model/effort, and lists that task's unfinished todo IDs at creation; reread current todos with `get_run`. For each check:
 
 1. Ask the task's actual owner through its lead (root reads its own and observed settings directly): current state, blocker, which listed todos are really finished. Do not answer from memory or a guess.
 2. Model/effort: run the team-contract actor check (Claude Code or Codex) and put the observed values on that task in the next `patch`. Only when it finds no record for that agent, name what is missing and leave the fields off; never send requested or default values as observed.
 3. Send `check_replies: [{check_id, answer}]` as a **top-level report argument** with the saved `run_id`, in the same report as the related patch: one or two factual sentences (state, blocker, next step, settings or why unknown). Filling fields alone does not answer it.
 
 Mark todos done only after the work is verified; an answer is a record, not completion or health. Resending the same answer is safe; a different answer to an answered check is rejected (`conflicting answer`), and a check closed by status/owner change or run end cannot be answered (`check is closed`). Any rejected reply rolls back the whole report, patch included: read `get_run`, drop only that reply and resend the patch. An aggregate card with no single agent answers with that reason; a root-owned card answers with root's own settings. Office re-asks a still-missing value only after 30 minutes.
+
+When the `report` output schema lists `open_todos`, each response names the patched tasks that still have unfinished todos, with `next`, the first one. Compare it with the real work: tick todos already verified in the next patch, and fix todo order or text when `next` is not what the owner is actually doing.
 
 Validation errors, `isError`, wrong run IDs and project mismatches require correcting the cause. For connection errors/timeouts, inspect the cause and attempt one supported discovery/reconnection recovery; retry only with new evidence. Preserve stable task IDs, decision titles and review round/reviewer keys. If still unavailable, keep Office mode, explicitly report unsynchronized progress and continue independent work. Do not mark synchronization successful without a successful response.
 
