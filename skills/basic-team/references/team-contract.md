@@ -78,4 +78,6 @@ Until an agent's first turn its rollout shows inherited or no settings, so use i
 | Reviewer | `sonnet` (`claude-sonnet-5-5`), `high` | `gpt-6.1-sol`, `medium` |
 | Planner, Architect, Critic (ralplan) | `opus` (`claude-opus-5-5`), `medium` (`high` for hard plans) | `gpt-6.1-sol`, `medium` (`high` for hard plans) |
 
+Pass the Executor row even when the spawned role's default model differs. A lead raises one implementation worker only when haiku would take too long (`sonnet`) or the task proves hard (`opus`), with effort chosen for its difficulty, and tells root why; on Codex it raises `gpt-6-luna` to `gpt-6.1-sol` the same way. The lead still verifies every worker result.
+
 Apply harness-role settings only through its supported invocation. Use host-valid native IDs, such as `frontend_lead` and `karpathy_agent` on hosts that require underscores; never reuse a rejected spelling. On Claude Code only root-spawned leads get a native name; a lead's leaves, reviewers included, have none, so identify them by the returned agent ID in evidence and resume them with `SendMessage` to that ID. Keep native IDs, canonical agent paths and Office display owners distinct. External reporting labels retain `Karpathy Agent`, `Ponytail Agent`, `Impeccable Agent`, `E2E Agent`. UI YAML describes skills; it does not register native agent types.

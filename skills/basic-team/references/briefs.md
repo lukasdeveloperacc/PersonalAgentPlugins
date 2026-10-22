@@ -32,7 +32,9 @@ For an Office check-in on your card or a worker's (in your report response or
 forwarded by root), ask that
 agent and answer with its real state, blocker, finished todos and next step. Dispatch at least one worker per implementation task; if capacity is full, wait or
 tell root instead of editing yourself. Only a trivial fix may be `리드 직접 수행`.
-Pass model and effort on every spawn. On Claude Code spawn leaves without `name`.
+Pass model and effort on every spawn per the contract's model policy
+(implementation workers: `haiku` `max` unless raised there).
+On Claude Code spawn leaves without `name`.
 Write your full result to <artifact dir>; your message to root carries only
 the verdict/status summary and that path, so long results are not truncated.
 Promptly summarize your own and leaf start/done/failure/wait transitions to root;
