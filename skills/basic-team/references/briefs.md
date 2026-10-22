@@ -38,6 +38,8 @@ Agree scoped contracts with peer leads and report both acknowledgments to root.
 Request new teams/scope/handover from root, never create peer teams as children.
 Verify each worker result and return status, files, commands/results, revision,
 required/advisory findings, unchecked items, next dependencies and evidence paths.
+End that return with one line `스킬 마찰: <what in this skill's instructions, tools
+or process slowed or misled you, with step/file>` or `스킬 마찰: 없음`; code defects go to review.
 An internal own-team check is not independent approval.
 ```
 

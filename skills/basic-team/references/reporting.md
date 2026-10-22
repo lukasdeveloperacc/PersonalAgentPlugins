@@ -52,6 +52,27 @@ Report confirmed actor/task start, completion, failure, waiting and owner/model 
 
 After 30 minutes with no state change, send a summary heartbeat at an execution-loop checkpoint; this is a fallback, not the status-change cadence. Do not create a timer daemon. Long ask calls require an appropriate host timeout (server hold is 100 seconds by default and up to 300 with `ASK_WAIT_MS`; configured Claude MCP_TOOL_TIMEOUT or Codex tool_timeout_sec must exceed it). Diagnose timeout settings without silently modifying global config.
 
+### Retro
+
+Root of the run (basic-team, or a standalone team skill) ends every run with a retro: up to three things in this skill's instructions, tools or process that went wrong, for later skill/MCP fixes. Code defects belong to review findings, not here. Send it only when the `report` schema advertises `retro`, as a **top-level report argument** (like `close_ask_ids`) in the report that ends the run (`완료` or `중단`, including a finish task's auto-close):
+
+`retro: [{skill, skill_version, category, evidence, suggestion?}]`
+
+- `skill`: the entry skill the user invoked (`basic-team`, `thegame-basic-team`, `basic-frontend-team`, …); a composed basic-plan-team stage belongs to its root's run, not a retro of its own.
+- `skill_version`: plugin version plus installed commit, from the snippet below (`0.1.0+bb590a2`, or `0.1.0` when no commit is found; `unknown` when no version is found).
+- `category`: `instruction_gap` (missing/unclear/contradictory instruction), `tool_friction` (MCP/CLI/host tool failed or misled), `user_correction` (the user had to correct the workflow), `review_miss` (a review gate let through what a later step caught), `other`.
+- `evidence`: one line of what happened, naming the step, file or tool. `suggestion`: the change you would make, when you have one.
+
+Collect the leads' `스킬 마찰` lines and root's own observations; merge duplicates and keep the three with the clearest evidence. Without concrete evidence send `retro: []`; never send "went well" or generic advice. Office computes review rounds, check-in and ask latency and whether the run stopped itself; do not restate them.
+
+If a report response's `checks` asks for a missing retro, do not use `check_replies`: answer with `retro` (or `[]`) and `patch: {}` in the next report; this works on an ended run without reopening it. In HTML mode, or when Office is unavailable, write the same array to `<artifact-dir>/retro.json` and name that path in the final summary.
+
+```sh
+p=$(cd "<basic-team-dir>/../.." && pwd); v=$(jq -r .version "$p/.claude-plugin/plugin.json" 2>/dev/null)
+s=$([ "$(git -C "$p" rev-parse --show-toplevel 2>/dev/null)" = "$p" ] && git -C "$p" rev-parse --short=7 HEAD || jq -r --arg p "$p" '.plugins[][] | select(.installPath==$p) | .gitCommitSha[:7]' ~/.claude/plugins/installed_plugins.json 2>/dev/null)
+echo "${v:-unknown}${v:+${s:++$s}}"
+```
+
 ## Public payload
 
 Use only the existing schema; see [progress-example.md](progress-example.md). Team tasks summarize meaningful deliverables, with owners such as `frontend-lead`, `backend-lead`, `docs-lead`, `plan-lead`. A short note contains done/total, current work, blocker, next step and detail-artifact path. Paths are evidence references, not guaranteed clickable Office links. Office does not provide a team/worker tree: do not send `team`, `parent` or `report_to` fields.
