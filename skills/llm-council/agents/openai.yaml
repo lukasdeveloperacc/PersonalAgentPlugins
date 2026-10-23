@@ -1,0 +1,4 @@
+interface:
+  display_name: "LLM Council"
+  short_description: "Review decisions through five independent perspectives"
+  default_prompt: "Use $llm-council to evaluate this decision with five perspectives, anonymous peer review, and a concrete recommendation."

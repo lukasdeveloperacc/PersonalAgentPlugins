@@ -46,6 +46,15 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - Claude: `claude update`, OMC npm 최신 안정 버전 설치, Ponytail·ELI5·Impeccable·OMC 마켓플레이스 및 플러그인 업데이트
   - 마지막에 OMC/OMX setup을 다시 실행. 명령이 실패하면 종료하고 다음 단계는 실행하지 않음
 
+# Decision Skills
+
+| 스킬 | 사용 목적 |
+| --- | --- |
+| `$llm-council` | 중요한 결정을 다섯 관점의 독립 분석·익명 상호 검토로 검증하고 최종 권고 제시 |
+
+예: `$llm-council 지금 자동화를 만들지, 수작업으로 수요를 먼저 검증할지 검토해줘`.
+Claude Code와 Codex의 네이티브 서브에이전트를 사용합니다. 여러 모델을 호출하는 방식은 아니며, 서브에이전트 미지원 시 제약을 밝힙니다.
+
 # Team Skills
 
 팀장은 동급으로 협의하고, 각 팀의 worker는 자기 팀장에게만 보고합니다. 사용자는 팀별 진행·막힘·리뷰 결과를 확인합니다.
