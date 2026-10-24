@@ -14,6 +14,7 @@ In Office mode, at every checkpoint:
 - Answer every pending `checks` entry of the last `report` response that no reporting lead owns before other reporting, through `check_replies` (see the reporting contract); it is easy to miss after a long `state`.
 - Call `ask` again with each pending `ask_id` until it returns answered or, on newer Office, a `report` response's `asks` lists it answered. Office does not notify you of the user's answer, and a pending result, backgrounded or not, is not one.
 - Put actual model/effort on every working card of a real agent from the team-contract actor check, root-owned cards (PLAN, DONE) with root's own; a reporting lead fills its team's; aggregate cards carry none.
+- At first publication and owner correction, check Office placement through [office-operations.md](references/office-operations.md). For added requirements, state existing work's continuation/waiting, planning owner and TODO/dependency/check changes per the reporting contract.
 
 ## Plan and publish work
 

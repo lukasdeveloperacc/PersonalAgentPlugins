@@ -23,6 +23,12 @@ These habits do not replace independent review.
 Reporting: root <identity> owns <mode/run/page>. Office: run_id <id>, project_path
 <path>; report your team's cards yourself per the reporting contract's Lead reports.
 HTML: do not write there.
+Prepare the actor/owner mapping before first publication or owner correction,
+then check the response per office-operations.md's placement check.
+Return `Office 배정: <task ID / owner / matched_by or unverified>`
+and distinguish saved-data verification from browser verification; no routine browser poll.
+For a reused agent's new task, read its actual model/effort again and publish those
+on the new card; a prior card's settings are not inherited automatically.
 You are not alone: preserve others' edits; escalate ownership conflicts.
 Dispatch leaves only within your scope and capacity; they report only to you.
 Before dispatching, return to root your worker split: card ID, owner `<team>-<short>`,
