@@ -1,6 +1,6 @@
 # Team progress example
 
-These seven JSON blocks are consecutive patches for one run. Root publishes meaningful team tasks; worker results stay in the run's evidence files. Read [reporting.md](reporting.md) for backend selection and resume. `after` means a dependency, never a parent/child relationship.
+The first seven JSON blocks are consecutive portable patches for one run; the final example is Office-only. Root publishes meaningful team tasks; worker results stay in the run's evidence files. Read [reporting.md](reporting.md) for backend selection and resume. `after` means a dependency, never a parent/child relationship.
 
 At startup, root selects Office after discovering `report` and `ask` schemas through a supported MCP transport and a successful initial report; actual question/answer execution remains unverified until a real decision. Send each block as the `patch` argument with the same `run_id` and absolute `project_path`. Normal Office runs create no HTML page or full local snapshot. If Office is explicitly absent/disabled at startup, root selects HTML and initializes it once:
 
@@ -46,7 +46,7 @@ Workers report to their own leaders; leaders agree on the contract and root reco
  "decisions":[{"title":"API-1","body":"Frontend·Backend 양측 확인: POST /imports, 422 검증 실패, backend가 API 파일 소유. API task 완료로 BE/FE/DOC 착수; 통합 검증은 BE에서 수행. 영향: FE/DOC, 계약 revision c1"}]}
 ```
 
-Office only, when the schema advertises it: if this response's `checks` holds a pending check for `BE` (30 minutes unchanged), root asks backend-lead and sends the answer (a reporting backend-lead answers it itself) beside the next patch as a top-level argument, never inside `patch`: `"check_replies":[{"check_id":"<checks[].id>","answer":"<backend-lead가 확인한 실제 상태·막힘·남은 todo·다음 단계>"}]`. Cards below that work without observed settings (`R1-D`, `R2-D`, the aggregate `R1-X`/`R2-X`) get an immediate check on newer Office; answer it with that reason instead of filling values.
+Office only, when the schema advertises it: if this response's `checks` holds a pending check for `BE` (30 minutes unchanged), root asks backend-lead and sends the answer (a reporting backend-lead answers it itself) beside the next patch as a top-level argument, never inside `patch`: `"check_replies":[{"check_id":"<checks[].id>","answer":"<backend-lead가 확인한 실제 상태·막힘·남은 todo·다음 단계>"}]`. Actor cards below without observed settings (`R1-D`, `R2-D`) get a missing-settings check; answer with the missing-record reason instead of filling values. The portable patches below omit `kind`; for Office supporting it, add `kind: "aggregate"` to `R1-X`/`R2-X` at first publication as shown in the Office-only example. Without that schema support, omit the field and explain any aggregate missing-settings check as before.
 
 ## 3. Freeze the revision and dispatch independent reviews
 
@@ -134,3 +134,16 @@ Root checks the required acceptance cells and revision, then resolves the earlie
 ```
 
 For a standalone Frontend run, root publishes only its Frontend work and needed review/fix/final tasks; Backend and Docs are not placeholder teams. The same task/review fields and finish gate apply. Root still owns reporting and creates the Frontend and Reviewer leaders as peers.
+
+## Office-only actor and aggregate cards
+
+Only when the advertised `report` input schema includes `patch.tasks[].kind`, use this additional example as `patch` with the saved run ID. Do not send `kind` to an older Office or the HTML helper. The model/effort below illustrate observed root values; replace them with this run's actual observations. Canonical `/root` remains in evidence; `leader` is only its Office display key. The gate has no single executor and no model/effort, while each actual reviewer still has its own actor card and verified settings.
+
+```json
+{"tasks":[
+  {"id":"MOTION","title":"모션 구현","kind":"actor","owner":"leader","model":"gpt-6.1-sol","effort":"medium","lane":"build","status":"진행중","note":"실제 root 설정 직접 확인 · canonical /root는 실행 근거에 보존"},
+  {"id":"REVIEW","title":"필수 리뷰 승인 집계","kind":"aggregate","owner":"","lane":"review","status":"진행중","note":"실제 리뷰 진행 중 · 개별 reviewer 카드의 같은 revision 결과 취합",
+   "todos":[{"id":"REVIEW-1","phase":"검증","text":"필수 reviewer의 같은 revision 근거 확인"}]}]}
+```
+
+The aggregate's model/effort exemption does not skip TODO/staleness checks or approval/completion evidence. If reviewers finish with required findings, put this gate in `대기중` and preserve its unfinished TODO until fixes and same-revision approval are verified.

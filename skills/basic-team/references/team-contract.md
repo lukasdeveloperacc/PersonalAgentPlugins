@@ -68,7 +68,7 @@ done | awk -F'\t' -v r="$root" '$1 == r || $2 in ids { ids[$1]; print $3 "\t" $4
 done
 ```
 
-Until an agent's first turn its rollout shows inherited or no settings, so use it only after that turn; an empty value means no record yet. Run it after spawning and at every reporting checkpoint, and put those values on the cards. A running agent's effort cannot be changed: if it differs from the policy, give that agent's remaining or follow-up work to a new spawn with the right effort instead of resuming it. If an agent has no record, retain the requested values as requested and mark actual values unverified, naming the missing file, instead of searching unrelated sessions.
+Until an agent's first turn its rollout shows inherited or no settings, so use it only after that turn; an empty value means no record yet. Run it after spawning and at every reporting checkpoint, and put those values on the cards. A running agent's effort cannot be changed: if a supported override can correct a policy mismatch, give remaining or follow-up work to a new spawn with that setting instead of resuming it. If the host fixes the role to another value (for example requested `max`, observed `medium`), report requested/observed values and the supported-host limit once, then use the supported setting; do not repeatedly respawn an unchangeable role. If that limit prevents meeting the task's acceptance criteria, escalate only the affected work for a supported role/path. If an agent has no record, retain the requested values as requested and mark actual values unverified, naming the missing file, instead of searching unrelated sessions.
 
 | Role | Claude | Codex |
 | --- | --- | --- |
