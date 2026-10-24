@@ -82,10 +82,10 @@ A completed review attempt with CHANGES_REQUIRED is not approval. If it has its 
   {"id":"R1-X","status":"대기중","note":"r1 검토 수행 종료 · CHANGES_REQUIRED · 3/4 PASS · 승인 gate 미해결 · 대비 수정과 새 revision 검토 대기"},
   {"id":"FIX","title":"경고 사유 대비 수정","owner":"frontend-lead","model":"gpt-6.1-sol","effort":"medium","lane":"fix","status":"진행중","after":["BE","FE","DOC","R1-D"],"note":"R1 근거 전부 수집 · R1-X finding 수정, 승인 gate는 열린 상태 유지 · 근거: docs/inprogress/import-fix-frontend.md"}],
  "reviews":[
-  {"round":1,"reviewer":"Karpathy Agent","verdict":"PASS","note":"r1 · 범위·계약 확인"},
-  {"round":1,"reviewer":"Ponytail Agent","verdict":"PASS","note":"r1 · 권고: 중복 문구 정리"},
-  {"round":1,"reviewer":"Impeccable Agent","verdict":"CHANGES_REQUIRED","note":"r1 · 경고 사유 대비 부족"},
-  {"round":1,"reviewer":"E2E Agent","verdict":"PASS","note":"r1 · required flow 직접 실행"}]}
+  {"round":1,"reviewer":"Karpathy Agent","verdict":"PASS","note":"r1 · 합의한 범위·API 계약 확인, 필수 결함 없음 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"round":1,"reviewer":"Ponytail Agent","verdict":"PASS","note":"r1 · 호출부·실패 처리 확인, 필수 결함 없음 · 권고: 중복 문구 정리 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"round":1,"reviewer":"Impeccable Agent","verdict":"CHANGES_REQUIRED","note":"r1 · 경고 사유 텍스트 대비가 기준 미달: 필수 수정 · 화면 8칸 확인, 그 외 범위 미검증 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"round":1,"reviewer":"E2E Agent","verdict":"PASS","note":"r1 · 필수 API→화면 흐름 직접 실행, 필수 결함 없음 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"}]}
 ```
 
 ## 5. Dispatch another round on the new revision
@@ -120,10 +120,10 @@ Root checks the required acceptance cells and revision, then resolves the earlie
   {"id":"R2-X","status":"완료","note":"r2 · 4/4 PASS · required cell 직접 확인 · 근거: docs/inprogress/import-fix-reviews.md"},
   {"id":"DONE","title":"최종 검사·팀 종료·보고","owner":"leader","model":"gpt-6.1-sol","effort":"medium","lane":"finish","status":"진행중","after":["R2-D","R2-X"]}],
  "reviews":[
-  {"round":2,"reviewer":"Karpathy Agent","verdict":"PASS","note":"r2"},
-  {"round":2,"reviewer":"Ponytail Agent","verdict":"PASS","note":"r2"},
-  {"round":2,"reviewer":"Impeccable Agent","verdict":"PASS","note":"r2 · 대비 기준 충족"},
-  {"round":2,"reviewer":"E2E Agent","verdict":"PASS","note":"r2 · required flow 직접 실행"}]}
+  {"round":2,"reviewer":"Karpathy Agent","verdict":"PASS","note":"r2 · 합의한 API·UI 요구사항과 계약 확인, 필수 결함 없음 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"round":2,"reviewer":"Ponytail Agent","verdict":"PASS","note":"r2 · 호출부·실패 처리 확인, 필수 결함 없음 · R1 중복 문구 권고는 선택 사항 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"round":2,"reviewer":"Impeccable Agent","verdict":"PASS","note":"r2 · 화면 8칸에서 수정된 대비 4.8:1 확인, 필수 결함 없음 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"},
+  {"round":2,"reviewer":"E2E Agent","verdict":"PASS","note":"r2 · 필수 API→화면 흐름과 422 실패 시나리오 직접 실행, 필수 결함 없음 · 범위 밖 미검증 · 근거: docs/inprogress/import-fix-reviews.md"}]}
 ```
 
 ## 7. Finish the same run

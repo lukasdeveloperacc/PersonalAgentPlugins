@@ -31,4 +31,6 @@ Frontend, Backend, Docs and Plan leads can perform separately assigned domain re
 
 ## Return
 
+For each collected external result, give root its round, exact reviewer label, actual verdict and readable result note (revision, rationale/findings, checked/unchecked scope and evidence). Root publishes these in `patch.reviews[]` per the reporting contract; completing a reviewer task or sending only its artifact path is insufficient. Identify uncollected results as `미보고` without inferring PASS from task completion.
+
 Use the common result contract and each reviewer's JSON verdict from the brief. Notify root promptly when each review starts or finishes. A completed attempt with CHANGES_REQUIRED or BLOCKED is not product approval: report the transition and verdict to root; the Reviewer lead (root, when the lead cannot report to Office) closes any execution-only card with its verdict preserved, and root keeps the aggregate required approval gate open. When no represented reviewer is working, that gate is `대기중`; while other reviewers still work it remains `진행중`. If one card represents both, record the completed attempt's verdict without implying approval. Required approval gates close only with accepted same-revision PASS evidence. A standalone review can finish with CHANGES_REQUIRED or BLOCKED as its result; that does not approve the product change.
