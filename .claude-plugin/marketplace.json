@@ -3,7 +3,7 @@
   "owner": {
     "name": "lukas"
   },
-  "allowCrossMarketplaceDependenciesOn": ["ponytail", "claude-community", "impeccable", "omc"],
+  "allowCrossMarketplaceDependenciesOn": ["ponytail", "claude-community", "impeccable", "omc", "obsidian-skills"],
   "plugins": [
     {
       "name": "lukas-plugin",

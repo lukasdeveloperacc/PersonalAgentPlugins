@@ -25,6 +25,9 @@ PLUGIN_ID="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
 ELI5_MARKETPLACE="claude-community"
 ELI5_ID="eli5@$ELI5_MARKETPLACE"
 ELI5_SRC="anthropics/claude-plugins-community"
+OBSIDIAN_ID="obsidian@obsidian-skills"
+OBSIDIAN_SRC="kepano/obsidian-skills"
+OBSIDIAN_SKILLS=(obsidian-markdown obsidian-bases json-canvas obsidian-cli)
 CODEX_DEPS=(
   "ponytail@ponytail DietrichGebert/ponytail"
   "$ELI5_ID $ELI5_SRC"
@@ -34,6 +37,7 @@ CLAUDE_DEPS=(
   "${CODEX_DEPS[@]}"
   "impeccable@impeccable pbakaus/impeccable"
   "oh-my-claudecode@omc Yeachan-Heo/oh-my-claudecode"
+  "$OBSIDIAN_ID $OBSIDIAN_SRC"
 )
 
 setup_claude_harness() {
@@ -118,6 +122,9 @@ install_codex_deps() {
   else
     npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks
   fi
+  # Upstream has no Codex plugin; its documented skills installer refreshes these copies on add.
+  npx -y skills@latest add "https://github.com/$OBSIDIAN_SRC" \
+    --global --agent codex --skill "${OBSIDIAN_SKILLS[@]}" --copy --yes
 }
 
 remove_codex_deps() {
@@ -126,6 +133,7 @@ remove_codex_deps() {
     read -r id src <<<"$dep"
     codex plugin remove "$id" --json
   done
+  npx -y skills@latest remove --global --agent codex --skill "${OBSIDIAN_SKILLS[@]}" --yes
   # impeccable's CLI has no uninstall; this is the folder install_codex_deps created.
   rm -rf "$HOME/.agents/skills/impeccable"
 }
@@ -328,6 +336,12 @@ if [ "$ACTION" = remove ]; then
 fi
 
 if [ "$ACTION" = install ] || [ "$ACTION" = reload ]; then
+  # Checking PATH avoids launching the desktop app or selecting an active vault during setup.
+  if command -v obsidian >/dev/null 2>&1; then
+    echo "Obsidian CLI: found on PATH (app connection not checked)."
+  else
+    echo "Obsidian CLI: not on PATH. Use the official desktop installer (1.12.7+) and enable Settings > General > Command line interface."
+  fi
   # MCP servers stay off by default (Claude Code cannot list plugin servers as disabled), so show what exists.
   echo
   echo "MCP servers (off by default; turn on with the mcp-setup skill, e.g. \"notion MCP 켜줘\"):"

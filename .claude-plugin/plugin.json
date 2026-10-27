@@ -7,6 +7,7 @@
     { "name": "ponytail", "marketplace": "ponytail" },
     { "name": "eli5", "marketplace": "claude-community" },
     { "name": "impeccable", "marketplace": "impeccable" },
-    { "name": "oh-my-claudecode", "marketplace": "omc" }
+    { "name": "oh-my-claudecode", "marketplace": "omc" },
+    { "name": "obsidian", "marketplace": "obsidian-skills" }
   ]
 }

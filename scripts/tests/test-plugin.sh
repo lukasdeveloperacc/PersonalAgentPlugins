@@ -14,6 +14,10 @@ CLAUDE_DEP_ID="impeccable@impeccable"
 CLAUDE_DEP_SRC="pbakaus/impeccable"
 OMC_ID="oh-my-claudecode@omc"
 OMC_SRC="Yeachan-Heo/oh-my-claudecode"
+OBSIDIAN_ID="obsidian@obsidian-skills"
+OBSIDIAN_SRC="kepano/obsidian-skills"
+OBSIDIAN_CODEX_ADD="npx -y skills@latest add https://github.com/$OBSIDIAN_SRC --global --agent codex --skill obsidian-markdown obsidian-bases json-canvas obsidian-cli --copy --yes"
+OBSIDIAN_CODEX_REMOVE="npx -y skills@latest remove --global --agent codex --skill obsidian-markdown obsidian-bases json-canvas obsidian-cli --yes"
 OMX_SETUP="omx setup --scope user --plugin --merge-agents"
 MCP_NAMES=($(jq -r '.mcpServers | keys[]' "$ROOT_DIR/mcp/servers.json"))
 IMPECCABLE_CODEX="npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks"
@@ -39,6 +43,9 @@ for name in codex claude npx; do
   cat > "$STUB_BIN/$name" <<STUB
 #!/usr/bin/env bash
 echo "$name \$*" >> "$CALL_LOG"
+if [[ "$name" == npx && "\$*" == "-y skills@latest "* && "\${SKILLS_FAIL:-0}" == 1 ]]; then
+  exit 19
+fi
 if [[ "$name" == claude && "\$1 \$2" == "plugin uninstall" && -n "\${CLAUDE_REMOVE_ERROR:-}" ]]; then
   echo "{\"failureCode\":\"\$CLAUDE_REMOVE_ERROR\"}"
   exit 1
@@ -120,6 +127,7 @@ expect_calls \
   "codex plugin marketplace add $ELI5_SRC --json" \
   "codex plugin add $ELI5_ID --json" \
   "$IMPECCABLE_CODEX" \
+  "$OBSIDIAN_CODEX_ADD" \
   "npm install -g oh-my-codex@latest" \
   "omx setup --scope user --plugin --clear-merge-agents-policy" \
   "codex plugin list"
@@ -138,6 +146,7 @@ expect_calls \
   "codex plugin remove $PLUGIN_ID --json" \
   "codex plugin remove $DEP_ID --json" \
   "codex plugin remove $ELI5_ID --json" \
+  "$OBSIDIAN_CODEX_REMOVE" \
   "${MCP_NAMES[@]/#/codex mcp remove }" \
   "npm uninstall -g @colbymchenry/codegraph"
 [[ ! -e "$FAKE_HOME/.agents/skills/impeccable" ]]
@@ -164,6 +173,7 @@ expect_calls \
   "codex plugin remove $ELI5_ID --json" \
   "codex plugin add $ELI5_ID --json" \
   "$IMPECCABLE_CODEX --force" \
+  "$OBSIDIAN_CODEX_ADD" \
   "$OMX_SETUP"
 [[ ! -e "$CACHE_DIR" ]]
 [[ "$(cat "$FAKE_HOME/.codex/AGENTS.md")" == 'Keep my user guidance' ]]
@@ -195,6 +205,7 @@ expect_calls \
   "claude plugin marketplace add $ELI5_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
   "claude plugin marketplace add $OMC_SRC" \
+  "claude plugin marketplace add $OBSIDIAN_SRC" \
   "claude plugin marketplace add $ROOT_DIR" \
   "claude plugin install $PLUGIN_ID" \
   "claude plugin marketplace update claude-community" \
@@ -214,6 +225,7 @@ expect_calls \
   "claude plugin uninstall $ELI5_ID --keep-data --json" \
   "claude plugin uninstall $CLAUDE_DEP_ID --keep-data --json" \
   "claude plugin uninstall $OMC_ID --keep-data --json" \
+  "claude plugin uninstall $OBSIDIAN_ID --keep-data --json" \
   "${MCP_NAMES[@]/#/claude mcp remove -s user }" \
   "npm uninstall -g @colbymchenry/codegraph"
 
@@ -264,6 +276,7 @@ expect_calls \
   "claude plugin marketplace add $ELI5_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
   "claude plugin marketplace add $OMC_SRC" \
+  "claude plugin marketplace add $OBSIDIAN_SRC" \
   "claude plugin marketplace update $MARKETPLACE_NAME" \
   "claude plugin uninstall $PLUGIN_ID --keep-data --json" \
   "claude plugin install $PLUGIN_ID" \
@@ -275,16 +288,53 @@ expect_calls \
   "claude plugin update $CLAUDE_DEP_ID --scope user --yes" \
   "claude plugin marketplace update omc" \
   "claude plugin update $OMC_ID --scope user --yes" \
+  "claude plugin marketplace update obsidian-skills" \
+  "claude plugin update $OBSIDIAN_ID --scope user --yes" \
   "omc setup --quiet" \
   "claude plugin details $PLUGIN_ID"
 
-for id in "$DEP_ID" "$ELI5_ID" "$CLAUDE_DEP_ID" "$OMC_ID"; do
+for id in "$DEP_ID" "$ELI5_ID" "$CLAUDE_DEP_ID" "$OMC_ID" "$OBSIDIAN_ID"; do
   jq -e --arg n "${id%@*}" --arg m "${id#*@}" \
     '.dependencies[] | select(.name == $n and .marketplace == $m)' \
     "$ROOT_DIR/.claude-plugin/plugin.json" >/dev/null
   jq -e --arg m "${id#*@}" '.allowCrossMarketplaceDependenciesOn | index($m)' \
     "$ROOT_DIR/.claude-plugin/marketplace.json" >/dev/null
 done
+
+# Obsidian setup checks PATH without launching the app; its absence does not block Markdown use.
+out="$(run codex install)"
+[[ "$out" == *"Obsidian CLI: not on PATH."* ]]
+cat > "$STUB_BIN/obsidian" <<STUB
+#!/usr/bin/env bash
+echo "obsidian \$*" >> "$CALL_LOG"
+exit 99
+STUB
+chmod +x "$STUB_BIN/obsidian"
+for tool in codex claude; do
+  : > "$CALL_LOG"
+  out="$(run "$tool" install)"
+  [[ "$out" == *"Obsidian CLI: found on PATH (app connection not checked)."* ]]
+  ! grep -q '^obsidian ' "$CALL_LOG"
+done
+rm "$STUB_BIN/obsidian"
+
+# Dependency failures must propagate, with no setup or success status after a failed add.
+for action in install reload; do
+  : > "$CALL_LOG"
+  if out="$(SKILLS_FAIL=1 run codex "$action" 2>&1)"; then
+    echo "expected Obsidian skill installation failure for $action" >&2
+    exit 1
+  fi
+  grep -qx "$OBSIDIAN_CODEX_ADD" "$CALL_LOG"
+  ! grep -q '^omx setup' "$CALL_LOG"
+  [[ "$out" != *"Obsidian CLI:"* ]]
+done
+: > "$CALL_LOG"
+if SKILLS_FAIL=1 run codex remove >/dev/null 2>&1; then
+  echo 'expected Obsidian skill removal failure' >&2
+  exit 1
+fi
+! grep -q '^codex mcp remove' "$CALL_LOG"
 
 # A failed CodeGraph install/update must stop before any plugin mutation.
 for tool in codex claude; do
