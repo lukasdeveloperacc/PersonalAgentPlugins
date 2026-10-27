@@ -26,10 +26,11 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
 ```
 
 - `install` : 이 원격저장소의 plugin 설치
+  - macOS + Homebrew 환경에서 Node.js와 Obsidian 앱을 먼저 설치·갱신. Obsidian이 실행 중이면 앱 교체 전에 중단하며 강제 종료하지 않음
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
   - Obsidian: Claude는 `obsidian@obsidian-skills`를 의존 플러그인으로 설치. Codex는 upstream의 `skills` CLI로 Markdown·Bases·Canvas·CLI 스킬 4개를 `~/.agents/skills`에 설치
   - MCP 서버(notion, glitchtip, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
-  - Node.js 22.20 이상과 npm 필요(`skills` CLI 요구사항). npm 전역 설치 경로가 `PATH`에 있어야 합니다.
+  - Homebrew의 `node` 최신 안정 버전을 사용하고 Node.js 22.20 이상인지 검증(`skills` CLI 요구사항). 갱신된 Node 경로를 설치 스크립트와 하위 npm/npx 명령에 적용하며 사용자 셸 설정은 변경하지 않음
   - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. Basic Team용 Agent Teams 환경 변수와 office 결재 대기용 `MCP_TOOL_TIMEOUT=325000`도 Claude 사용자 설정에 설정
   - Codex: `omx`가 없으면 공식 npm 패키지 설치 후 사용자 범위의 plugin 모드로 setup. 사용자 `AGENTS.md`가 있으면 병합하고, 없으면 생성
   - 설치 후 새 세션에서 `omc` 또는 `omx`로 harness 실행 가능
@@ -41,6 +42,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - 별도로 사용할 수 있는 OMC/OMX npm 패키지와 사용자 설정·실행 기록은 보존
   - 이미 없는 플러그인은 건너뛰며, 다른 도구에서 사용 중인 GlitchTip 터널은 유지
 - `reload` : CLI·harness·의존 플러그인 업데이트 후 plugin 재설치
+  - `install`과 동일하게 Node.js·Obsidian 앱을 먼저 갱신. 이 단계가 실패하면 플러그인 갱신을 진행하지 않음
   - CodeGraph npm CLI를 최신 버전으로 갱신. MCP 활성화 상태는 유지
   - Claude Agent Teams·`MCP_TOOL_TIMEOUT` 설정을 다시 적용
   - 업데이트 후 codex, claude 세션 모두 재실행 필요
@@ -64,7 +66,8 @@ Claude Code와 Codex의 네이티브 서브에이전트를 사용합니다. 여�
 
 - Claude: upstream 플러그인 전체를 설치합니다. Markdown·Bases·Canvas·CLI 외에 Defuddle·Knap 스킬도 포함되지만, 해당 실행 도구를 별도로 설치하지는 않습니다.
 - Codex: `npx skills add`의 `--global --agent codex --copy`로 필요한 4개만 설치합니다. 목적지는 `$CODEX_HOME`과 별개인 `~/.agents/skills`이며 `install`·`reload`는 동명의 설치본을 원본으로 갱신하므로 직접 수정하지 않습니다.
-- [공식 Obsidian CLI](https://obsidian.md/help/cli)는 데스크톱 설치 프로그램 1.12.7 이상에서 Settings → General → Command line interface를 켜 등록합니다. 설치 스크립트는 PATH 등록 여부만 알리고 앱 실행·연결은 검사하지 않습니다. CLI가 없어도 일반 Markdown 조회·기록은 가능합니다.
+- [Homebrew](https://docs.brew.sh/Manpage)로 `node`와 [Obsidian cask](https://formulae.brew.sh/cask/obsidian)를 설치·갱신합니다. 수동 설치된 기존 Obsidian 앱도 최신 앱으로 교체해 Homebrew 관리로 전환합니다. 자체 업데이트 앱도 갱신하도록 `--greedy`를 사용하며, `remove`는 Node.js·Obsidian 앱·vault를 보존합니다.
+- [공식 Obsidian CLI](https://obsidian.md/help/cli)는 현재 cask의 바이너리 링크로 PATH에 등록됩니다. 앱에서 필요한 CLI 설정은 Settings → General → Command line interface에서 확인합니다. 설치 스크립트는 PATH 등록 여부만 알리고 앱 실행·연결은 검사하지 않습니다. CLI가 없어도 일반 Markdown 조회·기록은 가능합니다.
 - Obsidian MCP와 자동 기록 훅은 추가하지 않습니다. vault 생성·스키마 변경·Git 커밋·푸시도 설치 과정에서 실행하지 않습니다.
 
 사용 예:

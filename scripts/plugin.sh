@@ -10,13 +10,16 @@ TOOL="${1:-}"
 ACTION="${2:-}"
 [ -n "$TOOL" ] && [ -n "$ACTION" ] || usage
 case "$TOOL" in codex|claude) ;; *) usage ;; esac
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 case "$ACTION" in
-  install|reload) npm install -g @colbymchenry/codegraph@latest ;;
+  install|reload)
+    . "$ROOT_DIR/scripts/desktop-tools.sh"
+    npm install -g @colbymchenry/codegraph@latest
+    ;;
   remove) ;;
   *) usage ;;
 esac
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLUGIN_NAME="$(jq -r '.name' "$ROOT_DIR/.claude-plugin/plugin.json")"
 MARKETPLACE_NAME="$(jq -r '.name' "$ROOT_DIR/.claude-plugin/marketplace.json")"
 PLUGIN_ID="${PLUGIN_NAME}@${MARKETPLACE_NAME}"

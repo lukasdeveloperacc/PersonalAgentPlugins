@@ -29,6 +29,34 @@ FAKE_HOME="$SANDBOX/home"
 INSTALLED="$SANDBOX/installed"
 CALL_LOG="$SANDBOX/calls.log"
 mkdir -p "$STUB_BIN" "$FAKE_HOME"
+DESKTOP_CALLS=(
+  "brew update"
+  "brew list --formula node"
+  "brew upgrade --formula --yes node"
+  "brew --prefix node"
+  "brew list --cask obsidian"
+  "brew upgrade --cask --greedy --no-quit --yes obsidian"
+)
+cat > "$STUB_BIN/brew" <<STUB
+#!/usr/bin/env bash
+echo "brew \$*" >> "$CALL_LOG"
+[[ "\$*" == "\${BREW_FAIL:-}" ]] && exit 20
+[[ "\$*" == "--prefix node" ]] && echo "$SANDBOX"
+exit 0
+STUB
+cat > "$STUB_BIN/uname" <<'STUB'
+#!/usr/bin/env bash
+echo Darwin
+STUB
+cat > "$STUB_BIN/pgrep" <<'STUB'
+#!/usr/bin/env bash
+exit 1
+STUB
+cat > "$STUB_BIN/node" <<'STUB'
+#!/usr/bin/env bash
+exit 0
+STUB
+chmod +x "$STUB_BIN/brew" "$STUB_BIN/uname" "$STUB_BIN/pgrep" "$STUB_BIN/node"
 for name in jq uv; do
   ln -s "$(command -v "$name")" "$STUB_BIN/$name"
 done
@@ -119,6 +147,7 @@ expect_usage_error bogus install
 : > "$CALL_LOG"
 run codex install >/dev/null
 expect_calls \
+  "${DESKTOP_CALLS[@]}" \
   "npm install -g @colbymchenry/codegraph@latest" \
   "codex plugin marketplace add $ROOT_DIR --json" \
   "codex plugin add $PLUGIN_ID --json" \
@@ -158,6 +187,7 @@ echo 'Keep my user guidance' > "$FAKE_HOME/.codex/AGENTS.md"
 mkdir -p "$CACHE_DIR" && touch "$CACHE_DIR/marker"
 run codex reload >/dev/null
 expect_calls \
+  "${DESKTOP_CALLS[@]}" \
   "npm install -g @colbymchenry/codegraph@latest" \
   "codex update" \
   "npm install -g oh-my-codex@latest" \
@@ -200,6 +230,7 @@ denied_count() { jq '[.deniedMcpServers[]? | select(.serverName == "claude.ai No
 mkdir -p "$FAKE_HOME/.claude" && echo '{"model":"keep"}' > "$FAKE_HOME/.claude/settings.json"
 run claude install >/dev/null
 expect_calls \
+  "${DESKTOP_CALLS[@]}" \
   "npm install -g @colbymchenry/codegraph@latest" \
   "claude plugin marketplace add $DEP_SRC" \
   "claude plugin marketplace add $ELI5_SRC" \
@@ -269,6 +300,7 @@ jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$FAKE_HOME/.claude/set
 : > "$CALL_LOG"
 run claude reload >/dev/null
 expect_calls \
+  "${DESKTOP_CALLS[@]}" \
   "npm install -g @colbymchenry/codegraph@latest" \
   "claude update" \
   "npm install -g oh-my-claude-sisyphus@latest" \
@@ -344,7 +376,19 @@ for tool in codex claude; do
       echo "expected CodeGraph installation failure for $tool $action" >&2
       exit 1
     fi
-    expect_calls "npm install -g @colbymchenry/codegraph@latest"
+    expect_calls "${DESKTOP_CALLS[@]}" "npm install -g @colbymchenry/codegraph@latest"
+  done
+done
+
+# Desktop setup failures stop both hosts before npm or plugin mutation.
+for tool in codex claude; do
+  for action in install reload; do
+    : > "$CALL_LOG"
+    if BREW_FAIL=update run "$tool" "$action" >/dev/null 2>&1; then
+      echo "expected desktop setup failure for $tool $action" >&2
+      exit 1
+    fi
+    expect_calls "brew update"
   done
 done
 
