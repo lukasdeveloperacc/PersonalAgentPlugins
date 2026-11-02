@@ -26,7 +26,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
 ```
 
 - `install` : 이 원격저장소의 plugin 설치
-  - macOS + Homebrew 환경에서 Node.js와 Obsidian 앱을 먼저 설치·갱신. Obsidian이 실행 중이면 앱 교체 전에 중단하며 강제 종료하지 않음
+  - macOS + Homebrew 환경에서 Node.js와 Obsidian 앱을 먼저 설치·갱신. 실행 중인 Obsidian은 정상 종료를 요청하고 갱신 후 다시 실행하며, 정상 종료가 되지 않으면 앱 교체를 중단
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
   - Obsidian: Claude는 `obsidian@obsidian-skills`를 의존 플러그인으로 설치. Codex는 upstream의 `skills` CLI로 Markdown·Bases·Canvas·CLI 스킬 4개를 `~/.agents/skills`에 설치
   - MCP 서버(notion, glitchtip, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
