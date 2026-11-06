@@ -17,6 +17,7 @@ shift 2
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CATALOG="$ROOT_DIR/mcp/servers.json"
 FORWARD="$ROOT_DIR/scripts/glitchtip-forward.sh"
+RADAR_FORWARD="$ROOT_DIR/scripts/radar-forward.sh"
 OFFICE="$ROOT_DIR/scripts/office-docker.sh"
 
 def() {
@@ -80,6 +81,7 @@ case "$ACTION" in
     for n in "$@"; do
       "enable_$TOOL" "$n"
       if [ "$n" = glitchtip ]; then "$FORWARD" start; fi
+      if [ "$n" = radar ]; then "$RADAR_FORWARD" start; fi
       if [ "$n" = office ]; then "$OFFICE" start; fi
     done
     ;;
@@ -89,6 +91,7 @@ case "$ACTION" in
       disable "$n" >/dev/null 2>&1 || true
       # Keep the tunnel while the other tool still uses it.
       if [ "$n" = glitchtip ] && ! "$FORWARD" enabled; then "$FORWARD" stop; fi
+      if [ "$n" = radar ] && ! "$RADAR_FORWARD" enabled; then "$RADAR_FORWARD" stop; fi
       if [ "$n" = office ] && ! "$OFFICE" enabled; then "$OFFICE" stop; fi
     done
     ;;

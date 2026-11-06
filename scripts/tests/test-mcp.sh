@@ -36,6 +36,29 @@ expect_calls 'claude|mcp|add-json|-s|user|glitchtip|{"type":"http","url":"http:/
 run codex enable glitchtip
 expect_calls 'codex|mcp|add|glitchtip|--url|http://localhost:38088/mcp|--bearer-token-env-var|GLITCHTIP_MCP_TOKEN|'
 
+# Radar registers only the read-only endpoint, without credentials.
+: > "$CALL_LOG"
+run claude enable radar
+expect_calls 'claude|mcp|add-json|-s|user|radar|{"type":"http","url":"http://localhost:39280/mcp-readonly"}|'
+: > "$CALL_LOG"
+run codex enable radar
+expect_calls 'codex|mcp|add|radar|--url|http://localhost:39280/mcp-readonly|'
+run claude list | grep -x 'radar off' >/dev/null
+echo '{"mcpServers":{"radar":{}}}' > "$SANDBOX/home/.claude.json"
+run claude list | grep -x 'radar on' >/dev/null
+mkdir -p "$SANDBOX/home/.codex" "$SANDBOX/state/lukas-plugin"
+printf '[mcp_servers.radar]\nurl = "x"\n' > "$SANDBOX/home/.codex/config.toml"
+sleep 300 & radar_pid=$!
+echo "$radar_pid" > "$SANDBOX/state/lukas-plugin/radar-forward.pid"
+rm "$SANDBOX/home/.claude.json"
+run claude disable radar
+kill -0 "$radar_pid"
+rm "$SANDBOX/home/.codex/config.toml"
+run codex disable radar
+wait "$radar_pid" 2>/dev/null || true
+[[ ! -e "$SANDBOX/state/lukas-plugin/radar-forward.pid" ]]
+run codex list | grep -x 'radar off' >/dev/null
+
 # stdio server: literal env kept, "${VAR}" pass-through dropped for Codex.
 : > "$CALL_LOG"
 run codex enable aws-eks

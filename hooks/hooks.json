@@ -7,6 +7,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/scripts/glitchtip-forward.sh\" start",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/scripts/radar-forward.sh\" start",
+            "timeout": 5
           }
         ]
       }

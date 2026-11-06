@@ -29,7 +29,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - macOS + Homebrew 환경에서 Node.js와 Obsidian 앱을 먼저 설치·갱신. 실행 중인 Obsidian은 정상 종료를 요청하고 갱신 후 다시 실행하며, 정상 종료가 되지 않으면 앱 교체를 중단
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
   - Obsidian: Claude는 `obsidian@obsidian-skills`를 의존 플러그인으로 설치. Codex는 upstream의 `skills` CLI로 Markdown·Bases·Canvas·CLI 스킬 4개를 `~/.agents/skills`에 설치
-  - MCP 서버(notion, glitchtip, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
+  - MCP 서버(notion, glitchtip, radar, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
   - Homebrew의 `node` 최신 안정 버전을 사용하고 Node.js 22.20 이상인지 검증(`skills` CLI 요구사항). 갱신된 Node 경로를 설치 스크립트와 하위 npm/npx 명령에 적용하며 사용자 셸 설정은 변경하지 않음
   - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. Basic Team용 Agent Teams 환경 변수와 office 결재 대기용 `MCP_TOOL_TIMEOUT=325000`도 Claude 사용자 설정에 설정
   - Codex: `omx`가 없으면 공식 npm 패키지 설치 후 사용자 범위의 plugin 모드로 setup. 사용자 `AGENTS.md`가 있으면 병합하고, 없으면 생성
@@ -40,7 +40,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - 해당 도구의 Obsidian 의존 플러그인/스킬을 제거. 다른 에이전트도 쓰는 Codex 공유 스킬은 `skills` CLI가 보존할 수 있음. Obsidian 앱과 vault는 보존
   - Agent Teams·`MCP_TOOL_TIMEOUT` 값은 설치 스크립트가 설정했고 값이 그대로인 경우에만 이전 값으로 복구
   - 별도로 사용할 수 있는 OMC/OMX npm 패키지와 사용자 설정·실행 기록은 보존
-  - 이미 없는 플러그인은 건너뛰며, 다른 도구에서 사용 중인 GlitchTip 터널은 유지
+  - 이미 없는 플러그인은 건너뛰며, 다른 도구에서 사용 중인 GlitchTip 및 Radar 터널은 유지
 - `reload` : CLI·harness·의존 플러그인 업데이트 후 plugin 재설치
   - `install`과 동일하게 Node.js·Obsidian 앱을 먼저 갱신. 이 단계가 실패하면 플러그인 갱신을 진행하지 않음
   - CodeGraph npm CLI를 최신 버전으로 갱신. MCP 활성화 상태는 유지
