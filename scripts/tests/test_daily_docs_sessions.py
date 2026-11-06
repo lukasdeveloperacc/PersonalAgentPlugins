@@ -261,6 +261,49 @@ class SessionPipelineTests(unittest.TestCase):
         self.assertTrue((self.vault / 'Daily/2026-10-29.md').exists())
         self.assertFalse(json.loads((self.day / 'prepare-status.json').read_text())['complete'])
 
+    def test_busy_launch_starts_visible_collection_instead_of_duplicate_model(self):
+        import subprocess
+        receipt = subprocess.CompletedProcess([], 0, stdout=json.dumps({'ok': True, 'terminalId': 'collector'}))
+        with sessions.run_lock(self.state), \
+                patch.object(sessions.subprocess, 'run', return_value=receipt) as spawn:
+            result = sessions.launch(self.config)
+        command = spawn.call_args.args[0]
+        self.assertEqual(command[:3], ['/usr/local/bin/orca', 'terminal', 'create'])
+        text = command[command.index('--command') + 1]
+        self.assertIn(' prepare ', text)
+        self.assertIn('--new-only', text)
+        self.assertNotIn(' run ', text)
+        self.assertTrue(result['already_running'])
+        self.assertTrue(result['collection_started'])
+        self.assertFalse(result['summary_complete'])
+
+    def test_prepare_cli_works_while_model_worker_is_locked(self):
+        with sessions.run_lock(self.state), \
+                patch.object(sys, 'argv', ['daily_docs_sessions.py', 'prepare', '--config', str(self.config), '--new-only']), \
+                patch.object(sessions, 'prepare', return_value=[]):
+            self.assertEqual(sessions.main(), 0)
+        self.assertFalse((self.state / 'pipeline_status.json').exists())
+        self.assertTrue((self.state / 'collection_status.json').exists())
+
+    def test_prepare_new_days_preserves_active_day_and_worker_status(self):
+        latest = self.state / '2026-10-29'
+        latest.mkdir()
+        manifest = dict(self.manifest, date='2026-10-29', transcripts=[])
+        worker = {'stage': 'summary', 'date': '2026-10-28', 'pid': 123}
+        sessions.private_json(self.state / 'pipeline_status.json', worker)
+        def collect(date, *args, **kwargs):
+            path = self.state / date / 'manifest.json'
+            path.write_text(json.dumps(manifest))
+            return path
+        with patch.object(sessions, 'collect', side_effect=collect) as collector:
+            dates = sessions.prepare(self.config, now=dt.datetime(2026, 10, 30, tzinfo=sessions.KST), new_only=True)
+        self.assertEqual(dates, ['2026-10-29'])
+        self.assertEqual([call.args[0] for call in collector.call_args_list], ['2026-10-29'])
+        self.assertFalse((self.vault / 'Daily/2026-10-28.md').exists())
+        self.assertTrue((self.vault / 'Daily/2026-10-29.md').exists())
+        self.assertEqual(json.loads((self.state / 'pipeline_status.json').read_text()), worker)
+        self.assertTrue(json.loads((latest / 'prepare-status.json').read_text())['complete'])
+
     def test_run_conflict_does_not_block_next_day_processing(self):
         calls = []
         def process(config, date, session_id=None):
