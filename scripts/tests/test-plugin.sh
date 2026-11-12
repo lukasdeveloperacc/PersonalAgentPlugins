@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Keep the adapter checks offline even when the test replaces HOME.
+UV_PYTHON="$(uv python find --offline "${UV_PYTHON:->=3.11}")" || {
+  echo 'test-plugin.sh requires an installed Python >=3.11 (or UV_PYTHON); downloads are disabled.' >&2
+  exit 1
+}
+export UV_PYTHON UV_OFFLINE=1
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT="$ROOT_DIR/scripts/plugin.sh"
 PLUGIN_NAME="$(jq -r '.name' "$ROOT_DIR/.claude-plugin/plugin.json")"
@@ -166,6 +173,7 @@ expect_calls \
 [[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:user_prompt_submit")" == 1 ]]
 [[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:session_end")" == 1 ]]
 [[ "$(trust_count "$DEP_ID:hooks/codex-hooks.json:session_start")" == 1 ]]
+[[ -f "$FAKE_HOME/.codex/agents/basic_backend.toml" ]]
 grep -qE '^trusted_hash = "sha256:[0-9a-f]{64}"$' "$FAKE_HOME/.codex/config.toml"
 
 : > "$CALL_LOG"
@@ -179,6 +187,7 @@ expect_calls \
   "${MCP_NAMES[@]/#/codex mcp remove }" \
   "npm uninstall -g @colbymchenry/codegraph"
 [[ ! -e "$FAKE_HOME/.agents/skills/impeccable" ]]
+[[ ! -e "$FAKE_HOME/.codex/agents/basic_backend.toml" ]]
 [[ -x "$STUB_BIN/omx" ]]
 
 : > "$CALL_LOG"
@@ -224,6 +233,7 @@ mkdir -p "$CACHE_DIR" "$CUSTOM_CACHE"
 touch "$CACHE_DIR/keep" "$CUSTOM_CACHE/stale"
 TEST_CODEX_HOME="$CUSTOM_CODEX_HOME" run codex reload >/dev/null
 [[ -f "$CACHE_DIR/keep" && ! -e "$CUSTOM_CACHE" ]]
+[[ -f "$CUSTOM_CODEX_HOME/agents/basic_backend.toml" ]]
 
 : > "$CALL_LOG"
 denied_count() { jq '[.deniedMcpServers[]? | select(.serverName == "claude.ai Notion")] | length' "$FAKE_HOME/.claude/settings.json"; }
@@ -247,7 +257,7 @@ expect_calls \
 
 : > "$CALL_LOG"
 [[ "$(denied_count)" == 1 ]]
-jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1" and .env.MCP_TOOL_TIMEOUT == "325000"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not) and .env.MCP_TOOL_TIMEOUT == "325000"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 
 run claude remove >/dev/null
 expect_calls \
@@ -268,7 +278,7 @@ jq -e '.model == "keep" and (has("deniedMcpServers") | not) and ((.env // {}) | 
 # Restore a pre-existing value on removal, but do not claim a setting that was already enabled.
 echo '{"model":"keep","env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"0","MCP_TOOL_TIMEOUT":"60000","OTHER":"keep"}}' > "$FAKE_HOME/.claude/settings.json"
 run claude install >/dev/null
-jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 run claude remove >/dev/null
 jq -e '.model == "keep" and .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0" and .env.MCP_TOOL_TIMEOUT == "60000" and .env.OTHER == "keep"' "$FAKE_HOME/.claude/settings.json" >/dev/null
 
@@ -287,16 +297,62 @@ jq -e '.model == "keep" and .env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "0"' "$
 
 # Honor Claude's configured settings directory, including creating it when absent.
 run_with_custom_claude_config claude install >/dev/null
-jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
+jq -e '((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not)' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
 run_with_custom_claude_config claude remove >/dev/null
 jq -e '((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not)' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
 
-echo '{"model":"keep"}' > "$FAKE_HOME/.claude/settings.json"
+# Pathless legacy records cannot prove which configuration they belong to.
+legacy_state="$FAKE_HOME/.local/state/lukas-plugin"
+mkdir -p "$legacy_state"
+echo '{"managed":true,"had_value":true,"previous":"0"}' > "$legacy_state/agent-teams.json"
+echo '{"managed":true,"had_value":true,"previous":"60000"}' > "$legacy_state/mcp-tool-timeout.json"
+cp "$legacy_state/agent-teams.json" "$SANDBOX/legacy-teams.json"
+cp "$legacy_state/mcp-tool-timeout.json" "$SANDBOX/legacy-timeout.json"
+echo '{"env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1","MCP_TOOL_TIMEOUT":"325000"}}' > "$FAKE_HOME/.claude/settings.json"
+cp "$FAKE_HOME/.claude/settings.json" "$SANDBOX/custom-claude-config/settings.json"
+run_with_custom_claude_config claude install >/dev/null 2>"$SANDBOX/legacy-warning"
+run_with_custom_claude_config claude remove >/dev/null 2>>"$SANDBOX/legacy-warning"
+run claude install >/dev/null 2>>"$SANDBOX/legacy-warning"
+run claude remove >/dev/null 2>>"$SANDBOX/legacy-warning"
+grep -q 'state without matching settings path' "$SANDBOX/legacy-warning"
+for settings in "$FAKE_HOME/.claude/settings.json" "$SANDBOX/custom-claude-config/settings.json"; do
+  jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1" and .env.MCP_TOOL_TIMEOUT == "325000"' "$settings" >/dev/null
+done
+cmp "$legacy_state/agent-teams.json" "$SANDBOX/legacy-teams.json"
+cmp "$legacy_state/mcp-tool-timeout.json" "$SANDBOX/legacy-timeout.json"
+rm "$legacy_state/agent-teams.json" "$legacy_state/mcp-tool-timeout.json"
+
+# Each settings destination restores only its own timeout value.
+echo '{"env":{"MCP_TOOL_TIMEOUT":"111"}}' > "$FAKE_HOME/.claude/settings.json"
+echo '{"env":{"MCP_TOOL_TIMEOUT":"222"}}' > "$SANDBOX/custom-claude-config/settings.json"
+run claude install >/dev/null
+run_with_custom_claude_config claude install >/dev/null
+for settings in "$FAKE_HOME/.claude/settings.json" "$SANDBOX/custom-claude-config/settings.json"; do
+  state_dir="$legacy_state/claude-$(printf '%s' "$settings" | shasum -a 256 | cut -d ' ' -f 1)"
+  jq -e --arg path "$settings" '.settings_path == $path' "$state_dir/mcp-tool-timeout.json" >/dev/null
+done
+run_with_custom_claude_config claude remove >/dev/null
+jq -e '.env.MCP_TOOL_TIMEOUT == "222"' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
+jq -e '.env.MCP_TOOL_TIMEOUT == "325000"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+run claude remove >/dev/null
+jq -e '.env.MCP_TOOL_TIMEOUT == "111"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+
+# A path-bound legacy record is restored only when its own configuration is used.
+echo '{"model":"keep","env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}' > "$FAKE_HOME/.claude/settings.json"
+echo '{"env":{"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS":"1"}}' > "$SANDBOX/custom-claude-config/settings.json"
+mkdir -p "$FAKE_HOME/.local/state/lukas-plugin"
+jq -n --arg path "$FAKE_HOME/.claude/settings.json" \
+  '{managed:true,settings_path:$path,had_value:false,previous:null}' > "$legacy_state/agent-teams.json"
+run_with_custom_claude_config claude install >/dev/null 2>"$SANDBOX/legacy-warning"
+run_with_custom_claude_config claude remove >/dev/null 2>>"$SANDBOX/legacy-warning"
+jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$SANDBOX/custom-claude-config/settings.json" >/dev/null
+[[ -f "$legacy_state/agent-teams.json" ]]
 
 run claude reload >/dev/null
 run claude reload >/dev/null
 [[ "$(denied_count)" == 1 ]]
-jq -e '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS == "1"' "$FAKE_HOME/.claude/settings.json" >/dev/null
+jq -e '((.env // {}) | has("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS") | not)' "$FAKE_HOME/.claude/settings.json" >/dev/null
+[[ ! -f "$legacy_state/agent-teams.json" ]]
 : > "$CALL_LOG"
 run claude reload >/dev/null
 expect_calls \

@@ -167,9 +167,11 @@ remove_claude_deps() {
 DENIED_CONNECTOR="claude.ai Notion"
 CLAUDE_SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 # Each managed env key keeps its pre-install value in a state file so remove can restore it.
-CLAUDE_ENV_STATE_DIR="$HOME/.local/state/lukas-plugin"
+case "$CLAUDE_SETTINGS" in /*) ;; *) CLAUDE_SETTINGS="$PWD/$CLAUDE_SETTINGS" ;; esac
+CLAUDE_LEGACY_ENV_DIR="$HOME/.local/state/lukas-plugin"
+CLAUDE_ENV_STATE_DIR="$CLAUDE_LEGACY_ENV_DIR/claude-$(printf '%s' "$CLAUDE_SETTINGS" | shasum -a 256 | cut -d ' ' -f 1)"
 # Office's ask holds 100s by default and up to 300s (ASK_WAIT_MS); Claude's MCP tool timeout must outlast it.
-CLAUDE_ENV=("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1 agent-teams.json" "MCP_TOOL_TIMEOUT 325000 mcp-tool-timeout.json")
+CLAUDE_ENV=("MCP_TOOL_TIMEOUT 325000 mcp-tool-timeout.json")
 
 edit_claude_settings() {
   local filter="$1" tmp
@@ -185,8 +187,8 @@ allow_claude_connector() { edit_claude_settings '.deniedMcpServers = ((.deniedMc
 enable_claude_env() {
   local key="$1" value="$2" state="$CLAUDE_ENV_STATE_DIR/$3" had_value=false previous=null tmp
   if [ -f "$state" ] && ! jq -e \
-    '.managed == true and (.had_value | type == "boolean") and has("previous")' \
-    "$state" >/dev/null; then
+    '.managed == true and (.had_value | type == "boolean") and has("previous") and .settings_path == $path' \
+    --arg path "$CLAUDE_SETTINGS" "$state" >/dev/null; then
     echo "Cannot configure Claude $key: invalid state file $state" >&2
     return 1
   fi
@@ -207,8 +209,8 @@ enable_claude_env() {
     fi
     mkdir -p "$CLAUDE_ENV_STATE_DIR"
     tmp="$(mktemp "$state.XXXXXX")"
-    jq -n --argjson had_value "$had_value" --argjson previous "$previous" \
-      '{managed: true, had_value: $had_value, previous: $previous}' > "$tmp"
+    jq -n --argjson had_value "$had_value" --argjson previous "$previous" --arg path "$CLAUDE_SETTINGS" \
+      '{managed: true, settings_path: $path, had_value: $had_value, previous: $previous}' > "$tmp"
     mv "$tmp" "$state"
   fi
 
@@ -216,13 +218,18 @@ enable_claude_env() {
 }
 
 restore_claude_env() {
-  local key="$1" state="$CLAUDE_ENV_STATE_DIR/$3" had_value previous
+  local key="$1" state="${4:-$CLAUDE_ENV_STATE_DIR/$3}" had_value previous
   [ -f "$state" ] || return 0
   jq -e '.managed == true and (.had_value | type == "boolean") and has("previous")' \
     "$state" >/dev/null || {
     echo "Cannot restore Claude $key: invalid state file $state" >&2
     return 1
   }
+
+  if ! jq -e --arg path "$CLAUDE_SETTINGS" '.settings_path == $path' "$state" >/dev/null; then
+    echo "Preserved Claude $key state without matching settings path: $state" >&2
+    return 0
+  fi
 
   if [ -f "$CLAUDE_SETTINGS" ] && jq -e --arg key "$key" \
     '(.env | type) == "object" and .env[$key] == $value' --arg value "$2" "$CLAUDE_SETTINGS" >/dev/null; then
@@ -239,8 +246,13 @@ restore_claude_env() {
   rm "$state"
 }
 
-enable_claude_envs() { local entry; for entry in "${CLAUDE_ENV[@]}"; do enable_claude_env $entry; done; }
-restore_claude_envs() { local entry; for entry in "${CLAUDE_ENV[@]}"; do restore_claude_env $entry; done; }
+restore_legacy_claude_envs() {
+  restore_claude_env CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 1 agent-teams.json "$CLAUDE_LEGACY_ENV_DIR/agent-teams.json"
+  restore_claude_env MCP_TOOL_TIMEOUT 325000 mcp-tool-timeout.json "$CLAUDE_LEGACY_ENV_DIR/mcp-tool-timeout.json"
+}
+
+enable_claude_envs() { restore_legacy_claude_envs; local entry; for entry in "${CLAUDE_ENV[@]}"; do enable_claude_env $entry; done; }
+restore_claude_envs() { restore_legacy_claude_envs; local entry; for entry in "${CLAUDE_ENV[@]}"; do restore_claude_env $entry; done; }
 
 # Claude installs dependencies itself, but only from marketplaces it already knows.
 add_claude_dep_marketplaces() {
@@ -269,9 +281,11 @@ case "$TOOL" in
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps
         setup_codex_harness
+        uv run --script "$ROOT_DIR/scripts/codex-agents.py" install
         codex plugin list | grep "$PLUGIN_NAME"
         ;;
       remove)
+        uv run --script "$ROOT_DIR/scripts/codex-agents.py" remove
         codex plugin remove "$PLUGIN_ID" --json
         remove_codex_deps
         "$ROOT_DIR/skills/mcp-setup/scripts/mcp.sh" codex disable
@@ -286,6 +300,7 @@ case "$TOOL" in
         trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps --refresh
         setup_codex_harness
+        uv run --script "$ROOT_DIR/scripts/codex-agents.py" install
         ;;
       *) usage ;;
     esac

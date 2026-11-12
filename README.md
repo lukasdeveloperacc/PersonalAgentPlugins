@@ -31,20 +31,20 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - Obsidian: Claude는 `obsidian@obsidian-skills`를 의존 플러그인으로 설치. Codex는 upstream의 `skills` CLI로 Markdown·Bases·Canvas·CLI 스킬 4개를 `~/.agents/skills`에 설치
   - MCP 서버(notion, glitchtip, radar, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
   - Homebrew의 `node` 최신 안정 버전을 사용하고 Node.js 22.20 이상인지 검증(`skills` CLI 요구사항). 갱신된 Node 경로를 설치 스크립트와 하위 npm/npx 명령에 적용하며 사용자 셸 설정은 변경하지 않음
-  - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. Basic Team용 Agent Teams 환경 변수와 office 결재 대기용 `MCP_TOOL_TIMEOUT=325000`도 Claude 사용자 설정에 설정
+  - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. office 결재 대기용 `MCP_TOOL_TIMEOUT=325000`도 Claude 사용자 설정에 설정
   - Codex: `omx`가 없으면 공식 npm 패키지 설치 후 사용자 범위의 plugin 모드로 setup. 사용자 `AGENTS.md`가 있으면 병합하고, 없으면 생성
   - 설치 후 새 세션에서 `omc` 또는 `omx`로 harness 실행 가능
   - Claude/Codex의 마켓플레이스 명령으로 플러그인만 설치하면 npm 설치·setup은 실행되지 않으므로 위 스크립트를 사용해야 합니다.
 - `remove` : plugin 제거
   - CodeGraph MCP 등록을 제거하고 npm CLI를 삭제. 다른 도구에서 CodeGraph MCP가 켜져 있으면 CLI는 유지. 프로젝트의 `.codegraph/` 인덱스는 보존
   - 해당 도구의 Obsidian 의존 플러그인/스킬을 제거. 다른 에이전트도 쓰는 Codex 공유 스킬은 `skills` CLI가 보존할 수 있음. Obsidian 앱과 vault는 보존
-  - Agent Teams·`MCP_TOOL_TIMEOUT` 값은 설치 스크립트가 설정했고 값이 그대로인 경우에만 이전 값으로 복구
+  - Agent Teams·`MCP_TOOL_TIMEOUT` 값은 설치 스크립트가 설정한 경로와 현재 값이 확인되는 경우에만 이전 값으로 복구. 대상 경로가 없는 옛 기록은 설정과 함께 보존하고 진단 메시지를 출력
   - 별도로 사용할 수 있는 OMC/OMX npm 패키지와 사용자 설정·실행 기록은 보존
   - 이미 없는 플러그인은 건너뛰며, 다른 도구에서 사용 중인 GlitchTip 및 Radar 터널은 유지
 - `reload` : CLI·harness·의존 플러그인 업데이트 후 plugin 재설치
   - `install`과 동일하게 Node.js·Obsidian 앱을 먼저 갱신. 이 단계가 실패하면 플러그인 갱신을 진행하지 않음
   - CodeGraph npm CLI를 최신 버전으로 갱신. MCP 활성화 상태는 유지
-  - Claude Agent Teams·`MCP_TOOL_TIMEOUT` 설정을 다시 적용
+  - Claude `MCP_TOOL_TIMEOUT` 설정을 다시 적용하고, 대상 경로가 확인되는 과거 Agent Teams 관리 값만 사용자 변경을 보존하며 복구
   - 업데이트 후 codex, claude 세션 모두 재실행 필요
   - Codex: `codex update`, OMX npm 최신 안정 버전 설치, Ponytail·ELI5 마켓플레이스 갱신 및 재설치, Impeccable 최신 CLI로 스킬 강제 갱신, Obsidian 스킬을 원본에서 다시 설치해 갱신
   - Claude: `claude update`, OMC npm 최신 안정 버전 설치, Ponytail·ELI5·Impeccable·OMC·Obsidian 마켓플레이스 및 플러그인 업데이트
@@ -79,21 +79,29 @@ Claude: /lukas-plugin:obsidian-work /절대경로/업무-vault에 이번 세션 
 
 이후 같은 vault에서 `이 자료를 ingest해줘`, `기록을 근거로 답해줘`, `링크 lint해줘`처럼 요청할 수 있습니다. 스킬은 vault의 기존 규칙과 폴더 구조를 따릅니다. 배포 소스를 갱신한 뒤에는 위 `reload` 명령으로 설치본을 갱신하고 새 세션을 시작합니다.
 
-# Team Skills
+# Basic work and native agents
 
-팀장은 동급으로 협의하고, 각 팀의 worker는 자기 팀장에게만 보고합니다. 사용자는 팀별 진행·막힘·리뷰 결과를 확인합니다.
+사용자가 지시하는 현재 Claude Code/Codex 세션이 메인입니다. `$basic-team`은 필요한 역할을 직접 호출하고 결과·검증을 통합하는 유일한 basic 계열 스킬입니다. 각 subagent는 맡은 일을 직접 수행하고 메인으로 반환합니다.
 
-| 스킬 | 사용 목적 |
-| --- | --- |
-| `$basic-team` | 필요한 팀을 골라 계획·구현·리뷰·통합을 조율 |
-| `$basic-plan-team` | Karpathy 지침을 기본 적용하고 기존 ralplan harness로 계획 작성·검토; 계획만 요청하면 구현 없이 종료 |
-| `$basic-frontend-team` | UI·상태·접근성·API 사용 작업 또는 도메인 리뷰 |
-| `$basic-backend-team` | API·권한·데이터 계약 작업 또는 도메인 리뷰 |
-| `$basic-docs-team` | 근거에 맞춘 문서 작업 또는 문서 리뷰 |
-| `$basic-reviewer-team` | Karpathy·Ponytail, 필요한 Impeccable·E2E 리뷰; 제품 수정은 원 담당 팀에 반환 |
-| `$thegame-basic-team` | basic-team의 공개 작업을 한 Notion Task의 체크리스트로 동기화 |
+| 역할 | Claude Code | Codex |
+| --- | --- | --- |
+| 계획(필요할 때만) | `lukas-plugin:basic-planner` | `basic_planner` |
+| 프런트엔드 | `lukas-plugin:basic-frontend` | `basic_frontend` |
+| 백엔드 | `lukas-plugin:basic-backend` | `basic_backend` |
+| 문서 | `lukas-plugin:basic-docs` | `basic_docs` |
+| 독립 리뷰 | `lukas-plugin:basic-reviewer` | `basic_reviewer` |
 
-예: `$basic-frontend-team 로그인 폼의 오류 상태를 개선해줘`, `$basic-team 가져오기 API와 UI를 함께 수정해줘`.
-Frontend·Backend 팀장과 구현 worker는 Karpathy·Ponytail 지침을 기본 적용하고, 별도의 독립 외부 리뷰도 유지합니다. 단독 구현 팀도 필요한 외부 리뷰를 거칩니다. 팀 계층·peer 통신 지원은 실행 호스트에서 확인하며, 미지원이면 구체적 제약을 보고합니다.
+```text
+Codex: basic_backend에게 이 API 오류 수정과 관련 테스트를 맡겨줘
+Claude: lukas-plugin:basic-frontend subagent로 로그인 오류 상태를 수정해줘
+복합 작업: basic-team으로 가져오기 API와 UI를 함께 수정해줘
+선택 추적: basic-team으로 작업하고 TheGame Notion Task에도 진행 상황을 남겨줘
+```
 
-진행 보고는 root가 시작할 때 한 번 선택합니다. Office `report`·`ask`가 사용 가능하고 초기 보고가 성공하면 Office를 사용하며 HTML을 만들지 않습니다. Office가 명시적으로 없거나 꺼져 있으면 기존 progress HTML을 사용합니다. 활성화됐지만 연결이 깨진 경우와 설정이 불명확한 경우는 별도로 진단하며, 실행 중 장애가 나도 자동으로 다른 보고 방식으로 바꾸지 않습니다. 재개 시에도 같은 run과 보고 방식을 유지합니다.
+역할 원본은 `agents/basic-*.md`에서 수정합니다. Claude는 플러그인의 agents를 로드합니다. Codex는 설치 스크립트가 같은 원본을 `${CODEX_HOME:-$HOME/.codex}/agents/basic_*.toml`에 생성합니다. 생성물은 직접 수정하지 않습니다. `install/reload/remove`는 관리 파일만 처리하며 동명의 사용자 파일과 수정본을 보존합니다. Codex 마켓플레이스 설치만으로 native 역할 배포가 완료되지는 않으므로 위 설치 스크립트를 사용합니다. 갱신 후 새 세션에서 실제 역할 등록을 확인합니다. `skills/*/agents/openai.yaml`은 스킬 UI 설정입니다.
+
+모델·effort는 사용자/호스트 설정을 따릅니다. 각 도구의 native `/goal`에 최종 완료 조건을 설정할 수 있으며 이미 활성인 목표를 재사용합니다. 스킬 호출만으로 새 Goal을 만들거나, 계획 요청을 구현으로 전환하지 않습니다. Agent Teams 활성화나 중첩 작업자 계층은 필요하지 않습니다.
+
+비단순 구현은 기본 독립 reviewer 1명이 검토합니다. 필요한 UI·연결 흐름 검증을 추가하되, 필수 결함만 수정하고 취향·인접 정리는 권고로 남깁니다. 수정 후 변경분과 영향받은 검사를 확인합니다. 기존 개별 역할 스킬 5개는 위 native 역할 호출로, `thegame-basic-team`은 `basic-team`의 선택 Notion 추적으로 대체됩니다. 옛 명령은 더 이상 제공하지 않으며 진행 중인 기존 run은 강제 이관하지 않습니다.
+
+진행 보고는 현재 세션만 기록합니다. Office가 준비되면 기존 run을 사용하고, 명시적으로 없거나 꺼져 있으면 HTML을 선택합니다. 설정 불명/연결 장애는 성공이나 부재로 간주하지 않으며 독립 작업을 계속하면서 미동기화를 표시합니다. 재개 시 같은 run과 보고 방식을 유지합니다. Notion은 요청한 경우에만 한 Task에 체크리스트를 동기화합니다.

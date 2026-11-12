@@ -1,4 +1,4 @@
 interface:
   display_name: "Basic Team"
-  short_description: "Coordinate specialist teams, reviews and summarized progress"
-  default_prompt: "Use $basic-team to plan and coordinate the needed specialist teams, verify independent reviews, and report team progress through Office when ready or HTML when Office is absent."
+  short_description: "Delegate focused work from the current session"
+  default_prompt: "Use $basic-team in this session to call only the native roles this task needs, verify scoped results, and stop when the acceptance criteria hold."

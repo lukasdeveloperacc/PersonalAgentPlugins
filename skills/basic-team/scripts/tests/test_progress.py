@@ -102,21 +102,23 @@ class ProgressTests(unittest.TestCase):
     def test_reference_example_patches_apply_in_order(self):
         example = (SCRIPT.parents[1] / "references" / "progress-example.md").read_text()
         patches = re.findall(r"```json\n(.*?)```", example, re.S)
-        self.assertEqual(len(patches), 7)
+        self.assertEqual(len(patches), 6)
         self.cli("init", str(self.page))
         for patch in patches:
             result = self.cli("update", str(self.page), "--input", "-", stdin=patch)
             self.assertEqual(result.returncode, 0, result.stderr)
             tasks = {task["id"]: task for task in self.data()["tasks"]}
             if self.data()["stage"] == "수정 (1라운드)":
-                # Finished reviewers should idle while their approval gate stays open.
-                self.assertEqual(tasks["R1-X"]["status"], "대기중")
+                # A finished review attempt does not close the required approval gate.
+                self.assertEqual(tasks["APPROVAL"]["status"], "대기중")
+                self.assertIn("CHANGES_REQUIRED", tasks["R1"]["note"])
+                self.assertEqual(self.data().get("reviews", []), [])
                 self.assertEqual([t["owner"] for t in tasks.values() if t["status"] == "진행중"],
-                                 ["frontend-lead"])
+                                 ["backend-api"])
                 before = self.page.read_bytes()
                 premature_finish = self.update({"stage": "완료", "tasks": [{"id": "FIX", "status": "완료"}]})
                 self.assertEqual(premature_finish.returncode, 2)
-                self.assertIn("R1-X", premature_finish.stderr)
+                self.assertIn("APPROVAL", premature_finish.stderr)
                 self.assertEqual(self.page.read_bytes(), before)
             for change in json.loads(patch).get("tasks", []):
                 if change.get("status") == "진행중":
