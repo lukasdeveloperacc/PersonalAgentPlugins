@@ -82,15 +82,13 @@ setup_codex_harness() {
   rm -f "$out"
 }
 
-# Codex skips plugin hooks until trusted; write the trust hashes it would write after TUI review.
+# Approve the final installed bundles, including the OMX cache created by its setup.
 trust_codex_hooks() {
-  local root="$1" id="$2" hooks_rel manifest="$1/.codex-plugin/plugin.json"
-  [ -f "$manifest" ] || return 0
-  hooks_rel="$(jq -r '.hooks // empty' "$manifest")"
-  [ -n "$hooks_rel" ] || return 0
-  hooks_rel="${hooks_rel#./}"
-  uv run --script "$ROOT_DIR/scripts/codex-trust-hooks.py" \
-    "$root/$hooks_rel" "$id:$hooks_rel" "${CODEX_HOME:-$HOME/.codex}/config.toml"
+  local dep ids=("$PLUGIN_ID" "oh-my-codex@oh-my-codex-local")
+  for dep in "${CODEX_DEPS[@]}"; do
+    ids+=("${dep%% *}")
+  done
+  uv run --script "$ROOT_DIR/scripts/codex-trust-hooks.py" "${ids[@]}"
 }
 
 # A marketplace root left in ~/.codex/.tmp/marketplaces without its config entry makes
@@ -110,7 +108,7 @@ add_codex_marketplace() {
 }
 
 install_codex_deps() {
-  local dep id src out refresh="${1:-}"
+  local dep id src refresh="${1:-}"
   for dep in "${CODEX_DEPS[@]}"; do
     read -r id src <<<"$dep"
     add_codex_marketplace "${id#*@}" "$src"
@@ -118,9 +116,7 @@ install_codex_deps() {
       codex plugin marketplace upgrade "${id#*@}" --json
       codex plugin remove "$id" --json
     fi
-    out="$(codex plugin add "$id" --json)"
-    echo "$out"
-    trust_codex_hooks "$(jq -r '.installedPath' <<<"$out")" "$id"
+    codex plugin add "$id" --json
   done
   # --no-hooks: its Codex hook is project-local (.codex/hooks.json), not something a user-scope install can set up.
   if [ "$refresh" = "--refresh" ]; then
@@ -281,11 +277,11 @@ case "$TOOL" in
       install)
         add_codex_marketplace "$MARKETPLACE_NAME" "$ROOT_DIR"
         codex plugin add "$PLUGIN_ID" --json
-        trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps
         setup_codex_harness
         uv run --script "$ROOT_DIR/scripts/codex-agents.py" install
         codex plugin list | grep "$PLUGIN_NAME"
+        trust_codex_hooks
         ;;
       remove)
         uv run --script "$ROOT_DIR/scripts/codex-agents.py" remove
@@ -300,10 +296,10 @@ case "$TOOL" in
         rm -rf "${CODEX_HOME:-$HOME/.codex}/plugins/cache/${MARKETPLACE_NAME}/${PLUGIN_NAME}"
         add_codex_marketplace "$MARKETPLACE_NAME" "$ROOT_DIR"
         codex plugin add "$PLUGIN_ID" --json
-        trust_codex_hooks "$ROOT_DIR" "$PLUGIN_ID"
         install_codex_deps --refresh
         setup_codex_harness
         uv run --script "$ROOT_DIR/scripts/codex-agents.py" install
+        trust_codex_hooks
         ;;
       *) usage ;;
     esac

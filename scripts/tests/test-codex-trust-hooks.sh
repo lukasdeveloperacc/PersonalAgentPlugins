@@ -4,42 +4,59 @@ set -euo pipefail
 SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/codex-trust-hooks.py"
 SANDBOX="$(mktemp -d)"
 trap 'rm -rf "$SANDBOX"' EXIT
-HOOKS="$SANDBOX/hooks.json"
-CONFIG="$SANDBOX/codex/config.toml"
+export CODEX_HOME="$SANDBOX/codex"
+MARKET="$SANDBOX/market"
+CONFIG="$CODEX_HOME/config.toml"
+KEY='fixture@local:hooks/hooks.json:session_start:0:0'
 
-# Expected hashes were written by codex-cli 0.157.1's TUI trust review for oh-my-codex.
-cat > "$HOOKS" <<'JSON'
-{
-  "hooks": {
-    "SessionStart": [{"hooks": [{"type": "command", "command": "node \"${PLUGIN_ROOT}/hooks/codex-native-hook.mjs\""}], "matcher": "startup|resume|clear"}],
-    "PreToolUse": [{"hooks": [{"type": "command", "command": "node \"${PLUGIN_ROOT}/hooks/codex-native-hook.mjs\""}]}],
-    "Stop": [{"hooks": [{"type": "command", "command": "node \"${PLUGIN_ROOT}/hooks/codex-native-hook.mjs\"", "timeout": 30}]}]
-  }
-}
+mkdir -p "$MARKET/.agents/plugins" "$CODEX_HOME"
+echo 'model = "fixture-model"' > "$CONFIG"
+cat > "$MARKET/.agents/plugins/marketplace.json" <<'JSON'
+{"name":"local","plugins":[
+  {"name":"fixture","source":{"source":"local","path":"./fixture"}},
+  {"name":"unmanaged","source":{"source":"local","path":"./unmanaged"}}
+]}
 JSON
 
-mkdir -p "$(dirname "$CONFIG")"
-cat > "$CONFIG" <<'TOML'
-model = "x"
+for name in fixture unmanaged; do
+  mkdir -p "$MARKET/$name/.codex-plugin" "$MARKET/$name/hooks"
+  jq -n --arg name "$name" '{name:$name,version:"1.0.0"}' > "$MARKET/$name/.codex-plugin/plugin.json"
+  cat > "$MARKET/$name/hooks/hooks.json" <<'JSON'
+{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"sh \"${PLUGIN_ROOT}/hooks/start.sh\""}]}]}}
+JSON
+  echo 'exit 0' > "$MARKET/$name/hooks/start.sh"
+done
 
-[hooks.state."omx@local:hooks/hooks.json:pre_tool_use:0:0"]
-trusted_hash = "sha256:stale"
+codex plugin marketplace add "$MARKET" --json >/dev/null
+installed="$(codex plugin add fixture@local --json | jq -er '.installedPath')"
+codex plugin add unmanaged@local --json >/dev/null
+cat >> "$CONFIG" <<TOML
+
+[hooks.state."$KEY"]
 enabled = false
 TOML
 
-uv run --script "$SCRIPT" "$HOOKS" "omx@local:hooks/hooks.json" "$CONFIG" >/dev/null
-uv run --script "$SCRIPT" "$HOOKS" "omx@local:hooks/hooks.json" "$CONFIG" >/dev/null
-
-expect_hash() {
-  local key="$1" hash="$2"
-  grep -A1 -Fx "[hooks.state.\"omx@local:hooks/hooks.json:$key\"]" "$CONFIG" | grep -qFx "trusted_hash = \"$hash\""
+approve() {
+  uv run --script "$SCRIPT" fixture@local
 }
 
-expect_hash session_start:0:0 sha256:c70df1f988a6965eb9d0fbdbfeaf84a609c98a9e24567dd1eb140cd6bf8e49f9
-expect_hash pre_tool_use:0:0 sha256:0beadaffc3fbe7daf525b5f470271fd9652bbb6a681827f62ae519aa585114fa
-expect_hash stop:0:0 sha256:216a53a71d5c9819f0fdbbbbf869c4f8d9455e742dad9e0f1d91f3d67dbba2ff
+approve | grep -qFx "trusted $KEY"
+declaration="$(sed -n 's/^trusted_hash = "\(.*\)"/\1/p' "$CONFIG")"
+content="$(sed -n 's/^trusted_content_hash = "\(.*\)"/\1/p' "$CONFIG")"
+[[ "$declaration" == sha256:* && "$content" == sha256:* ]]
+
+# A change to a script in the installed bundle invalidates approval even with identical hooks.json.
+echo '# Same declarations, changed bundle' >> "$installed/hooks/start.sh"
+approve | grep -qFx "trusted $KEY"
+grep -qFx "trusted_hash = \"$declaration\"" "$CONFIG"
+updated_content="$(sed -n 's/^trusted_content_hash = "\(.*\)"/\1/p' "$CONFIG")"
+[[ "$updated_content" == sha256:* && "$updated_content" != "$content" ]]
+
+approve >/dev/null
+grep -qFx "trusted_content_hash = \"$updated_content\"" "$CONFIG"
 grep -qFx 'enabled = false' "$CONFIG"
-grep -qFx 'model = "x"' "$CONFIG"
-[[ "$(grep -c '^\[hooks.state' "$CONFIG")" == 3 ]]
+grep -qFx 'model = "fixture-model"' "$CONFIG"
+! grep -q 'hooks.state."unmanaged@local:' "$CONFIG"
+[[ "$(grep -c '^\[hooks.state\.' "$CONFIG")" == 1 ]]
 
 echo "ok"

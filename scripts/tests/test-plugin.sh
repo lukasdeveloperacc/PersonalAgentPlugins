@@ -28,6 +28,7 @@ OBSIDIAN_SRC="kepano/obsidian-skills"
 OBSIDIAN_CODEX_ADD="npx -y skills@latest add https://github.com/$OBSIDIAN_SRC --global --agent codex --skill obsidian-markdown obsidian-bases json-canvas obsidian-cli --copy --yes"
 OBSIDIAN_CODEX_REMOVE="npx -y skills@latest remove --global --agent codex --skill obsidian-markdown obsidian-bases json-canvas obsidian-cli --yes"
 OMX_SETUP="omx setup --scope user --plugin --merge-agents"
+TRUST_HOOKS="trust-hooks $PLUGIN_ID oh-my-codex@oh-my-codex-local $DEP_ID $ELI5_ID $SLACK_ID"
 MCP_NAMES=($(jq -r '.mcpServers | keys[]' "$ROOT_DIR/mcp/servers.json"))
 IMPECCABLE_CODEX="npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks"
 
@@ -66,14 +67,18 @@ cat > "$STUB_BIN/node" <<'STUB'
 exit 0
 STUB
 chmod +x "$STUB_BIN/brew" "$STUB_BIN/uname" "$STUB_BIN/pgrep" "$STUB_BIN/node"
-for name in jq uv; do
-  ln -s "$(command -v "$name")" "$STUB_BIN/$name"
-done
-
-# Fake installed copy of the dependency so its hooks can be trusted.
-mkdir -p "$INSTALLED/ponytail/.codex-plugin" "$INSTALLED/ponytail/hooks"
-echo '{"name":"ponytail","hooks":"./hooks/codex-hooks.json"}' > "$INSTALLED/ponytail/.codex-plugin/plugin.json"
-echo '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"true"}]}]}}' > "$INSTALLED/ponytail/hooks/codex-hooks.json"
+ln -s "$(command -v jq)" "$STUB_BIN/jq"
+# The real Codex approval round trip is covered by test-codex-trust-hooks.sh.
+cat > "$STUB_BIN/uv" <<STUB
+#!/usr/bin/env bash
+if [[ "\$2" == --script && "\$3" == */codex-trust-hooks.py ]]; then
+  shift 3
+  echo "trust-hooks \$*" >> "$CALL_LOG"
+  exit 0
+fi
+exec "$(command -v uv)" "\$@"
+STUB
+chmod +x "$STUB_BIN/uv"
 
 # codex/claude are stubbed so this test never touches the real CLIs or ~/.codex.
 for name in codex claude npx; do
@@ -144,10 +149,6 @@ expect_calls() {
   }
 }
 
-trust_count() {
-  grep -c "^\[hooks.state.\"$1:" "$FAKE_HOME/.codex/config.toml"
-}
-
 expect_usage_error
 expect_usage_error codex
 expect_usage_error codex bogus
@@ -170,15 +171,9 @@ expect_calls \
   "$OBSIDIAN_CODEX_ADD" \
   "npm install -g oh-my-codex@latest" \
   "omx setup --scope user --plugin --clear-merge-agents-policy" \
-  "codex plugin list"
-[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:pre_tool_use")" == 1 ]]
-[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:session_start")" == 2 ]]
-[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:post_tool_use")" == 1 ]]
-[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:user_prompt_submit")" == 1 ]]
-[[ "$(trust_count "$PLUGIN_ID:hooks/hooks.json:session_end")" == 1 ]]
-[[ "$(trust_count "$DEP_ID:hooks/codex-hooks.json:session_start")" == 1 ]]
+  "codex plugin list" \
+  "$TRUST_HOOKS"
 [[ -f "$FAKE_HOME/.codex/agents/basic_backend.toml" ]]
-grep -qE '^trusted_hash = "sha256:[0-9a-f]{64}"$' "$FAKE_HOME/.codex/config.toml"
 
 : > "$CALL_LOG"
 mkdir -p "$FAKE_HOME/.agents/skills/impeccable"
@@ -222,11 +217,10 @@ expect_calls \
   "codex plugin add $SLACK_ID --json" \
   "$IMPECCABLE_CODEX --force" \
   "$OBSIDIAN_CODEX_ADD" \
-  "$OMX_SETUP"
+  "$OMX_SETUP" \
+  "$TRUST_HOOKS"
 [[ ! -e "$CACHE_DIR" ]]
 [[ "$(cat "$FAKE_HOME/.codex/AGENTS.md")" == 'Keep my user guidance' ]]
-[[ "$(trust_count "$PLUGIN_ID")" == 2 ]]
-[[ "$(trust_count "$DEP_ID")" == 1 ]]
 
 # An orphaned marketplace root is removed and re-added instead of failing the install.
 : > "$CALL_LOG"
@@ -520,5 +514,6 @@ STUB
 run codex reload >/dev/null
 [[ "$(grep -c '^omx setup --plugin --repair-plugin-cache$' "$CALL_LOG")" == 1 ]]
 grep -q "^$OMX_SETUP$" "$CALL_LOG"
+[[ "$(tail -2 "$CALL_LOG")" == "$(printf '%s\n' "omx setup --plugin --repair-plugin-cache" "$TRUST_HOOKS")" ]]
 
 echo "ok"
