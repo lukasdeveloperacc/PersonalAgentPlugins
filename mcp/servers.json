@@ -24,6 +24,10 @@
       "type": "http",
       "url": "http://localhost:39280/mcp-readonly"
     },
+    "rhwp": {
+      "command": "rhwp",
+      "args": ["mcp-serve"]
+    },
     "office": {
       "type": "http",
       "url": "http://127.0.0.1:4780/mcp",

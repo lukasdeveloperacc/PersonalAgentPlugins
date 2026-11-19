@@ -1,6 +1,6 @@
 ---
 name: mcp-setup
-description: lukas-plugin이 제공하는 MCP 서버(chrome-devtools, context7, gcloud, observability, notion, office, glitchtip, radar, aws-api, aws-docs, aws-eks, terraform, codegraph)를 목록으로 보여주고 켜고 끈다. 이 서버들은 기본으로 꺼져 있어서 /mcp에 보이지 않는다. 사용자가 "MCP 켜줘", "gcloud MCP 쓰고 싶어", "notion 연결해줘", "어떤 MCP 있어?", "glitchtip MCP 꺼줘", "radar MCP 켜줘", "aws mcp 활성화", "codegraph MCP 켜줘", "office MCP 켜줘", "context7 켜줘", "chrome devtools MCP 켜줘" 라고 하거나, 위 서버의 도구가 필요한데 세션에 없을 때 반드시 이 스킬을 사용한다.
+description: lukas-plugin이 제공하는 MCP 서버(chrome-devtools, context7, gcloud, observability, notion, office, glitchtip, radar, rhwp, aws-api, aws-docs, aws-eks, terraform, codegraph)를 목록으로 보여주고 켜고 끈다. 이 서버들은 기본으로 꺼져 있어서 /mcp에 보이지 않는다. 사용자가 "MCP 켜줘", "gcloud MCP 쓰고 싶어", "notion 연결해줘", "어떤 MCP 있어?", "glitchtip MCP 꺼줘", "radar MCP 켜줘", "한글 문서 MCP 켜줘", "aws mcp 활성화", "codegraph MCP 켜줘", "office MCP 켜줘", "context7 켜줘", "chrome devtools MCP 켜줘" 라고 하거나, 위 서버의 도구가 필요한데 세션에 없을 때 반드시 이 스킬을 사용한다.
 ---
 
 # MCP 켜고 끄기
@@ -39,6 +39,7 @@ mcp.sh <claude|codex> disable [server...]   # 이름 없이 쓰면 카탈로그 
 | office | TaskReporter 사무실 (basic-team 진행 보고·결재). 켜면 Docker 컨테이너가 뜬다 |
 | glitchtip | GlitchTip 이슈와 이벤트 조회 (`glitchtip-issue` 스킬이 사용) |
 | radar | Kubernetes 리소스 읽기 전용 조회 (Secret 제외) |
+| rhwp | 로컬 HWP·HWPX의 본문·표·문서 구조 추출 및 페이지 렌더링 |
 | aws-api | AWS CLI 명령 실행 |
 | aws-docs | AWS 공식 문서 검색 |
 | aws-eks | EKS 클러스터 조회와 조작 (쓰기 권한 포함) |
@@ -50,6 +51,7 @@ mcp.sh <claude|codex> disable [server...]   # 이름 없이 쓰면 카탈로그 
 - **notion**: 처음 쓸 때 Claude는 `/mcp`에서 notion을 골라 OAuth 인증을 한다. 브라우저가 다른 Notion 계정에 로그인돼 있으면 그 계정으로 붙으니, 원하는 계정으로 로그인하라고 알려준다. claude.ai Notion 커넥터는 플러그인이 막아두어서 중복되지 않는다.
 - **glitchtip**: 셸에 `GLITCHTIP_MCP_TOKEN`이 export돼 있어야 한다. 켜면 `kubectl port-forward`(localhost:38088)가 자동으로 뜨고, 끊기면 다시 붙는다. 현재 kube context로 클러스터에 접근할 수 있어야 한다.
 - **radar**: 현재 kube context로 thegame-cluster에 접근할 수 있어야 한다. 켜면 `kubectl port-forward`(localhost:39280)가 자동으로 뜨고, 읽기 전용 `/mcp-readonly`를 사용한다. 토큰은 필요 없다.
+- **rhwp**: [공식 릴리스](https://github.com/edwardkim/rhwp/releases/tag/v0.9.0)의 OS·아키텍처에 맞는 `rhwp` 바이너리를 PATH에 설치한다. `rhwp mcp-serve`로 로컬에서 실행한다. 문서로 발표 자료를 만들 때는 Codex의 `pdf:pdf`와 `presentations:Presentations` 스킬을 쓰고, 구형 `.ppt`는 LibreOffice의 `soffice --headless --convert-to pptx`로 변환한다. 스캔 PDF에는 OCRmyPDF와 필요한 Tesseract 언어 데이터를 사용한다.
 - **aws-api / aws-eks**: `AWS_PROFILE`이 필요하고, aws-eks는 `AWS_REGION`도 필요하다. Codex에서는 이 값들을 실행 환경에서 그대로 물려받는다.
 - **gcloud / observability**: `gcloud auth login`과 `gcloud auth application-default login`이 되어 있어야 한다.
 - **terraform**: docker가 실행 중이어야 한다.
