@@ -9,7 +9,7 @@ Loki 없이도 이벤트와 당시 코드로 앱 결함 범위는 정할 수 있
 1. 현재 세션에 연결된 MCP 도구, 설정 파일, 레포 문서를 확인한다.
 2. `logcli`(`/usr/local/bin/logcli`): 기본 주소는 `http://localhost:3100`이다. 원격 Loki는 `--addr` 또는 env(`LOKI_ADDR`, `LOKI_BEARER_TOKEN`/`LOKI_BEARER_TOKEN_FILE`, `LOKI_USERNAME`/`LOKI_PASSWORD`, `LOKI_ORG_ID`)로 지정한다.
 3. `gcx` CLI(Grafana CLI, `/opt/homebrew/bin/gcx`): 설치·인증되어 있으면 `gcx logs`로 조회할 수 있다. #297–299 조사에서는 쓰지 않았다.
-4. Loki가 결론에 꼭 필요한데 주소나 권한이 정말 없을 때만, 무엇이 막혀 있는지 구체적으로 사용자에게 묻는다. 엔드포인트나 토큰을 추측하지 않는다.
+4. 로컬 주소가 연결을 거절하거나 터널이 끊기면 대상 Service를 확인해 포워딩을 열고 같은 조회를 재시도한다. 복구 후에도 조회가 막히고 Loki가 결론에 꼭 필요할 때만 부족한 정보나 권한을 요청한다. [Loki 포트포워딩 복구](port-forward.md#loki)
 
 ## 순서
 

@@ -36,14 +36,14 @@ GlitchTip 이슈 상태(resolve/ignore)는 요청이 있을 때만 바꾼다.
 
 ### 조회 (GlitchTip MCP, `mcp__glitchtip__*`)
 
-먼저 현재 세션에 GlitchTip MCP 도구가 활성화되어 있는지 확인한다. 주소·토큰 설정은 머신마다 다를 수 있다.
+현재 세션에서 GlitchTip MCP 도구를 찾는다. 등록된 로컬 MCP가 보이지 않거나 연결에 실패하면 먼저 터널을 복구하고 원래 조회를 다시 실행한다. [포트포워딩 복구](references/port-forward.md)
 
 1. `get_issue({issue_id})` → 제목, count, firstSeen/lastSeen, project slug
 2. 대상 이벤트 ID가 있으면 `get_event({event_id, organization_slug})`로 **그 이벤트**를 조회한다. 이 호출은 "You cannot call this from an async context" 오류로 실패한 적이 있다. 실패하면 호출·시각·메시지를 기록한다.
 3. `get_latest_event({issue_id})`는 **대상 이벤트가 아닐 수 있다.** 받은 이벤트의 ID·timestamp를 대상과 대조하고, 다르면 "다른 표본"으로 표시하거나 사용자 제공 JSON/UI에서 정확한 이벤트를 확보한다.
 4. `list_logs({organization_slug, project_id, environment, query: <request_id>, start, end})` → GlitchTip Logs. `[]`는 "GlitchTip Logs에 없음"일 뿐이다. Loki 조회가 아니다.
 
-- 사용자가 이미 원본 JSON을 줬으면 다시 요청하지 않는다. MCP가 없고 JSON도 없으면 UI의 이벤트 JSON을 요청한다.
+- 이미 제공된 이벤트 JSON은 그대로 사용한다. MCP를 사용할 수 없으면 접근 가능한 GlitchTip UI에서 대상 이벤트를 읽고, 원본을 확보할 수 없을 때만 사용자에게 이벤트 JSON을 요청한다.
 - count>1이면 대표 이벤트와 다른 발생들의 공통점/차이를 확인하거나 "표본 1건"이라고 표시한다.
 - 앱의 `GLITCHTIP_DSN_*`는 **이벤트 전송용 DSN**이다. 조회 토큰으로 쓰지 않는다. 토큰·DSN 값은 어디에도 출력하지 않는다.
 
