@@ -17,6 +17,8 @@ DEP_ID="ponytail@ponytail"
 DEP_SRC="DietrichGebert/ponytail"
 ELI5_ID="eli5@claude-community"
 ELI5_SRC="anthropics/claude-plugins-community"
+SLACK_ID="slack@slack"
+SLACK_SRC="slackapi/slack-skills-plugin"
 CLAUDE_DEP_ID="impeccable@impeccable"
 CLAUDE_DEP_SRC="pbakaus/impeccable"
 OMC_ID="oh-my-claudecode@omc"
@@ -162,6 +164,8 @@ expect_calls \
   "codex plugin add $DEP_ID --json" \
   "codex plugin marketplace add $ELI5_SRC --json" \
   "codex plugin add $ELI5_ID --json" \
+  "codex plugin marketplace add $SLACK_SRC --json" \
+  "codex plugin add $SLACK_ID --json" \
   "$IMPECCABLE_CODEX" \
   "$OBSIDIAN_CODEX_ADD" \
   "npm install -g oh-my-codex@latest" \
@@ -183,6 +187,7 @@ expect_calls \
   "codex plugin remove $PLUGIN_ID --json" \
   "codex plugin remove $DEP_ID --json" \
   "codex plugin remove $ELI5_ID --json" \
+  "codex plugin remove $SLACK_ID --json" \
   "$OBSIDIAN_CODEX_REMOVE" \
   "${MCP_NAMES[@]/#/codex mcp remove }" \
   "npm uninstall -g @colbymchenry/codegraph"
@@ -211,6 +216,10 @@ expect_calls \
   "codex plugin marketplace upgrade claude-community --json" \
   "codex plugin remove $ELI5_ID --json" \
   "codex plugin add $ELI5_ID --json" \
+  "codex plugin marketplace add $SLACK_SRC --json" \
+  "codex plugin marketplace upgrade slack --json" \
+  "codex plugin remove $SLACK_ID --json" \
+  "codex plugin add $SLACK_ID --json" \
   "$IMPECCABLE_CODEX --force" \
   "$OBSIDIAN_CODEX_ADD" \
   "$OMX_SETUP"
@@ -244,6 +253,7 @@ expect_calls \
   "npm install -g @colbymchenry/codegraph@latest" \
   "claude plugin marketplace add $DEP_SRC" \
   "claude plugin marketplace add $ELI5_SRC" \
+  "claude plugin marketplace add $SLACK_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
   "claude plugin marketplace add $OMC_SRC" \
   "claude plugin marketplace add $OBSIDIAN_SRC" \
@@ -264,6 +274,7 @@ expect_calls \
   "claude plugin uninstall $PLUGIN_ID --keep-data --json" \
   "claude plugin uninstall $DEP_ID --keep-data --json" \
   "claude plugin uninstall $ELI5_ID --keep-data --json" \
+  "claude plugin uninstall $SLACK_ID --keep-data --json" \
   "claude plugin uninstall $CLAUDE_DEP_ID --keep-data --json" \
   "claude plugin uninstall $OMC_ID --keep-data --json" \
   "claude plugin uninstall $OBSIDIAN_ID --keep-data --json" \
@@ -362,6 +373,7 @@ expect_calls \
   "npm install -g oh-my-claude-sisyphus@latest" \
   "claude plugin marketplace add $DEP_SRC" \
   "claude plugin marketplace add $ELI5_SRC" \
+  "claude plugin marketplace add $SLACK_SRC" \
   "claude plugin marketplace add $CLAUDE_DEP_SRC" \
   "claude plugin marketplace add $OMC_SRC" \
   "claude plugin marketplace add $OBSIDIAN_SRC" \
@@ -372,6 +384,8 @@ expect_calls \
   "claude plugin update $DEP_ID --scope user --yes" \
   "claude plugin marketplace update claude-community" \
   "claude plugin update $ELI5_ID --scope user --yes" \
+  "claude plugin marketplace update slack" \
+  "claude plugin update $SLACK_ID --scope user --yes" \
   "claude plugin marketplace update impeccable" \
   "claude plugin update $CLAUDE_DEP_ID --scope user --yes" \
   "claude plugin marketplace update omc" \
@@ -381,7 +395,7 @@ expect_calls \
   "omc setup --quiet" \
   "claude plugin details $PLUGIN_ID"
 
-for id in "$DEP_ID" "$ELI5_ID" "$CLAUDE_DEP_ID" "$OMC_ID" "$OBSIDIAN_ID"; do
+for id in "$DEP_ID" "$ELI5_ID" "$SLACK_ID" "$CLAUDE_DEP_ID" "$OMC_ID" "$OBSIDIAN_ID"; do
   jq -e --arg n "${id%@*}" --arg m "${id#*@}" \
     '.dependencies[] | select(.name == $n and .marketplace == $m)' \
     "$ROOT_DIR/.claude-plugin/plugin.json" >/dev/null

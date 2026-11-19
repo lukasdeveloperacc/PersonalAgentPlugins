@@ -29,6 +29,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - macOS + Homebrew 환경에서 Node.js와 Obsidian 앱을 먼저 설치·갱신. 실행 중인 Obsidian은 정상 종료를 요청하고 갱신 후 다시 실행하며, 정상 종료가 되지 않으면 앱 교체를 중단
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
   - Obsidian: Claude는 `obsidian@obsidian-skills`를 의존 플러그인으로 설치. Codex는 upstream의 `skills` CLI로 Markdown·Bases·Canvas·CLI 스킬 4개를 `~/.agents/skills`에 설치
+  - [Slack 공식 플러그인](https://github.com/slackapi/slack-skills-plugin) `slack@slack`은 두 도구에서 설치·갱신·제거를 관리. Claude는 Slack MCP를 최초 사용 시 OAuth로 연결하며, Codex의 공식 플러그인은 Slack 개발 스킬을 제공하고 워크스페이스 연동은 기존 Slack 앱에서 사용
   - MCP 서버(notion, glitchtip, radar, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
   - Homebrew의 `node` 최신 안정 버전을 사용하고 Node.js 22.20 이상인지 검증(`skills` CLI 요구사항). 갱신된 Node 경로를 설치 스크립트와 하위 npm/npx 명령에 적용하며 사용자 셸 설정은 변경하지 않음
   - Claude: OMC 플러그인을 의존성으로 설치하고, `omc`가 없으면 공식 npm 패키지 설치 후 `omc setup --quiet` 실행. office 결재 대기용 `MCP_TOOL_TIMEOUT=325000`도 Claude 사용자 설정에 설정

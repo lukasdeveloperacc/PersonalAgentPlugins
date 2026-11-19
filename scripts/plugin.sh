@@ -31,9 +31,12 @@ ELI5_SRC="anthropics/claude-plugins-community"
 OBSIDIAN_ID="obsidian@obsidian-skills"
 OBSIDIAN_SRC="kepano/obsidian-skills"
 OBSIDIAN_SKILLS=(obsidian-markdown obsidian-bases json-canvas obsidian-cli)
+SLACK_ID="slack@slack"
+SLACK_SRC="slackapi/slack-skills-plugin"
 CODEX_DEPS=(
   "ponytail@ponytail DietrichGebert/ponytail"
   "$ELI5_ID $ELI5_SRC"
+  "$SLACK_ID $SLACK_SRC"
 )
 # impeccable ships no Codex plugin, so install_codex_deps puts its skill in ~/.agents/skills via its own CLI.
 CLAUDE_DEPS=(

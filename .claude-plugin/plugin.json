@@ -6,6 +6,7 @@
   "dependencies": [
     { "name": "ponytail", "marketplace": "ponytail" },
     { "name": "eli5", "marketplace": "claude-community" },
+    { "name": "slack", "marketplace": "slack" },
     { "name": "impeccable", "marketplace": "impeccable" },
     { "name": "oh-my-claudecode", "marketplace": "omc" },
     { "name": "obsidian", "marketplace": "obsidian-skills" }
