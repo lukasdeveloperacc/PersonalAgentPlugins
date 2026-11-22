@@ -33,6 +33,10 @@
       "url": "http://127.0.0.1:4780/mcp",
       "tool_timeout_sec": 325
     },
+    "figma": {
+      "type": "http",
+      "url": "http://127.0.0.1:3845/mcp"
+    },
     "notion": {
       "type": "http",
       "url": "https://mcp.notion.com/mcp"
