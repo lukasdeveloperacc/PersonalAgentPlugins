@@ -8,7 +8,7 @@ Root alone selects the reporting backend and mirrors its **published tasks** to 
 
 - Task Board data source: `collection://33b8a6cf-b7d4-8106-bca5-000bef4c35a9` (database https://app.notion.com/p/33b8a6cfb7d48026833cc7effb3b6111).
 - Tools: Notion MCP `notion-fetch`, `notion-get-self`, `notion-create-pages`, `notion-update-page`. If they are unavailable, do not enable MCP or change shared configuration automatically; add a `Notion Task` decision saying so and run the rest of basic-team normally.
-- Properties used: `업무명` (title), `Status` (`TODO`, `IN PROGRESS`, `DONE`), `작성자` and `담당자` (the connected user from `notion-get-self`), `작업유형` (one of `feature`, `fix`, `refactor`, `docs`, `chore`, `uiux`), `프로젝트` (multi-select). Leave the other properties empty. If a create call rejects a property or option, fetch the data source again and use what it shows; the schema may have changed.
+- Properties used: `업무명` (title), `Status` (`TODO`, `IN PROGRESS`, `DONE`), `작성자` and `담당자` (the connected user from `notion-get-self`), `작업유형` (one of `feature`, `fix`, `refactor`, `docs`, `chore`, `uiux`), `프로젝트` (multi-select). Apply the [Milestone rules](../../thegame-work-task/SKILL.md#milestone) on creation, including checking the stored relation after creating the Task. Leave other unspecified properties empty. If a create call rejects a property or option, fetch the data source again and use what it shows; the schema may have changed.
 
 ## When to touch Notion
 
