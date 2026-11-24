@@ -1,11 +1,13 @@
 ---
-name: work-task
-description: 회사 업무를 Notion TaskBoard와 내 Daily Scrum에 연결해 시작·재개하거나, 추적 중인 업무에 Slack 원문과 PR을 연결하고 완료 결과를 기록할 때 사용한다.
+name: thegame-work-task
+description: TheGame 업무 전용. TheGame 업무를 Notion TaskBoard와 내 Daily Scrum에 연결해 시작·재개하거나, 추적 중인 업무에 Slack 원문과 PR을 연결하고 완료 결과를 기록할 때 사용한다.
 ---
 
-# 회사 업무 추적
+# TheGame 업무 추적
 
-TaskBoard의 Task 한 장을 업무 기준으로 삼는다. 메인 세션이 Notion을 기록한다. 업무 추적을 요청했거나 현재 요청이 이미 추적 중인 Task에 속할 때 적용한다. 훅이 알려준 URL은 재개 단서다. 현재 요청과 같은 업무인지 확인한 뒤 사용한다.
+사용자가 이 스킬을 호출하거나 TheGame 업무임이 확인된 작업의 시작·PR 연결·마감을 요청할 때 적용한다. 개인 작업·다른 회사 업무·소속이 불분명한 일반 요청은 추적을 생략한다. 이전 세션의 링크나 같은 저장소에서 작업한다는 사실만으로 새 요청을 TheGame 업무로 분류하지 않는다.
+
+TaskBoard의 Task 한 장을 업무 기준으로 삼는다. 메인 세션이 Notion을 기록한다. 훅이 알려준 URL은 재개 단서다. 현재 요청과 같은 업무인지 확인한 뒤 사용한다.
 
 ## 시작과 재개
 

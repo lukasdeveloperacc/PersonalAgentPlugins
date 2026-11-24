@@ -15,7 +15,7 @@
           },
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/skills/work-task/scripts/task_state.py\" session-start",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/skills/thegame-work-task/scripts/task_state.py\" session-start",
             "timeout": 5
           }
         ]

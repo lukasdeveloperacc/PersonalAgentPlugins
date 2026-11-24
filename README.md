@@ -80,11 +80,11 @@ Claude: /lukas-plugin:obsidian-work /절대경로/업무-vault에 이번 세션 
 
 이후 같은 vault에서 `이 자료를 ingest해줘`, `기록을 근거로 답해줘`, `링크 lint해줘`처럼 요청할 수 있습니다. 스킬은 vault의 기존 규칙과 폴더 구조를 따릅니다. 배포 소스를 갱신한 뒤에는 위 `reload` 명령으로 설치본을 갱신하고 새 세션을 시작합니다.
 
-# Notion 업무 추적
+# TheGame Notion 업무 추적
 
-`$work-task 정산 CSV 환불 누락 수정 시작해줘. 관련 Slack은 <스레드 URL>이야`처럼 요청하면 TaskBoard에 업무를 등록하고 오늘 내 Daily Scrum TODO와 연결합니다. 이 업무의 PR을 만들 때는 Task와 Slack 원문을 PR에 넣고, PR 링크도 Task에 기록합니다. 완료 기준을 충족하면 Task에 결과와 확인 근거를 요약하고 Scrum TODO를 체크합니다.
+`$thegame-work-task 정산 CSV 환불 누락 수정 시작해줘. 관련 Slack은 <스레드 URL>이야`처럼 TheGame 업무 추적을 요청하면 TaskBoard에 업무를 등록하고 오늘 내 Daily Scrum TODO와 연결합니다. 이 업무의 PR을 만들 때는 Task와 Slack 원문을 PR에 넣고, PR 링크도 Task에 기록합니다. 완료 기준을 충족하면 Task에 결과와 확인 근거를 요약하고 Scrum TODO를 체크합니다.
 
-Notion MCP 연결이 필요합니다. 같은 Git 워크트리에서 새 세션을 열면 SessionStart 훅이 진행 중인 Task 링크를 에이전트에 전달합니다. [work-task 스킬](skills/work-task/SKILL.md)
+Notion MCP 연결이 필요합니다. 같은 Git 워크트리에서 새 세션을 열면 SessionStart 훅이 진행 중인 Task 링크를 에이전트에 전달합니다. [thegame-work-task 스킬](skills/thegame-work-task/SKILL.md)
 
 # Basic work and native agents
 

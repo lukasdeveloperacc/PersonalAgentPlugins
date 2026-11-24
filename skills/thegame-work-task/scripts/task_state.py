@@ -51,7 +51,7 @@ def main():
             return
         url = current(state_path(cwd))
         if url:
-            context = f"이 worktree의 work-task 기록: {url}. 관련 업무를 재개할 때 work-task 스킬로 현재 상태를 확인하세요."
+            context = f"TheGame 업무 재개 후보: {url}. 현재 요청이 이 TheGame Task의 후속 작업일 때만 thegame-work-task 스킬을 사용하세요."
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context}}, ensure_ascii=False))
         return
     path = state_path(None)

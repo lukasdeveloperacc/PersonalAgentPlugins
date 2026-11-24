@@ -1,6 +1,6 @@
 # Optional Notion Task tracking
 
-Read only when the user explicitly requests Notion Task tracking. Main alone mirrors the published tasks; native subagents never write Notion. Follow [reporting.md](reporting.md).
+Use this board only for confirmed TheGame work when the user requests Notion tracking. Main alone mirrors the published tasks; native subagents never write Notion. Follow [reporting.md](reporting.md).
 
 Root alone selects the reporting backend and mirrors its **published tasks** to Notion. Office is used when ready; HTML is selected only when Office is explicitly absent/disabled at startup. Keep that selection on resume and during outages. Normal Office runs create no HTML or full local snapshot. Notion never chooses the backend, schedules agents, or becomes a fallback source of truth. A Notion failure does not block product work. In the instructions below, “report” means the selected Office run or HTML page, and “report link” means its URL or absolute page path.
 
@@ -12,7 +12,7 @@ Root alone selects the reporting backend and mirrors its **published tasks** to 
 
 ## When to touch Notion
 
-When this run also tracks the user's Daily Scrum through [work-task](../../work-task/SKILL.md), use one Task for both workflows. At the published-task checkpoint, use the confirmed work-task page or create it once with the properties below. Record that URL in the report and add the report link and checklist to the existing page, preserving its Scrum backlink, Slack and PR links. Work-task handles the Scrum item and related links. At verified completion, sync the checklist first, then use work-task's completion sequence to write the conclusion, set DONE and check the Scrum item. If the same work reopens, restore the linked TODO to pending and remember the Task again.
+When this run also tracks the user's Daily Scrum through [thegame-work-task](../../thegame-work-task/SKILL.md), use one Task for both workflows. At the published-task checkpoint, use the confirmed thegame-work-task page or create it once with the properties below. Record that URL in the report and add the report link and checklist to the existing page, preserving its Scrum backlink, Slack and PR links. The skill handles the Scrum item and related links. At verified completion, sync the checklist first, then use thegame-work-task's completion sequence to write the conclusion, set DONE and check the Scrum item. If the same work reopens, restore the linked TODO to pending and remember the Task again.
 
 **Create (published-task checkpoint, after the selected report first contains the task list).** One `notion-create-pages` call with parent `data_source_id` above, icon `✅`, no template (the default template adds a placeholder to-do):
 

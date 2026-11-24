@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 plugin=$(cd "$(dirname "$0")/../.." && pwd)
-helper="$plugin/skills/work-task/scripts/task_state.py"
+helper="$plugin/skills/thegame-work-task/scripts/task_state.py"
 command=$(python3 -c 'import json,sys; print(next(h["command"] for group in json.load(open(sys.argv[1]))["hooks"]["SessionStart"] for h in group["hooks"] if "task_state.py" in h["command"]))' "$plugin/hooks/hooks.json")
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
@@ -29,7 +29,7 @@ cd child
 [[ "$(task show)" = "$url" ]]
 for host in codex claude; do
   if [[ "$host" = claude ]]; then unset PLUGIN_ROOT; export CLAUDE_PLUGIN_ROOT="$plugin"; fi
-  hook "$PWD" | python3 -c 'import json,sys; h=json.load(sys.stdin)["hookSpecificOutput"]; assert h["hookEventName"]=="SessionStart" and sys.argv[1] in h["additionalContext"]' "$url"
+  hook "$PWD" | python3 -c 'import json,sys; h=json.load(sys.stdin)["hookSpecificOutput"]; assert h["hookEventName"]=="SessionStart" and sys.argv[1] in h["additionalContext"] and "thegame-work-task" in h["additionalContext"]' "$url"
 done
 [[ -z "$(hook "$tmp/other")" ]]
 [[ -z "$(git status --porcelain)" ]]
@@ -37,4 +37,4 @@ task clear "$url"
 task clear "$url"
 [[ -z "$(hook "$PWD")" ]]
 if task remember 'https://example.org/11223344556677889900aabbccddeeff'; then exit 1; fi
-echo "work-task tests passed"
+echo "thegame-work-task tests passed"
