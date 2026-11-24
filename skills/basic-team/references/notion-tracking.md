@@ -12,6 +12,8 @@ Root alone selects the reporting backend and mirrors its **published tasks** to 
 
 ## When to touch Notion
 
+When this run also tracks the user's Daily Scrum through [work-task](../../work-task/SKILL.md), use one Task for both workflows. At the published-task checkpoint, use the confirmed work-task page or create it once with the properties below. Record that URL in the report and add the report link and checklist to the existing page, preserving its Scrum backlink, Slack and PR links. Work-task handles the Scrum item and related links. At verified completion, sync the checklist first, then use work-task's completion sequence to write the conclusion, set DONE and check the Scrum item. If the same work reopens, restore the linked TODO to pending and remember the Task again.
+
 **Create (published-task checkpoint, after the selected report first contains the task list).** One `notion-create-pages` call with parent `data_source_id` above, icon `✅`, no template (the default template adds a placeholder to-do):
 
 - `업무명`: a short Korean summary of what is being built or fixed, the same as the run title.
