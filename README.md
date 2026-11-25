@@ -82,6 +82,8 @@ Claude: /lukas-plugin:obsidian-work /절대경로/업무-vault에 이번 세션 
 
 # TheGame Notion 업무 추적
 
+새 작업을 요청했을 때 소속이 불분명하면 에이전트가 “이번 작업을 TheGame 업무로 기록할까요?”라고 묻습니다. “응”이면 TaskBoard와 오늘 Daily Scrum을 연결하고, “아니”면 기록 없이 작업합니다. 같은 작업의 후속 요청에는 답을 그대로 적용합니다.
+
 `$thegame-work-task 정산 CSV 환불 누락 수정 시작해줘. 관련 Slack은 <스레드 URL>이야`처럼 TheGame 업무 추적을 요청하면 TaskBoard에 업무를 등록하고 오늘 내 Daily Scrum TODO와 연결합니다. 이 업무의 PR을 만들 때는 Task와 Slack 원문을 PR에 넣고, PR 링크도 Task에 기록합니다. 완료 기준을 충족하면 Task에 결과와 확인 근거를 요약하고 Scrum TODO를 체크합니다.
 
 Notion MCP 연결이 필요합니다. 같은 Git 워크트리에서 새 세션을 열면 SessionStart 훅이 진행 중인 Task 링크를 에이전트에 전달합니다. [thegame-work-task 스킬](skills/thegame-work-task/SKILL.md)

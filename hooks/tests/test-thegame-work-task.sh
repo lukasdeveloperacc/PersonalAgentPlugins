@@ -3,6 +3,7 @@ set -eu
 plugin=$(cd "$(dirname "$0")/../.." && pwd)
 helper="$plugin/skills/thegame-work-task/scripts/task_state.py"
 command=$(python3 -c 'import json,sys; print(next(h["command"] for group in json.load(open(sys.argv[1]))["hooks"]["SessionStart"] for h in group["hooks"] if "task_state.py" in h["command"]))' "$plugin/hooks/hooks.json")
+intake=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["hooks"]["UserPromptSubmit"][0]["hooks"][0]["command"])' "$plugin/hooks/hooks.json")
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 cd "$tmp"
@@ -29,6 +30,7 @@ cd child
 [[ "$(task show)" = "$url" ]]
 for host in codex claude; do
   if [[ "$host" = claude ]]; then unset PLUGIN_ROOT; export CLAUDE_PLUGIN_ROOT="$plugin"; fi
+  bash -c "$intake" | python3 -c 'import json,sys; h=json.load(sys.stdin)["hookSpecificOutput"]; assert h["hookEventName"] == "UserPromptSubmit" and "thegame-work-task" in h["additionalContext"]'
   hook "$PWD" | python3 -c 'import json,sys; h=json.load(sys.stdin)["hookSpecificOutput"]; assert h["hookEventName"]=="SessionStart" and sys.argv[1] in h["additionalContext"] and "thegame-work-task" in h["additionalContext"]' "$url"
 done
 [[ -z "$(hook "$tmp/other")" ]]
