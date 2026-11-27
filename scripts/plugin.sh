@@ -33,6 +33,8 @@ OBSIDIAN_SRC="kepano/obsidian-skills"
 OBSIDIAN_SKILLS=(obsidian-markdown obsidian-bases json-canvas obsidian-cli)
 SLACK_ID="slack@slack"
 SLACK_SRC="slackapi/slack-skills-plugin"
+# Codex's built-in remote marketplace, so no marketplace add/upgrade. Claude has no Gmail plugin; it uses claude.ai's Gmail connector.
+GMAIL_ID="gmail@openai-curated-remote"
 CODEX_DEPS=(
   "ponytail@ponytail DietrichGebert/ponytail"
   "$ELI5_ID $ELI5_SRC"
@@ -118,6 +120,8 @@ install_codex_deps() {
     fi
     codex plugin add "$id" --json
   done
+  [ "$refresh" = "--refresh" ] && codex plugin remove "$GMAIL_ID" --json
+  codex plugin add "$GMAIL_ID" --json
   # --no-hooks: its Codex hook is project-local (.codex/hooks.json), not something a user-scope install can set up.
   if [ "$refresh" = "--refresh" ]; then
     npx -y impeccable@latest install --providers=codex --scope=user --yes --no-hooks --force
@@ -135,6 +139,7 @@ remove_codex_deps() {
     read -r id src <<<"$dep"
     codex plugin remove "$id" --json
   done
+  codex plugin remove "$GMAIL_ID" --json
   npx -y skills@latest remove --global --agent codex --skill "${OBSIDIAN_SKILLS[@]}" --yes
   # impeccable's CLI has no uninstall; this is the folder install_codex_deps created.
   rm -rf "$HOME/.agents/skills/impeccable"

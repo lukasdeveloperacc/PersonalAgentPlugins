@@ -19,6 +19,7 @@ ELI5_ID="eli5@claude-community"
 ELI5_SRC="anthropics/claude-plugins-community"
 SLACK_ID="slack@slack"
 SLACK_SRC="slackapi/slack-skills-plugin"
+GMAIL_ID="gmail@openai-curated-remote"
 CLAUDE_DEP_ID="impeccable@impeccable"
 CLAUDE_DEP_SRC="pbakaus/impeccable"
 OMC_ID="oh-my-claudecode@omc"
@@ -167,6 +168,7 @@ expect_calls \
   "codex plugin add $ELI5_ID --json" \
   "codex plugin marketplace add $SLACK_SRC --json" \
   "codex plugin add $SLACK_ID --json" \
+  "codex plugin add $GMAIL_ID --json" \
   "$IMPECCABLE_CODEX" \
   "$OBSIDIAN_CODEX_ADD" \
   "npm install -g oh-my-codex@latest" \
@@ -183,6 +185,7 @@ expect_calls \
   "codex plugin remove $DEP_ID --json" \
   "codex plugin remove $ELI5_ID --json" \
   "codex plugin remove $SLACK_ID --json" \
+  "codex plugin remove $GMAIL_ID --json" \
   "$OBSIDIAN_CODEX_REMOVE" \
   "${MCP_NAMES[@]/#/codex mcp remove }" \
   "npm uninstall -g @colbymchenry/codegraph"
@@ -215,6 +218,8 @@ expect_calls \
   "codex plugin marketplace upgrade slack --json" \
   "codex plugin remove $SLACK_ID --json" \
   "codex plugin add $SLACK_ID --json" \
+  "codex plugin remove $GMAIL_ID --json" \
+  "codex plugin add $GMAIL_ID --json" \
   "$IMPECCABLE_CODEX --force" \
   "$OBSIDIAN_CODEX_ADD" \
   "$OMX_SETUP" \
