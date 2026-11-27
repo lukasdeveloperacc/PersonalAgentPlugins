@@ -30,6 +30,7 @@ ln -sfn .. "plugins/${PLUGIN_NAME}"
   - CodeGraph 공식 npm CLI를 전역 설치. MCP는 기본 OFF이며 `mcp-setup`으로 활성화
   - Obsidian: Claude는 `obsidian@obsidian-skills`를 의존 플러그인으로 설치. Codex는 upstream의 `skills` CLI로 Markdown·Bases·Canvas·CLI 스킬 4개를 `~/.agents/skills`에 설치
   - [Slack 공식 플러그인](https://github.com/slackapi/slack-skills-plugin) `slack@slack`은 두 도구에서 설치·갱신·제거를 관리. Claude는 Slack MCP를 최초 사용 시 OAuth로 연결하며, Codex의 공식 플러그인은 Slack 개발 스킬을 제공하고 워크스페이스 연동은 기존 Slack 앱에서 사용
+  - [Supabase 공식 플러그인](https://github.com/supabase-community/supabase-plugin) `supabase@claude-community`는 두 도구에서 설치·갱신·제거를 관리. Supabase·Postgres 스킬과 공식 MCP(`https://mcp.supabase.com/mcp`)를 포함하며 최초 사용 시 OAuth로 Supabase 계정을 연결. Codex는 같은 플러그인의 Supabase 앱 커넥터로 연결
   - Gmail: Codex는 OpenAI 공식 `gmail@openai-curated-remote`를 설치·갱신·제거(Codex 내장 원격 마켓플레이스라 마켓플레이스 등록 불필요, 계정 연결은 Gmail 앱 커넥터). Claude에는 공식 Gmail 플러그인이 없어 claude.ai의 Gmail 커넥터를 사용
   - MCP 서버(notion, glitchtip, radar, gcloud 등)는 기본 OFF라 `/mcp` 목록에 보이지 않음. 설치가 끝나면 서버별 on/off 목록이 출력되고, `mcp-setup` 스킬("notion MCP 켜줘")로 필요한 것만 켬. Claude Code는 플러그인 MCP를 '목록에 보이되 꺼진 상태'로 둘 수 없기 때문
   - Homebrew의 `node` 최신 안정 버전을 사용하고 Node.js 22.20 이상인지 검증(`skills` CLI 요구사항). 갱신된 Node 경로를 설치 스크립트와 하위 npm/npx 명령에 적용하며 사용자 셸 설정은 변경하지 않음

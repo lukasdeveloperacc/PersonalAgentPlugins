@@ -33,12 +33,15 @@ OBSIDIAN_SRC="kepano/obsidian-skills"
 OBSIDIAN_SKILLS=(obsidian-markdown obsidian-bases json-canvas obsidian-cli)
 SLACK_ID="slack@slack"
 SLACK_SRC="slackapi/slack-skills-plugin"
+# Supabase's official plugin (skills + hosted MCP with OAuth), listed in claude-community for both hosts.
+SUPABASE_ID="supabase@$ELI5_MARKETPLACE"
 # Codex's built-in remote marketplace, so no marketplace add/upgrade. Claude has no Gmail plugin; it uses claude.ai's Gmail connector.
 GMAIL_ID="gmail@openai-curated-remote"
 CODEX_DEPS=(
   "ponytail@ponytail DietrichGebert/ponytail"
   "$ELI5_ID $ELI5_SRC"
   "$SLACK_ID $SLACK_SRC"
+  "$SUPABASE_ID $ELI5_SRC"
 )
 # impeccable ships no Codex plugin, so install_codex_deps puts its skill in ~/.agents/skills via its own CLI.
 CLAUDE_DEPS=(
